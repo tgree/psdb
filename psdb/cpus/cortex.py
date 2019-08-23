@@ -54,8 +54,19 @@ class Cortex(psdb.component.Component):
     def __init__(self, component, subtype):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
+        self._scb  = None
         self.flags = 0
         self.ap.db.cpus.append(self)
+
+    @property
+    def scb(self):
+        if not self._scb:
+            results = self.find_components_by_type(SystemControlBlock)
+            assert results
+            assert len(results) == 1
+            self._scb = results[0]
+
+        return self._scb
 
     def is_halted(self):
         return self.flags & FLAG_HALTED
@@ -73,16 +84,16 @@ class Cortex(psdb.component.Component):
         return self.ap.read_bulk(addr, size)
 
     def read_aircr(self):
-        return self.ap.read_32(0xE000ED0C)
+        return self.ap.read_32(self.scb.addr + 0xD0C)
 
     def read_dhcsr(self):
-        return self.ap.read_32(0xE000EDF0)
+        return self.ap.read_32(self.scb.addr + 0xDF0)
 
     def read_dcrdr(self):
-        return self.ap.read_32(0xE000EDF8)
+        return self.ap.read_32(self.scb.addr + 0xDF8)
 
     def read_demcr(self):
-        return self.ap.read_32(0xE000EDFC)
+        return self.ap.read_32(self.scb.addr + 0xDFC)
 
     def _read_core_register(self, sel):
         assert self.flags & FLAG_HALTED
@@ -117,19 +128,19 @@ class Cortex(psdb.component.Component):
         self.ap.write_bulk(data, addr)
 
     def write_aircr(self, v):
-        return self.ap.write_32(v, 0xE000ED0C)
+        return self.ap.write_32(v, self.scb.addr + 0xD0C)
 
     def write_dhcsr(self, v):
-        return self.ap.write_32(v, 0xE000EDF0)
+        return self.ap.write_32(v, self.scb.addr + 0xDF0)
 
     def write_dcrsr(self, v):
-        return self.ap.write_32(v, 0xE000EDF4)
+        return self.ap.write_32(v, self.scb.addr + 0xDF4)
 
     def write_dcrdr(self, v):
-        return self.ap.write_32(v, 0xE000EDF8)
+        return self.ap.write_32(v, self.scb.addr + 0xDF8)
 
     def write_demcr(self, v):
-        return self.ap.write_32(v, 0xE000EDFC)
+        return self.ap.write_32(v, self.scb.addr + 0xDFC)
 
     def write_core_register(self, v, sel):
         '''Writes a single core register.'''
