@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb
 from .flctl import FLCTL
+from ..device import MemDevice
 from psdb.targets import Target
 
 
@@ -9,6 +10,7 @@ class MSP432P401(Target):
         super(MSP432P401, self).__init__(db)
         self.ahb_ap = self.db.aps[0]
         self.flash  = FLCTL(self, 'FLCTL', 0x40011000, 0x00201108)
+        MemDevice(self, 'FBANK0', 0x00000000, self.flash.flash_size)
 
     def __repr__(self):
         return 'MSP432P401'
