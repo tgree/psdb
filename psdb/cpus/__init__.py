@@ -15,6 +15,8 @@ psdb.component.Matcher(cortex_m7.CortexM7, 0xB105100D, 0x00000004000BB4C8,
 psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
                              0x000000000B1979AF,
                              subtype='MSP432P401R Cortex-M4')
+psdb.component.StaticMatcher(cortex_m7.CortexM7, 0, 0xE00FE000, 0xB105100D,
+                             0x00000000000A0450, subtype='STM32H7 Cortex-M7')
 
 # Matcher for the Cortex System Control Block.  This is matched in order to
 # enable DEMCR.TRCENA so that child tables can be probed properly.  It's also
