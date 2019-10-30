@@ -99,3 +99,6 @@ class MemDevice(Device):
     def __init__(self, target, name, addr, size):
         super(MemDevice, self).__init__(target, addr, name, [])
         self.size = size
+
+    def read_mem_block(self, addr, size):
+        return self.target.ahb_ap.read_bulk(addr, size)
