@@ -1,9 +1,10 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from . import xds110
+from . import stlink_v2_1
 from .probe import Exception
 
 
-PROBES = xds110.enumerate()
+PROBES = xds110.enumerate() + stlink_v2_1.enumerate()
 
 def find_by_serial_number(serial_number):
     p = [p for p in PROBES if p.serial_num == serial_number]
