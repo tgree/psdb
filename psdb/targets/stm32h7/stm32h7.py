@@ -1,5 +1,7 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 import psdb
+from .flash import FLASH
+from ..device import MemDevice
 from psdb.targets import Target
 
 
@@ -26,6 +28,8 @@ class STM32H7(Target):
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
+        self.flash      = FLASH(self, 'FLASH', 0x52002000, 0x08000000)
+        MemDevice(self, 'FBANKS', self.flash.mem_base, self.flash.flash_size)
 
     def __repr__(self):
         return 'STM32H7xx MCU_IDCODE 0x%08X' % self.mcu_idcode
