@@ -42,11 +42,11 @@ class Reg32W(Reg):
 
 
 class Device(object):
-    def __init__(self, target, base, name, regs):
-        self.target = target
-        self.base   = base
-        self.name   = name
-        self.regs   = regs
+    def __init__(self, target, dev_base, name, regs):
+        self.target   = target
+        self.dev_base = dev_base
+        self.name     = name
+        self.regs     = regs
         for r in regs:
             n = r.name.lower()
             if r.flags & Reg.READABLE:
@@ -61,10 +61,10 @@ class Device(object):
         self.target.devs[self.name] = self
 
     def _read_32(self, offset):
-        return self.target.ahb_ap.read_32(self.base + offset)
+        return self.target.ahb_ap.read_32(self.dev_base + offset)
 
     def _write_32(self, v, offset):
-        self.target.ahb_ap.write_32(v, self.base + offset)
+        self.target.ahb_ap.write_32(v, self.dev_base + offset)
 
     def _set_field(self, v, width, shift, offset):
         assert width + shift <= 32

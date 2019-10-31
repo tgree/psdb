@@ -172,7 +172,7 @@ class FLCTL(Device, Flash):
 
         verify_bits = (1 << 7) | (1 << 6)
         for _ in range(self.max_programming_pulses):
-            self.target.ahb_ap.write_bulk(data_bytes, self.base + 0x60)
+            self.target.ahb_ap.write_bulk(data_bytes, self.dev_base + 0x60)
             self._write_prgbrst_startaddr(addr)
             self._write_prgbrst_ctlstat(verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
