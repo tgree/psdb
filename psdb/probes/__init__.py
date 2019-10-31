@@ -30,5 +30,12 @@ def find_default(serial_number=None, usb_path=None):
     elif usb_path:
         return find_by_path(usb_path)
     elif PROBES:
-        return PROBES[0]
+        if len(PROBES) == 1:
+            return PROBES[0]
+
+        print('Found probes:')
+        for p in PROBES:
+            p.show_info()
+        raise Exception('Multiple probes found.')
+
     raise Exception('No compatible debug probe found.')
