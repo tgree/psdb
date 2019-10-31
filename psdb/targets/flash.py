@@ -106,8 +106,6 @@ class Flash(object):
 
         Data written to sectors outside flash boundaries is silently discarded.
         '''
-        t0 = time.time()
-
         bd = RAMBD(self.sector_size,
                    first_block=self.mem_base // self.sector_size,
                    nblocks=self.nsectors)
@@ -120,9 +118,10 @@ class Flash(object):
         mask = 0
         for block in bd.blocks.values():
             mask |= self._mask_for_alp(block.addr, len(block.data))
-
-        total_len = 0
         self.erase_sectors(mask)
+
+        t0 = time.time()
+        total_len = 0
         for block in bd.blocks.values():
             while block.data.endswith(b'\xff'*64):
                 block.data = block.data[:-64]
