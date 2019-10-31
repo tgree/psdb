@@ -50,11 +50,11 @@ def draw_dev_registers(reg_win, dev):
 
 def draw_mem_dump(mem_win, dev):
     if not dev.regs and hasattr(dev, 'size'):
-        dev._mem_dump_addr = dev.__dict__.get('_mem_dump_addr', dev.base)
+        dev._mem_dump_addr = dev.__dict__.get('_mem_dump_addr', dev.dev_base)
         mem_win.show()
         rows = mem_win.content.height
         addr = dev._mem_dump_addr
-        size = min(32*rows, dev.size - (addr - dev.base))
+        size = min(32*rows, dev.size - (addr - dev.dev_base))
         data = dev.read_mem_block(dev._mem_dump_addr, size)
         rows = int(math.ceil(size / 32.))
         for i in range(rows):
@@ -91,19 +91,19 @@ def draw_device(reg_win, mem_win, dev):
 
 
 def mem_up(reg_win, mem_win, d, n):
-    avail = d._mem_dump_addr - d.base
+    avail = d._mem_dump_addr - d.dev_base
     d._mem_dump_addr -= min(avail, n)
     draw_device(reg_win, mem_win, d)
 
 
 def mem_down(reg_win, mem_win, d, n):
-    avail = d.base + d.size - d._mem_dump_addr
+    avail = d.dev_base + d.size - d._mem_dump_addr
     d._mem_dump_addr += min(avail, n)
-    if d._mem_dump_addr >= d.base + d.size:
-        d._mem_dump_addr = d.base + d.size - 32
+    if d._mem_dump_addr >= d.dev_base + d.size:
+        d._mem_dump_addr = d.dev_base + d.size - 32
     d._mem_dump_addr &= ~31
-    if d._mem_dump_addr < d.base:
-        d._mem_dump_addr = d.base
+    if d._mem_dump_addr < d.dev_base:
+        d._mem_dump_addr = d.dev_base
     draw_device(reg_win, mem_win, d)
 
 
@@ -135,8 +135,8 @@ def main(screen, args):
     t = args.target
 
     # Get the device list.
-    devs         = sorted(t.devs.values(), key=lambda d:d.base)
-    dev_names    = ['%08X %s' % (d.base, d.name) for d in devs]
+    devs         = sorted(t.devs.values(), key=lambda d:d.dev_base)
+    dev_names    = ['%08X %s' % (d.dev_base, d.name) for d in devs]
     max_dev_name = max(len(dn) for dn in dev_names)
     max_reg_name = max(len(r.name) for d in devs for r in d.regs)
 
@@ -213,6 +213,9 @@ if __name__ == '__main__':
 
     # Probe the target platform.
     args.target = args.probe.probe(verbose=args.verbose)
-    args.target.halt()
 
+    # Interact with the UI.
     tgcurses.wrapper(main, args)
+
+    # Resume the target.
+    args.target.resume()

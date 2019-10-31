@@ -102,6 +102,18 @@ class Component(object):
 
         return None
 
+    def _find_components_by_type(self, typ, results):
+        if isinstance(self, typ):
+            results.append(self)
+
+        for c in self.children:
+            c._find_components_by_type(typ, results)
+
+    def find_components_by_type(self, typ):
+        results = []
+        self._find_components_by_type(typ, results)
+        return results
+
     def dump(self, prefix=''):
         print('%s%s' % (prefix, self))
         for c in self.children:

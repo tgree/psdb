@@ -2,8 +2,8 @@
 import struct
 from builtins import range
 
-from .. import flash
-from ..device import Reg32
+from ..device import Device, Reg32
+from ..flash import Flash
 
 
 # Conservative flash read wait states that work for all frequencies.
@@ -44,7 +44,7 @@ class UnlockedContextManager(object):
         self.flash._write_bank1_main_weprot(0xFFFFFFFF)
 
 
-class FLCTL(flash.Flash):
+class FLCTL(Device, Flash):
     '''
     Driver for the FLCTL device on the MSP432P401 series of MCUs.
     '''
@@ -81,8 +81,8 @@ class FLCTL(flash.Flash):
             ]
 
     def __init__(self, target, name, addr, flash_tlv_addr):
-        super(FLCTL, self).__init__(target, addr, name, FLCTL.REGS, 0x00000000)
-        self._set_geometry(4096, 64)
+        Device.__init__(self, target, addr, name, FLCTL.REGS)
+        Flash.__init__(self, 0x00000000, 4096, 64)
         self.flash_tlv = [self.target.ahb_ap.read_32(flash_tlv_addr + i*4)
                           for i in range(4)]
         assert self.flash_tlv[0] == 4
@@ -172,7 +172,7 @@ class FLCTL(flash.Flash):
 
         verify_bits = (1 << 7) | (1 << 6)
         for _ in range(self.max_programming_pulses):
-            self.target.ahb_ap.write_bulk(data_bytes, self.base + 0x60)
+            self.target.ahb_ap.write_bulk(data_bytes, self.dev_base + 0x60)
             self._write_prgbrst_startaddr(addr)
             self._write_prgbrst_ctlstat(verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
@@ -371,6 +371,12 @@ class FLCTL(flash.Flash):
         assert 0 <= n and n < self.nsectors
         self.erase_sectors(1 << n, verbose)
 
+    def read(self, addr, length):
+        '''
+        Reads a region from the flash.
+        '''
+        return self.target.ahb_ap.read_bulk(addr, length)
+
     def write(self, addr, data, verbose=True):
         '''
         Writes data to flash.  The data must be 16-byte aligned and be a
@@ -378,8 +384,11 @@ class FLCTL(flash.Flash):
 
         The target region should already have been erased.
         '''
+        assert self.mem_base <= addr
+        assert addr + len(data) <= self.mem_base + self.flash_size
+
         alps = []
-        ptr  = addr - self.base_addr
+        ptr  = addr - self.mem_base
         while data:
             alps.append((addr, data[:0x00020000 - ptr]))
             data = data[0x00020000 - ptr:]
