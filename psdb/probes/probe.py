@@ -106,6 +106,10 @@ class Probe(object):
             data  = data[count*4:]
         self._bulk_write_8(data, addr, ap_num)
 
+    def halt(self):
+        for c in self.cpus:
+            c.halt()
+
     def _probe_dp_v1(self, verbose=False):
         '''Probe all 256 APs for a non-zero IDR.'''
         self.aps = {}
@@ -123,6 +127,10 @@ class Probe(object):
         First discovers which APs are attached to the debug probe and then
         performs component topology detection on each AP.  Finally, we attempt
         to match the resulting components to a known target.
+
+        After components have been matched, the target must be halted before it
+        is further probed.  When we return, the target remains in the halted
+        state and Target.resume() must be invoked if it is to continue running.
         '''
         dpver = ((self.dpidr & 0x0000F000) >> 12)
         if dpver == 1:
@@ -137,6 +145,7 @@ class Probe(object):
         for _, ap in self.aps.items():
             ap.probe_components(verbose=verbose)
 
+        self.halt()
         self.target = psdb.targets.probe(self)
         assert self.target
 

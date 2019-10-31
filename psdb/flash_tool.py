@@ -25,9 +25,6 @@ def main(rv):
     # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose)
 
-    # Halt the target.
-    target.halt()
-
     # Flash info if verbose.
     if rv.verbose:
         print('       Flash size: %u' % target.flash.flash_size)

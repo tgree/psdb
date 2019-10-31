@@ -242,6 +242,7 @@ def main(rv):
     print('Starting server on port %s for %s' % (rv.port, probe))
     probe.set_tck_freq_max()
     target = probe.probe(verbose=rv.verbose)
+    target.resume()
     GDBServer(target, rv.port, rv.verbose)
 
     while True:

@@ -213,6 +213,9 @@ if __name__ == '__main__':
 
     # Probe the target platform.
     args.target = args.probe.probe(verbose=args.verbose)
-    args.target.halt()
 
+    # Interact with the UI.
     tgcurses.wrapper(main, args)
+
+    # Resume the target.
+    args.target.resume()
