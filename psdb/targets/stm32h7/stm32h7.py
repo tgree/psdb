@@ -22,16 +22,20 @@ class STM32H7(Target):
     def __init__(self, db):
         super(STM32H7, self).__init__(db)
         self.ahb_ap     = self.db.aps[0]
+        self.apbd_ap    = self.db.aps[2]
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
+        self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
 
     def __repr__(self):
-        return 'STM32H7'
+        return 'STM32H7xx MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
     def probe(db):
-        # APSEL 0 should be populated.
+        # APSEL 0 and 2 should be populated.
         if 0 not in db.aps:
+            return None
+        if 2 not in db.aps:
             return None
 
         # APSEL 0 should be an AHB AP.
