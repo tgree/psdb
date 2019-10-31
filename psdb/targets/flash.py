@@ -19,16 +19,10 @@ class FlashWriteException(Exception):
     pass
 
 
-class Flash(Device):
-    def __init__(self, target, reg_base, name, regs, base_addr):
-        super(Flash, self).__init__(target, reg_base, name, regs)
-        self.base_addr   = base_addr
-        self.sector_size = None
-        self.sector_mask = None
-        self.flash_size  = None
-        self.nsectors    = None
-
-    def _set_geometry(self, sector_size, nsectors):
+class Flash(object):
+    def __init__(self, mem_base, sector_size, nsectors):
+        super(Flash, self).__init__()
+        self.mem_base    = mem_base
         self.sector_size = sector_size
         self.sector_mask = sector_size - 1
         self.flash_size  = sector_size * nsectors
@@ -42,7 +36,7 @@ class Flash(Device):
         begin    = addr & ~self.sector_mask
         end      = addr + length + (-(addr + length) & self.sector_mask)
         nsectors = (end - begin) // self.sector_size
-        fbit     = (begin - self.base_addr) // self.sector_size
+        fbit     = (begin - self.mem_base) // self.sector_size
         assert 0 <= fbit and fbit < self.nsectors
         assert 0 <= nsectors and fbit + nsectors <= self.nsectors
         return ((1 << nsectors) - 1) << fbit
@@ -75,7 +69,7 @@ class Flash(Device):
         '''
         Erases the entire flash.
         '''
-        return self.erase(self.base_addr, self.flash_size, verbose=verbose)
+        return self.erase(self.mem_base, self.flash_size, verbose=verbose)
 
     def read(self, addr, length):
         '''
@@ -87,7 +81,7 @@ class Flash(Device):
         '''
         Reads the entire flash.
         '''
-        return self.read(self.base_addr, self.flash_size)
+        return self.read(self.mem_base, self.flash_size)
 
     def write(self, addr, data, verbose=True):
         '''
@@ -115,7 +109,7 @@ class Flash(Device):
         t0 = time.time()
 
         bd = RAMBD(self.sector_size,
-                   first_block=self.base_addr // self.sector_size,
+                   first_block=self.mem_base // self.sector_size,
                    nblocks=self.nsectors)
         for v in dv:
             try:
