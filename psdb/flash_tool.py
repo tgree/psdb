@@ -28,6 +28,11 @@ def main(rv):
     # Halt the target.
     target.halt()
 
+    # Flash info if verbose.
+    if rv.verbose:
+        print('       Flash size: %u' % target.flash.flash_size)
+        print('Flash sector size: %u' % target.flash.sector_size)
+
     # Read a backup of flash if requested.
     if rv.read_flash:
         with open(rv.read_flash, 'wb') as f:
