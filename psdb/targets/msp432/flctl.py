@@ -371,6 +371,12 @@ class FLCTL(flash.Flash):
         assert 0 <= n and n < self.nsectors
         self.erase_sectors(1 << n, verbose)
 
+    def read(self, addr, length):
+        '''
+        Reads a region from the flash.
+        '''
+        return self.target.ahb_ap.read_bulk(addr, length)
+
     def write(self, addr, data, verbose=True):
         '''
         Writes data to flash.  The data must be 16-byte aligned and be a

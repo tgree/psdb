@@ -77,11 +77,17 @@ class Flash(Device):
         '''
         return self.erase(self.base_addr, self.flash_size, verbose=verbose)
 
+    def read(self, addr, length):
+        '''
+        Reads a region from the flash.
+        '''
+        raise NotImplementedError
+
     def read_all(self):
         '''
         Reads the entire flash.
         '''
-        return self.target.cpus[0].read_bulk(self.base_addr, self.flash_size)
+        return self.read(self.base_addr, self.flash_size)
 
     def write(self, addr, data, verbose=True):
         '''
@@ -139,7 +145,7 @@ class Flash(Device):
             if verbose:
                 print('Verifying [0x%08X : 0x%08X]...' % (
                       block.addr, block.addr + len(block.data) - 1))
-            mem = self.target.cpus[0].read_bulk(block.addr, len(block.data))
+            mem = self.read(block.addr, len(block.data))
             assert mem == block.data
         if verbose:
             elapsed = time.time() - t0
