@@ -18,7 +18,10 @@ setuptools.setup(
               'psdb.elf',
               'psdb.probes',
               'psdb.targets',
-              'psdb.targets.msp432'],
+              'psdb.targets.msp432',
+              'psdb.targets.stm32h7',
+              'psdb.targets.stm32g4',
+              ],
     classifiers=[
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
