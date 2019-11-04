@@ -8,7 +8,9 @@ PYPSDB_DEPS := \
 		psdb/elf/*.py				\
 		psdb/probes/*.py			\
 		psdb/targets/*.py			\
-		psdb/targets/msp432/*.py
+		psdb/targets/msp432/*.py	\
+		psdb/targets/stm32h7/*.py	\
+		psdb/targets/stm32g4/*.py
 
 .PHONY: all
 all: pypsdb pypsdb3
