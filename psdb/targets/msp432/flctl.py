@@ -380,29 +380,24 @@ class FLCTL(Device, Flash):
     def write(self, addr, data, verbose=True):
         '''
         Writes data to flash.  The data must be 16-byte aligned and be a
-        multiple of 16 bytes in length.
+        multiple of 16 bytes in length.  The data must not span multiple flash
+        banks.
 
         The target region should already have been erased.
         '''
         assert self.mem_base <= addr
         assert addr + len(data) <= self.mem_base + self.flash_size
 
-        alps = []
-        ptr  = addr - self.mem_base
-        while data:
-            alps.append((addr, data[:0x00020000 - ptr]))
-            data = data[0x00020000 - ptr:]
-        for alp in alps:
-            try:
-                self._write_bulk(alp[0], alp[1], verbose=verbose)
-            except flash.FlashWriteException as e:
-                # Hack until we implement proper pulsing in _write_bulk.
-                if (alp[0] & self.sector_mask) != 0:
-                    raise Exception('not aligned')
-                if len(alp[1]) % 64:
-                    raise Exception('not 64-byte multiple')
-                
-                print('Exception doing bulk write; attempting burst writes')
-                print('-- Exception: %s' % e)
-                self._write_sector(alp[0], alp[1], verbose=verbose,
-                                   already_erased=False)
+        try:
+            self._write_bulk(addr, data, verbose=verbose)
+        except flash.FlashWriteException as e:
+            # Hack until we implement proper pulsing in _write_bulk.
+            if (addr & self.sector_mask) != 0:
+                raise Exception('not aligned')
+            if len(data) % 64:
+                raise Exception('not 64-byte multiple')
+            
+            print('Exception doing bulk write; attempting burst writes')
+            print('-- Exception: %s' % e)
+            self._write_sector(addr, data, verbose=verbose,
+                               already_erased=False)
