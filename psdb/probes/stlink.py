@@ -10,9 +10,7 @@ import time
 
 RX_EP    = 0x81
 TX_EP    = 0x01
-TRACE_EP = 0x82
 
-SG_SIZE   = 31
 DATA_SIZE = 4096
 
 MODE_EXIT_CMD = {0x00: bytes(b'\xF3\x07'), # DFU
