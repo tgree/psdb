@@ -113,7 +113,7 @@ class STLink(usb_probe.Probe):
         '''
         Reads a consecutive number of bytes from the specified address.
         '''
-        assert n <= 64
+        assert n <= self.max_rw8
         if not n:
             return bytes(b'')
         assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
@@ -160,7 +160,7 @@ class STLink(usb_probe.Probe):
         '''
         Writes a consecutive number of bytes to the specified address.
         '''
-        assert len(data) <= 64
+        assert len(data) <= self.max_rw8
         if not data:
             return
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
