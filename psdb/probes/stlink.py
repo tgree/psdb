@@ -88,8 +88,11 @@ class STLink(usb_probe.Probe):
         rsp = self._usb_xfer_in(bytes(b'\xF2\x22'), 4)
         return unpack('<I', rsp)[0]
 
-    def _read_idcodes(self, suffix=bytes(b'')):
-        rsp = self._usb_xfer_in(bytes(b'\xF2\x31') + suffix, None)
+    def _read_idcodes(self):
+        '''
+        Reads "IDCODES".  Not entirely sure what this is.
+        '''
+        rsp = self._usb_xfer_in(bytes(b'\xF2\x31'), None)
         return unpack('<III', rsp)
 
     def _current_mode(self):
