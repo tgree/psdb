@@ -7,17 +7,35 @@ from struct import pack, unpack, unpack_from
 from builtins import bytes, range
 import time
 
-
+# The STLINK works kind of like a SCSI device.  There are three types of
+# transaction, all of which begin with a command phase and are then followed by
+# an optional data phase:
+#
+#   xfer_in:   CMD16 out, DATA_in
+#   xfer_out:  CMD16 out, DATA_out
+#   xfer_null: CMD16 out
+#
+# DATA_in can be actual bulk data (say, if we are reading RAM or flash), in
+# which case it doesn't contain an error code.  Or, it could be a response to
+# a query or status for an operation, in which case the first byte often
+# contains an error code (but this is command-specific).
+#
+# CMD16 and DATA_out are always written to the TX_EP.  DATA_in is always read
+# from the RX_EP.
 RX_EP    = 0x81
 TX_EP    = 0x01
 
+# Maximum size of data that can be returned in a DATA in operation.
 DATA_SIZE = 4096
 
+# Commands to exit DFU, DEBUG or SWIM mode.  We need this table so that we can
+# get the probe out of its current mode and into SWD mode.
 MODE_EXIT_CMD = {0x00: bytes(b'\xF3\x07'), # DFU
                  0x02: bytes(b'\xF2\x21'), # DEBUG
                  0x03: bytes(b'\xF4\x01'), # SWIM
                  }
 
+# Features supported by various versions of the STLINK firmware.
 FEATURE_RW_STATUS_12  = (1 << 0)
 FEATURE_SWD_SET_FREQ  = (1 << 1)
 FEATURE_BULK_READ_16  = (1 << 2)
@@ -49,6 +67,11 @@ class STLink(usb_probe.Probe):
         return self._usb_xfer_in(bytes(b'\xF2\x3E'), 12)
 
     def _usb_xfer_out(self, cmd, data):
+        '''
+        Writes a 16-byte command (padded with trailing zeroes if the cmd
+        parameter is less than 16 bytes) to the TX_EP and then writes the data
+        buffer to the TX_EP.
+        '''
         cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
@@ -56,6 +79,10 @@ class STLink(usb_probe.Probe):
         assert self._usb_last_xfer_status()[0] == 0x80
 
     def _usb_xfer_null(self, cmd):
+        '''
+        Writes a 16-byte command (padded with trailing zeroes if the cmd
+        parameter is less than 16 bytes) to the TX_EP.  No data is transferred.
+        '''
         cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
@@ -96,19 +123,31 @@ class STLink(usb_probe.Probe):
         return unpack('<III', rsp)
 
     def _current_mode(self):
+        '''
+        Returns the current mode that the probe is in (SWIM, JTAG, SWD, etc.).
+        '''
         rsp = self._usb_xfer_in(bytes(b'\xF5'), 2)
         return rsp[0]
 
     def _mode_leave(self, mode):
+        '''
+        Performs an exit command from the specified mode.  Note that the exit
+        command is mode-dependent.
+        '''
         cmd = MODE_EXIT_CMD.get(mode)
         if cmd:
             self._usb_xfer_null(cmd)
 
     def _leave_current_mode(self):
+        '''
+        Performs the appropriate exit command for the current mode.
+        '''
         self._mode_leave(self._current_mode())
 
     def _swd_connect(self):
-        # Switch to SWD mode.
+        '''
+        Enters SWD mode.
+        '''
         self._leave_current_mode()
         self._cmd_allow_retry(bytes(b'\xF2\x30\xA3'), 2)
         assert self._current_mode() == 0x02
