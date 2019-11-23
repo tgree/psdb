@@ -81,8 +81,11 @@ class STLink(usb_probe.Probe):
         self.ver_vid    = vid
         self.ver_pid    = pid
 
-    def _read_dpidr(self, suffix=bytes(b'')):
-        rsp = self._usb_xfer_in(bytes(b'\xF2\x22') + suffix, 4)
+    def _read_dpidr(self):
+        '''
+        Reads the DP IDR register.
+        '''
+        rsp = self._usb_xfer_in(bytes(b'\xF2\x22'), 4)
         return unpack('<I', rsp)[0]
 
     def _read_idcodes(self, suffix=bytes(b'')):
