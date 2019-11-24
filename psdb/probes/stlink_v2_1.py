@@ -2,7 +2,7 @@
 import usb
 from . import stlink
 
-from struct import pack
+from struct import pack, unpack
 
 
 # Unknown commands sniffed via debugger:
@@ -35,6 +35,27 @@ class STLinkV2_1(stlink.STLink):
         if self.ver_jtag >= 26:
             self.features |= stlink.FEATURE_BULK_READ_16
             self.features |= stlink.FEATURE_BULK_WRITE_16
+
+    def _usb_last_xfer_status(self):
+        '''
+        Returns a 2-byte or a 12-byte transfer status; the error code is in the
+        first byte.  The 12-byte transfer status is available for versions J15
+        and later.  The 2-byte version will eventually be deprecated in a
+        future probe firmware update.
+        '''
+        if self.features & stlink.FEATURE_RW_STATUS_12:
+            return self._usb_xfer_in(bytes(b'\xF2\x3E'), 12)
+        return self._usb_xfer_in(bytes(b'\xF2\x3B'), 2)
+
+    def _usb_version(self):
+        rsp = self._usb_xfer_in(bytes(b'\xF1'), 6)
+        v0, v1, vid, pid = unpack('<BBHH', rsp)
+        v = (v0 << 8) | v1
+        self.ver_stlink = (v >> 12) & 0x0F
+        self.ver_jtag   = (v >>  6) & 0x3F
+        self.ver_swim   = (v >>  0) & 0x3F
+        self.ver_vid    = vid
+        self.ver_pid    = pid
 
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1

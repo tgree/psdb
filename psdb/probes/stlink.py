@@ -63,9 +63,6 @@ class STLink(usb_probe.Probe):
         assert len(rsp) == size
         return rsp
 
-    def _usb_last_xfer_status(self):
-        return self._usb_xfer_in(bytes(b'\xF2\x3E'), 12)
-
     def _usb_xfer_out(self, cmd, data):
         '''
         Writes a 16-byte command (padded with trailing zeroes if the cmd
@@ -98,15 +95,12 @@ class STLink(usb_probe.Probe):
             time.sleep(0.1)
         raise Exception('Max retries exceeded!')
 
-    def _usb_version(self):
-        rsp = self._usb_xfer_in(bytes(b'\xF1'), 6)
-        v0, v1, vid, pid = unpack('<BBHH', rsp)
-        v = (v0 << 8) | v1
-        self.ver_stlink = (v >> 12) & 0x0F
-        self.ver_jtag   = (v >>  6) & 0x3F
-        self.ver_swim   = (v >>  0) & 0x3F
-        self.ver_vid    = vid
-        self.ver_pid    = pid
+    def _usb_last_xfer_status(self):
+        '''
+        To be implemented by the subclass.  Different STLINK probes get the
+        transfer status in different ways.
+        '''
+        raise NotImplementedError
 
     def _read_dpidr(self):
         '''
