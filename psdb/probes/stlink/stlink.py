@@ -1,8 +1,9 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .. import usb_probe
+from . import cdb
 import psdb
 
-from struct import pack, unpack, unpack_from
+from struct import pack, unpack_from
 from builtins import bytes, range
 import time
 
@@ -29,9 +30,9 @@ DATA_SIZE = 4096
 
 # Commands to exit DFU, DEBUG or SWIM mode.  We need this table so that we can
 # get the probe out of its current mode and into SWD mode.
-MODE_EXIT_CMD = {0x00: bytes(b'\xF3\x07'),  # DFU
-                 0x02: bytes(b'\xF2\x21'),  # DEBUG
-                 0x03: bytes(b'\xF4\x01'),  # SWIM
+MODE_EXIT_CMD = {cdb.MODE_DFU:   cdb.make_mode_leave_dfu(),
+                 cdb.MODE_DEBUG: cdb.make_mode_leave_debug(),
+                 cdb.MODE_SWIM:  cdb.make_mode_leave_swim(),
                  }
 
 # Features supported by various versions of the STLINK firmware.
@@ -54,14 +55,12 @@ class STLink(usb_probe.Probe):
 
     def _usb_xfer_in(self, cmd, rx_size, timeout=1000):
         '''
-        Writes a 16-byte command (padded with trailing zeroes if the cmd
-        parameter is less than 16 bytes) to the TX_EP and then reads a response
-        of the given rx_size from the RX_EP.  The rx_size parameter can be
-        specified as None to avoid enforcing the RX buffer size.  In that case,
-        a variable-length response of up to 4096 bytes can be returned and it
-        is up to the caller to validate it.
+        Writes a 16-byte command to the TX_EP and then reads a response of the
+        given rx_size from the RX_EP.  The rx_size parameter can be specified
+        as None to avoid enforcing the RX buffer size.  In that case, a
+        variable-length response of up to 4096 bytes can be returned and it is
+        up to the caller to validate it.
         '''
-        cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
         if rx_size is None:
@@ -72,21 +71,17 @@ class STLink(usb_probe.Probe):
 
     def _usb_xfer_out(self, cmd, data, timeout=1000):
         '''
-        Writes a 16-byte command (padded with trailing zeroes if the cmd
-        parameter is less than 16 bytes) to the TX_EP and then writes the data
-        buffer to the TX_EP.
+        Writes a 16-byte command parameter is less than 16 bytes to the TX_EP
+        and then writes the data buffer to the TX_EP.
         '''
-        cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
         assert self.usb_dev.write(TX_EP, data, timeout=timeout) == len(data)
 
     def _usb_xfer_null(self, cmd):
         '''
-        Writes a 16-byte command (padded with trailing zeroes if the cmd
-        parameter is less than 16 bytes) to the TX_EP.  No data is transferred.
+        Writes a 16-byte command to the TX_EP.  No data is transferred.
         '''
-        cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
 
@@ -125,22 +120,22 @@ class STLink(usb_probe.Probe):
         '''
         Reads the DP IDR register.
         '''
-        rsp = self._usb_xfer_in(bytes(b'\xF2\x22'), 4)
-        return unpack('<I', rsp)[0]
+        rsp = self._usb_xfer_in(cdb.make_read_coreid(), 4)
+        return cdb.decode_read_coreid(rsp)
 
     def _read_idcodes(self):
         '''
         Reads "IDCODES".  Not entirely sure what this is.
         '''
-        rsp = self._usb_xfer_in(bytes(b'\xF2\x31'), None)
-        return unpack('<III', rsp)
+        rsp = self._usb_xfer_in(cdb.make_read_idcodes(), None)
+        return cdb.decode_read_idcodes(rsp)
 
     def _current_mode(self):
         '''
         Returns the current mode that the probe is in (SWIM, JTAG, SWD, etc.).
         '''
-        rsp = self._usb_xfer_in(bytes(b'\xF5'), 2)
-        return rsp[0]
+        rsp = self._usb_xfer_in(cdb.make_get_current_mode(), 2)
+        return cdb.decode_get_current_mode(rsp)
 
     def _mode_leave(self, mode):
         '''
@@ -162,7 +157,7 @@ class STLink(usb_probe.Probe):
         Enters SWD mode.
         '''
         self._leave_current_mode()
-        self._cmd_allow_retry(bytes(b'\xF2\x30\xA3'), 2)
+        self._cmd_allow_retry(cdb.make_swd_connect(), 2)
         assert self._current_mode() == 0x02
 
     def _bulk_read_8(self, addr, n, ap_num=0):
@@ -172,8 +167,7 @@ class STLink(usb_probe.Probe):
         assert n <= self.max_rw8
         if not n:
             return bytes(b'')
-        assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
-        cmd = pack('<BBIHB', 0xF2, 0x0C, addr, n, ap_num)
+        cmd = cdb.make_bulk_read_8(addr, n, ap_num)
         rsp = self._usb_xfer_in(cmd, 2 if n == 1 else n)
         self._usb_raise_for_status()
         return bytes(rsp[:n])
@@ -184,11 +178,9 @@ class STLink(usb_probe.Probe):
         addr.
         '''
         assert self.features & FEATURE_BULK_READ_16
-        assert addr % 2 == 0
         if not n:
             return bytes(b'')
-        assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
-        cmd = pack('<BBIHB', 0xF2, 0x47, addr, n*2, ap_num)
+        cmd = cdb.make_bulk_read_16(addr, n, ap_num)
         rsp = self._usb_xfer_in(cmd, n*2)
         self._usb_raise_for_status()
         return bytes(rsp)
@@ -197,11 +189,9 @@ class STLink(usb_probe.Probe):
         '''
         Reads a consecutive number of 32-bit words from the 32-bit aligned addr.
         '''
-        assert addr % 4 == 0
         if not n:
             return bytes(b'')
-        assert (addr & 0xFFFFFC00) == ((addr + n*4 - 1) & 0xFFFFFC00)
-        cmd = pack('<BBIHB', 0xF2, 0x07, addr, n*4, ap_num)
+        cmd = cdb.make_bulk_read_32(addr, n, ap_num)
         rsp = self._usb_xfer_in(cmd, n*4)
         self._usb_raise_for_status()
         return bytes(rsp)
@@ -213,9 +203,7 @@ class STLink(usb_probe.Probe):
         assert len(data) <= self.max_rw8
         if not data:
             return
-        assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-        self._usb_xfer_out(pack('<BBIHB', 0xF2, 0x0D, addr, len(data), ap_num),
-                           data)
+        self._usb_xfer_out(cdb.make_bulk_write_8(data, addr, ap_num), data)
         self._usb_raise_for_status()
 
     def _bulk_write_16(self, data, addr, ap_num=0):
@@ -223,26 +211,18 @@ class STLink(usb_probe.Probe):
         Writes a consecutive number of 16-bit halfwords to the 16-bit aligned
         addr.
         '''
-        assert addr % 2 == 0
-        assert len(data) % 2 == 0
         if not data:
             return
-        assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-        self._usb_xfer_out(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num),
-                           data)
+        self._usb_xfer_out(cdb.make_bulk_write_16(addr, data, ap_num), data)
         self._usb_raise_for_status()
 
     def _bulk_write_32(self, data, addr, ap_num=0):
         '''
         Writes a consecutive number of 32-bit words to the 32-bit aligned addr.
         '''
-        assert addr % 4 == 0
-        assert len(data) % 4 == 0
         if not data:
             return
-        assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-        self._usb_xfer_out(pack('<BBIHB', 0xF2, 0x08, addr, len(data), ap_num),
-                           data)
+        self._usb_xfer_out(cdb.make_bulk_write_32(addr, data, ap_num), data)
         self._usb_raise_for_status()
 
     def _should_offload_ap(self, ap_num):
@@ -261,25 +241,25 @@ class STLink(usb_probe.Probe):
 
     def assert_srst(self):
         '''Holds the target in reset.'''
-        self._cmd_allow_retry(bytes(b'\xF2\x3C\x00'), 2)
+        self._cmd_allow_retry(cdb.make_set_srst(True), 2)
 
     def deassert_srst(self):
         '''Releases the target from reset.'''
-        self._cmd_allow_retry(bytes(b'\xF2\x3C\x01'), 2)
+        self._cmd_allow_retry(cdb.make_set_srst(False), 2)
 
     def set_tck_freq(self, freq):
         raise NotImplementedError
 
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''
-        cmd = pack('<BBHB', 0xF2, 0x45, apsel, addr)
+        cmd = cdb.make_read_ap_reg(apsel, addr)
         rsp = self._cmd_allow_retry(cmd, 8)
-        return unpack_from('<I', rsp, 4)[0]
+        return cdb.decode_read_ap_reg(rsp)
 
     def write_ap_reg(self, apsel, addr, value):
         '''Write a 32-bit register in the AP address space.'''
-        cmd = pack('<BBHHI', 0xF2, 0x46, apsel, addr, value)
-        self._cmd_allow_retry(cmd, None)
+        cmd = cdb.make_write_ap_reg(apsel, addr, value)
+        self._cmd_allow_retry(cmd, 2)
 
     def read_32(self, addr, ap_num=0):
         '''
@@ -290,9 +270,9 @@ class STLink(usb_probe.Probe):
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._read_32(addr)
 
-        assert addr % 4 == 0
-        cmd = pack('<BBIB', 0xF2, 0x36, addr, ap_num)
-        return unpack_from('<I', self._cmd_allow_retry(cmd, 8), 4)[0]
+        cmd = cdb.make_read_32(addr, ap_num)
+        rsp = self._cmd_allow_retry(cmd, 8)
+        return cdb.decode_read_32(rsp)
 
     def read_16(self, addr, ap_num=0):
         '''
@@ -335,8 +315,7 @@ class STLink(usb_probe.Probe):
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._write_32(v, addr)
 
-        assert addr % 4 == 0
-        cmd = pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num)
+        cmd = cdb.make_write_32(addr, v, ap_num)
         self._cmd_allow_retry(cmd, 2)
 
     def write_16(self, v, addr, ap_num=0):

@@ -1,8 +1,9 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import usb
 from . import stlink
+from . import cdb
 
-from struct import pack, unpack
+from struct import unpack
 
 
 # Unknown commands sniffed via debugger:
@@ -44,11 +45,11 @@ class STLinkV2_1(stlink.STLink):
         future probe firmware update.
         '''
         if self.features & stlink.FEATURE_RW_STATUS_12:
-            return self._usb_xfer_in(bytes(b'\xF2\x3E'), 12)
-        return self._usb_xfer_in(bytes(b'\xF2\x3B'), 2)
+            return self._usb_xfer_in(cdb.make_last_xfer_status_12(), 12)
+        return self._usb_xfer_in(cdb.make_last_xfer_status_2(), 2)
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(bytes(b'\xF1'), 6)
+        rsp = self._usb_xfer_in(cdb.make_version_1(), 6)
         v0, v1, vid, pid = unpack('<BBHH', rsp)
         v = (v0 << 8) | v1
         self.ver_stlink = (v >> 12) & 0x0F
@@ -60,7 +61,7 @@ class STLinkV2_1(stlink.STLink):
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22
-        cmd = pack('<BBH', 0xF2, 0x43, divisor)
+        cmd = cdb.make_set_swdclk_divisor(divisor)
         self._cmd_allow_retry(cmd, 2)
 
     def set_tck_freq(self, freq):
