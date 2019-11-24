@@ -53,14 +53,22 @@ class STLink(usb_probe.Probe):
         self.dpidr    = None
         self.features = 0
 
-    def _usb_xfer_in(self, cmd, size):
+    def _usb_xfer_in(self, cmd, rx_size, timeout=1000):
+        '''
+        Writes a 16-byte command (padded with trailing zeroes if the cmd
+        parameter is less than 16 bytes) to the TX_EP and then reads a response
+        of the given rx_size from the RX_EP.  The rx_size parameter can be
+        specified as None to avoid enforcing the RX buffer size.  In that case,
+        a variable-length response of up to 4096 bytes can be returned and it
+        is up to the caller to validate it.
+        '''
         cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
-        if size is None:
-            return self.usb_dev.read(RX_EP, DATA_SIZE, timeout=1000)
-        rsp = self.usb_dev.read(RX_EP, size, timeout=1000)
-        assert len(rsp) == size
+        if rx_size is None:
+            return self.usb_dev.read(RX_EP, DATA_SIZE, timeout=timeout)
+        rsp = self.usb_dev.read(RX_EP, rx_size, timeout=timeout)
+        assert len(rsp) == rx_size
         return rsp
 
     def _usb_xfer_out(self, cmd, data):
