@@ -173,9 +173,7 @@ class STLink(usb_probe.Probe):
         assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
         cmd = pack('<BBIHB', 0xF2, 0x0C, addr, n, ap_num)
         rsp = self._usb_xfer_in(cmd, 2 if n == 1 else n)
-        err = self._usb_last_xfer_status()
-        if err[0] != 0x80:
-            raise Exception('Unexpected error 0x%02X: %s' % (err[0], err))
+        self._usb_raise_for_status()
         return bytes(rsp[:n])
 
     def _bulk_read_16(self, addr, n, ap_num=0):
@@ -190,9 +188,7 @@ class STLink(usb_probe.Probe):
         assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
         cmd = pack('<BBIHB', 0xF2, 0x47, addr, n*2, ap_num)
         rsp = self._usb_xfer_in(cmd, n*2)
-        err = self._usb_last_xfer_status()
-        if err[0] != 0x80:
-            raise Exception('Unexpected error 0x%02X: %s' % (err[0], err))
+        self._usb_raise_for_status()
         return bytes(rsp)
 
     def _bulk_read_32(self, addr, n, ap_num=0):
@@ -205,9 +201,7 @@ class STLink(usb_probe.Probe):
         assert (addr & 0xFFFFFC00) == ((addr + n*4 - 1) & 0xFFFFFC00)
         cmd = pack('<BBIHB', 0xF2, 0x07, addr, n*4, ap_num)
         rsp = self._usb_xfer_in(cmd, n*4)
-        err = self._usb_last_xfer_status()
-        if err[0] != 0x80:
-            raise Exception('Unexpected error 0x%02X: %s' % (err[0], err))
+        self._usb_raise_for_status()
         return bytes(rsp)
 
     def _bulk_write_8(self, data, addr, ap_num=0):
