@@ -71,7 +71,7 @@ class STLink(usb_probe.Probe):
         assert len(rsp) == rx_size
         return rsp
 
-    def _usb_xfer_out(self, cmd, data):
+    def _usb_xfer_out(self, cmd, data, timeout=1000):
         '''
         Writes a 16-byte command (padded with trailing zeroes if the cmd
         parameter is less than 16 bytes) to the TX_EP and then writes the data
@@ -80,7 +80,7 @@ class STLink(usb_probe.Probe):
         cmd = cmd + bytes(b'\x00'*(16 - len(cmd)))
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
-        assert self.usb_dev.write(TX_EP, data, timeout=1000) == len(data)
+        assert self.usb_dev.write(TX_EP, data, timeout=timeout) == len(data)
 
     def _usb_xfer_null(self, cmd):
         '''
