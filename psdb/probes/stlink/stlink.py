@@ -1,5 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from . import usb_probe
+from .. import usb_probe
 import psdb
 
 from struct import pack, unpack, unpack_from
