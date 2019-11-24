@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from . import probe
-from . import usb_probe
+from .. import probe
+from .. import usb_probe
 
 import usb.core
 

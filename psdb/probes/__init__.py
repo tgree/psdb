@@ -1,5 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from . import xds110
+from .xds110 import xds110
 from .stlink import stlink_v2_1, stlink_v3e
 from .probe import Exception
 
