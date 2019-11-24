@@ -208,7 +208,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Find a debug probe.
-    args.probe = psdb.probes.find_default(usb_path=args.usb_path)
+    try:
+        args.probe = psdb.probes.find_default(usb_path=args.usb_path)
+    except psdb.probes.Exception as e:
+        print(e)
+        sys.exit(1)
+
+    # Set the max clock frequency.
     args.probe.set_tck_freq_max()
 
     # Probe the target platform.
