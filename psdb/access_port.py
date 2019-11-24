@@ -101,7 +101,7 @@ class MemAP(AP):
             self._write_csw(self.csw_base | v)
             if (self._read_csw() & 0x7) == v:
                 self.flags |= f
-        
+
         assert self.flags & MemAP.FLAG_SIZE_32
         self._write_csw(self.csw_reset)
 
@@ -279,8 +279,8 @@ class MemAP(AP):
         if n >= 1 and (addr % 2):
             assert self.flags & MemAP.FLAG_SIZE_8
             self._write_csw(self.csw_base | (1<<4))
-            self._write_drw(struct.unpack_from('B', data, offset)[0]
-                            << 8*(addr % 4))
+            self._write_drw(struct.unpack_from('B', data, offset)[0] <<
+                            8*(addr % 4))
             addr   += 1
             offset += 1
             n      -= 1
@@ -288,8 +288,8 @@ class MemAP(AP):
         if n >= 2 and (addr % 4):
             assert self.flags & MemAP.FLAG_SIZE_16
             self._write_csw(self.csw_base | (1<<4) | 1)
-            self._write_drw(struct.unpack_from('<H', data, offset)[0]
-                            << 8*(addr % 4))
+            self._write_drw(struct.unpack_from('<H', data, offset)[0] <<
+                            8*(addr % 4))
             addr   += 2
             offset += 2
             n      -= 2
@@ -308,8 +308,8 @@ class MemAP(AP):
             assert (addr % 2) == 0
             assert self.flags & MemAP.FLAG_SIZE_16
             self._write_csw(self.csw_base | (1<<4) | 1)
-            self._write_drw(struct.unpack_from('<H', data, offset)[0]
-                            << 8*(addr % 4))
+            self._write_drw(struct.unpack_from('<H', data, offset)[0] <<
+                            8*(addr % 4))
             addr   += 2
             offset += 2
             n      -= 2
@@ -317,8 +317,8 @@ class MemAP(AP):
         if n == 1:
             assert self.flags & MemAP.FLAG_SIZE_8
             self._write_csw(self.csw_base | (1<<4))
-            self._write_drw(struct.unpack_from('B', data, offset)[0]
-                           << 8*(addr % 4))
+            self._write_drw(struct.unpack_from('B', data, offset)[0] <<
+                            8*(addr % 4))
             addr   += 1
             offset += 1
             n      -= 1
@@ -362,6 +362,7 @@ class APBAP(MemAP):
 
 class IDRMapper(object):
     PROBE_SIZES = (1<<0)
+
     def __init__(self, idr, mask, factory, csw_base, flags):
         self.idr      = idr
         self.mask     = mask
@@ -385,12 +386,14 @@ IDR_MAPPERS = [
     IDRMapper(0x00010000, 0x0001E000, MemAP, None,       0),
     IDRMapper(0x00000000, 0x00000000, AP,    None,       0),
     ]
+
+
 def probe_ap(db, ap_num, verbose=False):
     try:
         idr = db.read_ap_reg(ap_num, 0xFC)
         if idr == 0:
             return None
-    except:
+    except Exception:
         return None
 
     for im in IDR_MAPPERS:

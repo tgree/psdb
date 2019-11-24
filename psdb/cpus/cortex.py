@@ -9,23 +9,23 @@ FLAG_HALTED   = (1<<0)
 
 # The core registers and the selector value they map to in the DCRSR.
 CORE_REGISTERS = collections.OrderedDict([
-    ('r0',   0),  
-    ('r1',   1),  
-    ('r2',   2),  
-    ('r3',   3),  
-    ('r4',   4),  
-    ('r5',   5),  
-    ('r6',   6),  
-    ('r7',   7),  
-    ('r8',   8),  
-    ('r9',   9),  
-    ('r10',  10), 
-    ('r11',  11), 
-    ('r12',  12), 
-    ('sp',   13), 
-    ('lr',   14), 
-    ('pc',   15), 
-    ('xpsr', 16), 
+    ('r0',   0),
+    ('r1',   1),
+    ('r2',   2),
+    ('r3',   3),
+    ('r4',   4),
+    ('r5',   5),
+    ('r6',   6),
+    ('r7',   7),
+    ('r8',   8),
+    ('r9',   9),
+    ('r10',  10),
+    ('r11',  11),
+    ('r12',  12),
+    ('sp',   13),
+    ('lr',   14),
+    ('pc',   15),
+    ('xpsr', 16),
 ])
 
 
@@ -180,7 +180,7 @@ class Cortex(psdb.component.Component):
                 if not (v & 4):
                     break
                 time.sleep(0.001)
-            except:
+            except Exception:
                 pass
 
         # Clear DEMCR.VC_CORESET so that future resets don't catch.

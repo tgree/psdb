@@ -61,7 +61,7 @@ class XDS110(usb_probe.Probe):
             size -= len(buf)
 
         s = rsp.tostring()
-        err = unpack_from('i',s)[0]
+        err = unpack_from('i', s)[0]
         if err not in allowed_errs:
             raise XDS110CommandException(err, allowed_errs, s)
         return s[4:], err
@@ -155,7 +155,7 @@ class XDS110(usb_probe.Probe):
     def cmapi_read_dap_reg(self, typ, apsel, addr):
         '''
         CMAPI DAP register read.  It looks like for an AP read:
-        
+
             apsel = ADDR[31:24]
             addr  = ADDR[ 7: 0]
 
@@ -195,7 +195,7 @@ class XDS110(usb_probe.Probe):
         return pack('<BI', self._make_dap_cmd(((reg << 1) & 0x18) | 0x01), v)
 
     def _make_ap_read_request(self, reg):
-        return pack('<B', self._make_dap_cmd(((reg << 1 ) & 0x18) | 0x07))
+        return pack('<B', self._make_dap_cmd(((reg << 1) & 0x18) | 0x07))
 
     def _make_ap_write_request(self, v, reg):
         return pack('<BI', self._make_dap_cmd(((reg << 1) & 0x18) | 0x03), v)

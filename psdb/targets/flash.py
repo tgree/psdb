@@ -1,5 +1,4 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from .device import Device
 from ..block import RAMBD, BlockOutOfRangeException
 
 import math
@@ -152,5 +151,5 @@ class Flash(object):
         outside of the flash are ignored.
         '''
         dv = [(s['p_paddr'], s.data() + b'\x00'*(s['p_memsz'] - s['p_filesz']))
-               for s in elf_bin.iter_segments() if s['p_type'] == 'PT_LOAD']
+              for s in elf_bin.iter_segments() if s['p_type'] == 'PT_LOAD']
         self.burn_dv(dv)

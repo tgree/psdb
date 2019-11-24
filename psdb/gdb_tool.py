@@ -219,7 +219,7 @@ class GDBServer(object):
         try:
             self.target.cpus[0].write_bulk(data, addr)
             return b'OK'
-        except:
+        except Exception:
             print('Write threw exception.')
         return b'E01'
 

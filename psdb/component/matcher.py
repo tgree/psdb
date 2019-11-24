@@ -13,11 +13,14 @@ class Matcher(object):
         self.subtype   = subtype
         MATCHERS.append(self)
 
+    def _cidr_match(self, c):
+        return (self.cidr & self.cidr_mask) == (c.cidr & self.cidr_mask)
+
+    def _pidr_match(self, c):
+        return (self.pidr & self.pidr_mask) == (c.pidr & self.pidr_mask)
+
     def score(self, c):
-        if (self.cidr & self.cidr_mask == c.cidr & self.cidr_mask and
-            self.pidr & self.pidr_mask == c.pidr & self.pidr_mask):
-            return 100
-        return 0
+        return 100 if self._cidr_match(c) and self._pidr_match(c) else 0
 
 
 class StaticMatcher(Matcher):
@@ -34,7 +37,7 @@ class StaticMatcher(Matcher):
 
 def match(c):
     scores = [(m.score(c), m) for m in MATCHERS]
-    scores.sort(key = lambda s: s[0])
+    scores.sort(key=lambda s: s[0])
     if scores and scores[-1][0] > 0:
         m = scores[-1][1]
         return m.cls(c, m.subtype)

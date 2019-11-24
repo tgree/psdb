@@ -1,8 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import collections
 
-from psdb.elf import ELFBinary
-
 
 class MemRegion(object):
     def __init__(self, addrs, length):

@@ -130,7 +130,7 @@ class FLASH(Device, Flash):
         The sector is verified to be erased before returning.
         '''
         assert 0 <= n and n < self.nsectors
-        
+
         addr = self.mem_base + n * self.sector_size
         if verbose:
             print('Erasing sector [0x%08X - 0x%08X]...' % (

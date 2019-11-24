@@ -3,7 +3,6 @@
 import argparse
 import curses
 import curses.ascii
-import time
 import math
 import sys
 
@@ -131,11 +130,10 @@ def handle_pagedown(reg_win, mem_win, d):
 
 def main(screen, args):
     # Extract args.
-    p = args.probe
     t = args.target
 
     # Get the device list.
-    devs         = sorted(t.devs.values(), key=lambda d:d.dev_base)
+    devs         = sorted(t.devs.values(), key=lambda d: d.dev_base)
     dev_names    = ['%08X %s' % (d.dev_base, d.name) for d in devs]
     max_dev_name = max(len(dn) for dn in dev_names)
     max_reg_name = max(len(r.name) for d in devs for r in d.regs)

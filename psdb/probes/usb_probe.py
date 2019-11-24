@@ -28,9 +28,9 @@ class Probe(probe.Probe):
 
     def show_info(self):
         print(('============= %s Bus 0x%02X Address 0x%02X %04X:%04X '
-               '=============' % (
-                self.name, self.usb_dev.bus, self.usb_dev.address,
-                self.usb_dev.idVendor, self.usb_dev.idProduct)))
+               '=============' % (self.name, self.usb_dev.bus,
+                                  self.usb_dev.address, self.usb_dev.idVendor,
+                                  self.usb_dev.idProduct)))
         print(' Manufacturer: %s' % self.usb_dev.manufacturer)
         print('      Product: %s' % self.usb_dev.product)
         print('Serial Number: %s' % self.usb_dev.serial_number)

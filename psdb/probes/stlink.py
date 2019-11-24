@@ -1,5 +1,4 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import usb
 from . import usb_probe
 import psdb
 
@@ -30,9 +29,9 @@ DATA_SIZE = 4096
 
 # Commands to exit DFU, DEBUG or SWIM mode.  We need this table so that we can
 # get the probe out of its current mode and into SWD mode.
-MODE_EXIT_CMD = {0x00: bytes(b'\xF3\x07'), # DFU
-                 0x02: bytes(b'\xF2\x21'), # DEBUG
-                 0x03: bytes(b'\xF4\x01'), # SWIM
+MODE_EXIT_CMD = {0x00: bytes(b'\xF3\x07'),  # DFU
+                 0x02: bytes(b'\xF2\x21'),  # DEBUG
+                 0x03: bytes(b'\xF4\x01'),  # SWIM
                  }
 
 # Features supported by various versions of the STLINK firmware.
@@ -313,8 +312,8 @@ class STLink(usb_probe.Probe):
         '''
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._read_8(addr)
-        return (unpack_from('<H', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
-                & 0xFF)
+        u16 = self._bulk_read_8(addr, 1, ap_num=ap_num)
+        return unpack_from('<H', u16)[0] & 0xFF
 
     def read_bulk(self, addr, size, ap_num=0):
         '''

@@ -20,6 +20,10 @@ clean:
 	rm -rf dist pypsdb.egg-info
 	find . -name "*.pyc" | xargs rm
 
+.PHONY: test
+test:
+	python3 -m flake8 psdb
+
 .PHONY: pypsdb
 pypsdb: dist/pypsdb-$(PYPSDB_VERS)-py2-none-any.whl
 

@@ -1,9 +1,8 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import struct
 from builtins import range
 
 from ..device import Device, Reg32
-from ..flash import Flash
+from .. import flash
 
 
 # Conservative flash read wait states that work for all frequencies.
@@ -44,7 +43,7 @@ class UnlockedContextManager(object):
         self.flash._write_bank1_main_weprot(0xFFFFFFFF)
 
 
-class FLCTL(Device, Flash):
+class FLCTL(Device, flash.Flash):
     '''
     Driver for the FLCTL device on the MSP432P401 series of MCUs.
     '''
@@ -82,7 +81,7 @@ class FLCTL(Device, Flash):
 
     def __init__(self, target, name, addr, flash_tlv_addr):
         Device.__init__(self, target, addr, name, FLCTL.REGS)
-        Flash.__init__(self, 0x00000000, 4096, 64)
+        flash.Flash.__init__(self, 0x00000000, 4096, 64)
         self.flash_tlv = [self.target.ahb_ap.read_32(flash_tlv_addr + i*4)
                           for i in range(4)]
         assert self.flash_tlv[0] == 4
@@ -365,7 +364,7 @@ class FLCTL(Device, Flash):
 
     def erase_sector(self, n, verbose=True):
         '''
-        Erases the nth sector in flash.  
+        Erases the nth sector in flash.
         The sector is verified to be erased before returning.
         '''
         assert 0 <= n and n < self.nsectors
@@ -396,7 +395,7 @@ class FLCTL(Device, Flash):
                 raise Exception('not aligned')
             if len(data) % 64:
                 raise Exception('not 64-byte multiple')
-            
+
             print('Exception doing bulk write; attempting burst writes')
             print('-- Exception: %s' % e)
             self._write_sector(addr, data, verbose=verbose,

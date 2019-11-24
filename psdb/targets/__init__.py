@@ -6,10 +6,17 @@ from . import stm32h7
 from . import stm32g4
 
 
+__all__ = ['Target',
+           'MemRegion',
+           'Reg',
+           'MemDevice',
+           ]
+
 TARGETS = [msp432.MSP432P401,
            stm32h7.STM32H7,
            stm32g4.STM32G4,
            ]
+
 
 def probe(db):
     for t in TARGETS:

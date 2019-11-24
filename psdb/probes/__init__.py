@@ -7,6 +7,7 @@ from .probe import Exception
 
 PROBES = xds110.enumerate() + stlink_v2_1.enumerate() + stlink_v3e.enumerate()
 
+
 def find_by_serial_number(serial_number):
     p = [p for p in PROBES if p.serial_num == serial_number]
     if not p:
