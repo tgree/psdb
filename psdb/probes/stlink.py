@@ -110,6 +110,15 @@ class STLink(usb_probe.Probe):
         '''
         raise NotImplementedError
 
+    def _usb_raise_for_status(self, allowed_status=[0x80]):
+        '''
+        Raises an exception if the last transfer status code is not in the
+        allowed_status list.
+        '''
+        err = self._usb_last_xfer_status()
+        if err[0] not in allowed_status:
+            raise Exception('Unexpected error 0x%02X: %s' % (err[0], err))
+
     def _read_dpidr(self):
         '''
         Reads the DP IDR register.
