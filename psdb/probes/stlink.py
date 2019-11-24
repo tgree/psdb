@@ -81,7 +81,6 @@ class STLink(usb_probe.Probe):
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
         assert self.usb_dev.write(TX_EP, data, timeout=1000) == len(data)
-        assert self._usb_last_xfer_status()[0] == 0x80
 
     def _usb_xfer_null(self, cmd):
         '''
@@ -214,6 +213,7 @@ class STLink(usb_probe.Probe):
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
         self._usb_xfer_out(pack('<BBIHB', 0xF2, 0x0D, addr, len(data), ap_num),
                            data)
+        self._usb_raise_for_status()
 
     def _bulk_write_16(self, data, addr, ap_num=0):
         '''
@@ -227,6 +227,7 @@ class STLink(usb_probe.Probe):
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
         self._usb_xfer_out(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num),
                            data)
+        self._usb_raise_for_status()
 
     def _bulk_write_32(self, data, addr, ap_num=0):
         '''
@@ -239,6 +240,7 @@ class STLink(usb_probe.Probe):
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
         self._usb_xfer_out(pack('<BBIHB', 0xF2, 0x08, addr, len(data), ap_num),
                            data)
+        self._usb_raise_for_status()
 
     def _should_offload_ap(self, ap_num):
         '''
