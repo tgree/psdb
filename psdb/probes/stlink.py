@@ -91,15 +91,19 @@ class STLink(usb_probe.Probe):
         assert len(cmd) == 16
         assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
 
-    def _cmd_allow_retry(self, cmd, size):
-        for _ in range(10):
-            data = self._usb_xfer_in(cmd, size)
+    def _cmd_allow_retry(self, cmd, rx_size, retries=10, delay=0.1):
+        '''
+        Performs a xfer_in operation, retrying it if necessary based on the
+        first byte of the response which is an error code.
+        '''
+        for _ in range(retries):
+            data = self._usb_xfer_in(cmd, rx_size)
             if data[0] == 0x80:
                 return data
 
             if data[0] not in (0x10, 0x14):
                 raise Exception('Unexpected error 0x%02X: %s' % (data[0], data))
-            time.sleep(0.1)
+            time.sleep(delay)
         raise Exception('Max retries exceeded!')
 
     def _usb_last_xfer_status(self):
