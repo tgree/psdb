@@ -181,8 +181,23 @@ class GetCurrentMode(STLinkCommand):
         return mode
 
 
-def make_mode_leave_dfu():
-    return make_cdb(pack('<BB', 0xF3, 0x07))
+class LeaveDFUMode(STLinkCommand):
+    '''
+    Leaves DFU mode.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF3      |      0x07      |
+        +----------------+----------------+
+
+    RX_EP:
+        None
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF3, 0x07))
 
 
 def make_mode_leave_debug():
