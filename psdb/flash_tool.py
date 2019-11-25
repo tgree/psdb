@@ -16,8 +16,8 @@ def main(rv):
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
     probe = psdb.probes.find_default(usb_path=rv.usb_path)
-    f     = probe.set_tck_freq(4000000)
-    print('Set SWD frequency to %.3f MHz' % (f/1.e6))
+    f     = probe.set_tck_freq(rv.probe_freq)
+    print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
 
     # SRST the target, if requested.  We have to assert this for at least 1 us.
     if rv.srst:
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     parser.add_argument('--flash')
     parser.add_argument('--erase', action='store_true')
     parser.add_argument('--mem-dump', '-m')
+    parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
     rv = parser.parse_args()
 
