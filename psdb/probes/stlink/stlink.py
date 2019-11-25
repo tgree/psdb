@@ -182,10 +182,10 @@ class STLink(usb_probe.Probe):
         assert self.features & FEATURE_BULK_READ_16
         if not n:
             return bytes(b'')
-        cmd = cdb.make_bulk_read_16(addr, n, ap_num)
+        cmd = cdb.BulkRead16.make(addr, n, ap_num)
         rsp = self._usb_xfer_in(cmd, n*2)
         self._usb_raise_for_status()
-        return bytes(rsp)
+        return cdb.BulkRead16.decode(rsp)
 
     def _bulk_read_32(self, addr, n, ap_num=0):
         '''

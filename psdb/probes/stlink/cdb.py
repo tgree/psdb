@@ -441,13 +441,48 @@ class BulkRead8(STLinkCommand):
         return bytes(rsp[:n])
 
 
-def make_bulk_read_16(addr, n, ap_num):
+class BulkRead16(STLinkCommand):
     '''
     Reads the specified number of halfwords from the specified AP and address.
+    One of the last transfer status commands must be used afterwards to get the
+    transfer status since it is not encoded in the response.  The read should
+    not cross a 1K page boundary and the address must be 2-byte aligned.
+
+    Note that the API takes a count of N halfwords, but the CDB itself takes a
+    count of N*2 bytes.
+
+    Note: this command should not be used if the AP type is not an AHBAP.  The
+          probe will clobber the upper bits of the CSW register which can
+          result in the probe being locked out of the target if CSW.DbgSwEnable
+          gets cleared.
+
+    Availability: V3+ and V2 with J >= 26.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x47      |            addr[31:16]         ...
+        +----------------+----------------+---------------------------------+
+       ...          addr[15:0]            |              N bytes            |
+        +----------------+--------------------------------------------------+
+        |       AP       |
+        +----------------+
+
+    RX_EP (N bytes):
+        +---------------------------------+---------------------------------+
+        |             DATA[0]             |               ...               |
+        +---------------------------------+---------------------------------+
+        |               ...               |          DATA[N/2 - 1]          |
+        +---------------------------------+---------------------------------+
     '''
-    assert addr % 2 == 0
-    assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
-    return make_cdb(pack('<BBIHB', 0xF2, 0x47, addr, n*2, ap_num))
+    @staticmethod
+    def make(addr, n, ap_num):
+        assert addr % 2 == 0
+        assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
+        return make_cdb(pack('<BBIHB', 0xF2, 0x47, addr, n*2, ap_num))
+
+    @staticmethod
+    def decode(rsp):
+        return bytes(rsp)
 
 
 def make_bulk_read_32(addr, n, ap_num):
