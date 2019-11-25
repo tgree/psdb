@@ -16,7 +16,8 @@ def main(rv):
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
     probe = psdb.probes.find_default(usb_path=rv.usb_path)
-    probe.set_tck_freq_max()
+    f     = probe.set_tck_freq_max()
+    print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # SRST the target, if requested.  We have to assert this for at least 1 us.
     if rv.srst:
