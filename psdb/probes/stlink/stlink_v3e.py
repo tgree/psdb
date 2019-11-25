@@ -41,8 +41,8 @@ class STLinkV3E(stlink.STLink):
          self.ver_pid) = cdb.Version2.decode(rsp)
 
     def _read_dpidr(self):
-        rsp = self._cmd_allow_retry(cdb.make_read_idcodes(), 12)
-        return cdb.decode_read_idcodes(rsp)[0]
+        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
+        return cdb.ReadIDCodes.decode(rsp)[0]
 
     def _get_com_freq(self, is_jtag=False):
         '''

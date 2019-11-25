@@ -122,14 +122,37 @@ class ReadCoreID(STLinkCommand):
         return dpidr
 
 
-def make_read_idcodes():
-    return make_cdb(pack('<BB', 0xF2, 0x31))
+class ReadIDCodes(STLinkCommand):
+    '''
+    Returns the DP DPIDR value.
+    See "ARM Debug Interface Architecture Specification ADIv5.0 to ADIv5.2"
+    section 2.3.5.
 
+    Availability: V2+.
 
-def decode_read_idcodes(rsp):
-    assert len(rsp) == 12
-    status, _, _, _, dpidr, unknown = unpack('<BBBBII', rsp)
-    return dpidr, unknown
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x31      |
+        +----------------+----------------+
+
+    RX_EP (12 bytes):
+        +----------------+----------------+----------------+----------------+
+        |     STATUS     |       --       |      --        |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                               DPIDR                               |
+        +-------------------------------------------------------------------+
+        |                                ???                                |
+        +-------------------------------------------------------------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF2, 0x31))
+
+    @staticmethod
+    def decode(rsp):
+        assert len(rsp) == 12
+        status, _, _, _, dpidr, unknown = unpack('<BBBBII', rsp)
+        return dpidr, unknown
 
 
 def make_get_current_mode():

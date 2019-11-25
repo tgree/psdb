@@ -55,8 +55,8 @@ class STLinkV2_1(stlink.STLink):
          self.ver_pid) = cdb.Version1.decode(rsp)
 
     def _read_dpidr(self):
-        rsp = self._cmd_allow_retry(cdb.make_read_idcodes(), 12)
-        return cdb.decode_read_idcodes(rsp)[0]
+        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
+        return cdb.ReadIDCodes.decode(rsp)[0]
 
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
