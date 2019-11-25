@@ -272,9 +272,9 @@ class STLink(usb_probe.Probe):
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._read_32(addr)
 
-        cmd = cdb.make_read_32(addr, ap_num)
+        cmd = cdb.Read32.make(addr, ap_num)
         rsp = self._cmd_allow_retry(cmd, 8)
-        return cdb.decode_read_32(rsp)
+        return cdb.Read32.decode(rsp)
 
     def read_16(self, addr, ap_num=0):
         '''

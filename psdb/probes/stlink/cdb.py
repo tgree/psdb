@@ -786,14 +786,37 @@ class WriteAPReg(STLinkCommand):
         return make_cdb(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
 
 
-def make_read_32(addr, ap_num):
-    assert addr % 4 == 0
-    return make_cdb(pack('<BBIB', 0xF2, 0x36, addr, ap_num))
+class Read32(STLinkCommand):
+    '''
+    Reads a 32-bit value from the target AP bus space.  This is more efficent
+    than a bulk read since the error status is returned as part of the response
+    rather than in a separate transaction.
 
+    Availability: All.
 
-def decode_read_32(rsp):
-    status, _, _, _, u32 = unpack('<BBBBI', rsp)
-    return u32
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x36      |            addr[31:16]         ...
+        +----------------+----------------+----------------+----------------+
+       ...          addr[15:0]            |       AP       |
+        +----------------+----------------+----------------+
+
+    RX_EP (8 bytes):
+        +----------------+----------------+----------------+----------------+
+        |     STATUS     |       --       |       --       |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                           Register Value                          |
+        +-------------------------------------------------------------------+
+    '''
+    @staticmethod
+    def make(addr, ap_num):
+        assert addr % 4 == 0
+        return make_cdb(pack('<BBIB', 0xF2, 0x36, addr, ap_num))
+
+    @staticmethod
+    def decode(rsp):
+        status, _, _, _, u32 = unpack('<BBBBI', rsp)
+        return u32
 
 
 def make_write_32(addr, v, ap_num):
