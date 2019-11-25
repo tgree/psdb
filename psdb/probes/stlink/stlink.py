@@ -169,10 +169,10 @@ class STLink(usb_probe.Probe):
         assert n <= self.max_rw8
         if not n:
             return bytes(b'')
-        cmd = cdb.make_bulk_read_8(addr, n, ap_num)
+        cmd = cdb.BulkRead8.make(addr, n, ap_num)
         rsp = self._usb_xfer_in(cmd, 2 if n == 1 else n)
         self._usb_raise_for_status()
-        return bytes(rsp[:n])
+        return cdb.BulkRead8.decode(rsp, n)
 
     def _bulk_read_16(self, addr, n, ap_num=0):
         '''

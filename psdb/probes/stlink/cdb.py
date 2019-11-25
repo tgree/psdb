@@ -395,12 +395,50 @@ class SetComFreq(STLinkCommand):
         return act_freq_khz
 
 
-def make_bulk_read_8(addr, n, ap_num):
+class BulkRead8(STLinkCommand):
     '''
-    Reads the specified number of bytes from the specified AP and address.
+    Reads the specified number of bytes from the specified AP and address.  One
+    of the last transfer status commands must be used afterwards to get the
+    transfer status since it is not encoded in the response.  The read should
+    not cross a 1K page boundary.
+
+    Note that if N == 1 the response will be two bytes long and the second byte
+    should be ignored.
+
+    Note: this command should not be used if the AP type is not an AHBAP.  The
+          probe will clobber the upper bits of the CSW register which can
+          result in the probe being locked out of the target if CSW.DbgSwEnable
+          gets cleared.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x0C      |            addr[31:16]         ...
+        +----------------+----------------+---------------------------------+
+       ...          addr[15:0]            |              N bytes            |
+        +----------------+--------------------------------------------------+
+        |       AP       |
+        +----------------+
+
+    RX_EP for N > 1 (N bytes):
+        +----------------+----------------+----------------+----------------+
+        |    DATA[0]     |      ...       |      ...       |   DATA[N-1]    |
+        +----------------+----------------+----------------+----------------+
+
+    RX_EP for N == 1 (2 bytes):
+        +----------------+----------------+
+        |    DATA[0]     |       --       |
+        +----------------+----------------+
     '''
-    assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
-    return make_cdb(pack('<BBIHB', 0xF2, 0x0C, addr, n, ap_num))
+    @staticmethod
+    def make(addr, n, ap_num):
+        assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
+        return make_cdb(pack('<BBIHB', 0xF2, 0x0C, addr, n, ap_num))
+
+    @staticmethod
+    def decode(rsp, n):
+        return bytes(rsp[:n])
 
 
 def make_bulk_read_16(addr, n, ap_num):
