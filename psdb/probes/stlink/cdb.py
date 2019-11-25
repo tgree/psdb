@@ -12,6 +12,9 @@ MODE_BOOT   = 4
 
 
 def make_cdb(cmd):
+    '''
+    Right-pads the specified command with zeroes to make it a 16-byte CDB.
+    '''
     assert len(cmd) <= 16
     return cmd + bytes(b'\x00'*(16 - len(cmd)))
 
