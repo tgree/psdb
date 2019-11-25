@@ -22,7 +22,7 @@ class STM32H7ROMTable1(psdb.component.Component):
 
 class STM32H7(Target):
     def __init__(self, db):
-        super(STM32H7, self).__init__(db)
+        super(STM32H7, self).__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.apbd_ap    = self.db.aps[2]
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)

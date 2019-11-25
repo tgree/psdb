@@ -9,10 +9,19 @@ class MemRegion(object):
 
 
 class Target(object):
-    def __init__(self, db):
-        self.db   = db
-        self.cpus = self.db.cpus
-        self.devs = collections.OrderedDict()
+    def __init__(self, db, max_tck_freq):
+        self.db           = db
+        self.max_tck_freq = max_tck_freq
+        self.cpus         = self.db.cpus
+        self.devs         = collections.OrderedDict()
+
+    def set_max_tck_freq(self):
+        '''
+        Sets the debug probe to the target's maximum supported SWD frequency.
+        Note that this frequency may need to be throttled under some conditions
+        such as during flash writes.
+        '''
+        return self.db.set_tck_freq(self.max_tck_freq)
 
     def is_halted(self, cpus=None):
         cpus = cpus or self.cpus
