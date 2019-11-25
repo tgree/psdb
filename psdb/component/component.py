@@ -45,11 +45,11 @@ class Component(object):
         '''
         # Probe based on the CIDR and the PIDR.  The CIDR always has the
         # following format:
-        # 
+        #
         #   0xB105n00D
-        # 
+        #
         # The n value identifies the component class:
-        # 
+        #
         #   0   - generic verification component
         #   1   - ROM table
         #   2-8 - reserved
@@ -71,7 +71,7 @@ class Component(object):
             entry = self.ap.read_32(self.addr + offset)
             if entry == 0:
                 break
-            
+
             c = Component.probe(self.ap, entry, base=self.addr, parent=self)
             if c is not None:
                 if verbose:

@@ -25,7 +25,8 @@ class RAMBD(bd.BlockDevice):
                 raise bd.BlockOutOfRangeException(self, blocknum)
 
             blockaddr = blocknum*block_size
-            block     = self.blocks.get(blocknum,bd.Block(blockaddr, self.fill))
+            block     = self.blocks.get(blocknum,
+                                        bd.Block(blockaddr, self.fill))
             block.write(addr, data[:count])
 
             self.blocks[blocknum] = block

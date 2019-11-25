@@ -20,6 +20,10 @@ clean:
 	rm -rf dist pypsdb.egg-info
 	find . -name "*.pyc" | xargs rm
 
+.PHONY: test
+test:
+	python3 -m flake8 psdb
+
 .PHONY: pypsdb
 pypsdb: dist/pypsdb-$(PYPSDB_VERS)-py2-none-any.whl
 
@@ -28,11 +32,13 @@ pypsdb3: dist/pypsdb-$(PYPSDB_VERS)-py3-none-any.whl
 
 .PHONY: install
 install: pypsdb
-	sudo pip install --force-reinstall dist/pypsdb-$(PYPSDB_VERS)-py2-none-any.whl
+	sudo pip uninstall -y pypsdb
+	sudo pip install dist/pypsdb-$(PYPSDB_VERS)-py2-none-any.whl
 
 .PHONY: install3
 install3: pypsdb3
-	sudo pip3 install --force-reinstall dist/pypsdb-$(PYPSDB_VERS)-py3-none-any.whl
+	sudo pip3 uninstall -y pypsdb
+	sudo pip3 install dist/pypsdb-$(PYPSDB_VERS)-py3-none-any.whl
 
 .PHONY: uninstall
 uninstall:

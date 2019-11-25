@@ -1,8 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import usb
 from . import stlink
-
-from struct import pack, unpack
+from . import cdb
 
 
 # Unknown commands sniffed via debugger:
@@ -44,48 +43,31 @@ class STLinkV2_1(stlink.STLink):
         future probe firmware update.
         '''
         if self.features & stlink.FEATURE_RW_STATUS_12:
-            return self._usb_xfer_in(bytes(b'\xF2\x3E'), 12)
-        return self._usb_xfer_in(bytes(b'\xF2\x3B'), 2)
+            return self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
+        return self._usb_xfer_in(cdb.LastXFERStatus2.make(), 2)
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(bytes(b'\xF1'), 6)
-        v0, v1, vid, pid = unpack('<BBHH', rsp)
-        v = (v0 << 8) | v1
-        self.ver_stlink = (v >> 12) & 0x0F
-        self.ver_jtag   = (v >>  6) & 0x3F
-        self.ver_swim   = (v >>  0) & 0x3F
-        self.ver_vid    = vid
-        self.ver_pid    = pid
+        rsp = self._usb_xfer_in(cdb.Version1.make(), 6)
+        (self.ver_stlink,
+         self.ver_jtag,
+         self.ver_swim,
+         self.ver_vid,
+         self.ver_pid) = cdb.Version1.decode(rsp)
+
+    def _read_dpidr(self):
+        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
+        return cdb.ReadIDCodes.decode(rsp)[0]
 
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22
-        cmd = pack('<BBH', 0xF2, 0x43, divisor)
+        cmd = cdb.SetSWDCLKDivisor.make(divisor)
         self._cmd_allow_retry(cmd, 2)
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         '''
         Sets the TCK to the nearest frequency that doesn't exceed the
         requested one.  Returns the actual frequency in Hz.
-        According to OCD divisors map to frequencies as follows:
-                    | OCD  | Scope
-            Divisor | kHz  |  kHz
-            --------+------+------
-                  0 | 4000 | 2360
-                  1 | 1800 | 1553
-                  2 | 1200 | 1230
-                  3 |  950 |  960
-                  7 |  480 |  484
-                 15 |  240 |  245
-                 31 |  125 |  123
-                 40 |  100 |
-                 79 |   50 |
-                158 |   25 |
-                265 |   15 |
-                798 |    5 |
-            --------+------+------
-
-        Basically the clock is crap.  We'll just go with the OCD table.
         '''
         assert self.features & stlink.FEATURE_SWD_SET_FREQ
 
@@ -102,10 +84,10 @@ class STLinkV2_1(stlink.STLink):
                     (  15000, 265),
                     (   5000, 798)]
         for f, d in freq_map:
-            if freq >= f:
+            if freq_hz >= f:
                 self._set_swdclk_divisor(d)
                 return f
-        raise Exception('Frequency %s too low!' % freq)
+        raise Exception('Frequency %s too low!' % freq_hz)
 
     def show_info(self):
         super(STLinkV2_1, self).show_info()

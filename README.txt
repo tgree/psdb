@@ -22,3 +22,10 @@ used to view the current CPU registers, select target peripheral registers and
 select regions of target RAM or flash.  The inspect_tool script requires the
 tgcurses library to be installed (available on github/tgree).  Since tgcurses
 only supports python3, inspect_tool can only run under python3.
+
+
+We also attempt to document the STLINK protocol inside the stlink package.
+You can view it most easily from within the python interpreter:
+
+    >>> import psdb.probes.stlink
+    >>> help(psdb.probes.stlink.cdb)

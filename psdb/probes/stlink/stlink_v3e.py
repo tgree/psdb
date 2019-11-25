@@ -1,10 +1,6 @@
 import usb
 from . import stlink
-
-from struct import pack, unpack
-
-
-MAX_FREQS = 10
+from . import cdb
 
 
 class STLinkV3E(stlink.STLink):
@@ -27,27 +23,29 @@ class STLinkV3E(stlink.STLink):
         '''
         Returns a 12-byte transfer status; the error code is in the first byte.
         '''
-        return self._usb_xfer_in(bytes(b'\xF2\x3E'), 12)
+        return self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(bytes(b'\xFB'), 12)
+        rsp = self._usb_xfer_in(cdb.Version2.make(), 12)
         (self.ver_stlink,
          self.ver_swim,
          self.ver_jtag,
          self.ver_msd,
          self.ver_bridge,
-         _, _, _,
          self.ver_vid,
-         self.ver_pid) = unpack('<BBBBBBBBHH', rsp)
+         self.ver_pid) = cdb.Version2.decode(rsp)
+
+    def _read_dpidr(self):
+        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
+        return cdb.ReadIDCodes.decode(rsp)[0]
 
     def _get_com_freq(self, is_jtag=False):
         '''
         Returns the list of supported frequencies, in kHz.
         '''
-        cmd   = pack('<BBB', 0xF2, 0x62, int(is_jtag))
-        rsp   = self._cmd_allow_retry(cmd, 12 + 4*MAX_FREQS)
-        count = min(rsp[8], MAX_FREQS)
-        return unpack('<' + 'I'*count, rsp[12:12 + count*4])
+        cmd   = cdb.GetComFreqs.make(is_jtag)
+        rsp   = self._cmd_allow_retry(cmd, cdb.GetComFreqs.RSP_LEN)
+        return cdb.GetComFreqs.decode(rsp)
 
     def _set_com_freq(self, freq_khz, is_jtag=False):
         '''
@@ -55,23 +53,26 @@ class STLinkV3E(stlink.STLink):
         that doesn't exceed the requested one.  Returns the actual frequency in
         kHz.
         '''
-        assert not is_jtag
-        for v in self._swd_freqs_khz:
-            if freq_khz >= v:
-                cmd = pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, v)
-                self._cmd_allow_retry(cmd, 8)
-                return v
-
-        raise Exception('Requested frequency %u kHz too low; minimum is '
+        cmd = cdb.SetComFreq.make(freq_khz, is_jtag)
+        try:
+            rsp = self._cmd_allow_retry(cmd, 8)
+            return cdb.SetComFreq.decode(rsp)
+        except stlink.STLinkCmdException as e:
+            if e.err != 0x08:
+                raise
+        if is_jtag:
+            raise Exception('Requested JTAG frequency %u kHz too low.'
+                            % freq_khz)
+        raise Exception('Requested SWD frequency %u kHz too low; minimum is '
                         '%u kHz.' % (freq_khz, self._swd_freqs_khz[-1]))
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         '''
         Sets the communication frequency to the highest supported frequency
         that doesn't exceed the requested one.  Returns the actual frequency in
         Hz.
         '''
-        return self._set_com_freq(freq, is_jtag=False) * 1000
+        return self._set_com_freq(freq_hz // 1000, is_jtag=False) * 1000
 
     def show_info(self):
         super(STLinkV3E, self).show_info()

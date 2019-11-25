@@ -27,7 +27,7 @@ class Probe(object):
         raise NotImplementedError
 
     def set_tck_freq_max(self):
-        return self.set_tck_freq(10000000)
+        return self.set_tck_freq(100000000)
 
     def read_32(self, addr, ap_num=0):
         raise NotImplementedError
