@@ -20,6 +20,9 @@ def make_cdb(cmd):
 
 
 class STLinkCommand(object):
+    '''
+    Attempt at documenting the SLINK command protocol.
+    '''
     pass
 
 
