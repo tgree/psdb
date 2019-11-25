@@ -563,14 +563,46 @@ class BulkWrite8(STLinkCommand):
         return make_cdb(pack('<BBIHB', 0xF2, 0x0D, addr, len(data), ap_num))
 
 
-def make_bulk_write_16(data, addr, ap_num):
+class BulkWrite16(STLinkCommand):
     '''
-    Writes the specified number of halfwords to the specified AP and address.
+    Writes the data to the specified AP and address.  One of the last transfer
+    status commands must be used afterwards to get the transfer status since it
+    is not encoded in the response.  The write should not cross a 1K page
+    boundary, should be a multiple of 2 bytes and the address must be 2-byte
+    aligned.
+
+    Note that the API takes a count of N halfwords, but the CDB itself takes a
+    count of N*2 bytes.
+
+    Note: this command should not be used if the AP type is not an AHBAP.  The
+          probe will clobber the upper bits of the CSW register which can
+          result in the probe being locked out of the target if CSW.DbgSwEnable
+          gets cleared.
+
+    Availability: V3+ and V2 with J >= 26.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x48      |            addr[31:16]         ...
+        +----------------+----------------+---------------------------------+
+       ...          addr[15:0]            |              N bytes            |
+        +----------------+--------------------------------------------------+
+        |       AP       |
+        +----------------+
+
+    TX_EP (DATA, N bytes):
+        +---------------------------------+---------------------------------+
+        |             DATA[0]             |               ...               |
+        +---------------------------------+---------------------------------+
+        |               ...               |          DATA[N/2 - 1]          |
+        +---------------------------------+---------------------------------+
     '''
-    assert addr % 2 == 0
-    assert len(data) % 2 == 0
-    assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-    return make_cdb(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num))
+    @staticmethod
+    def make(data, addr, ap_num):
+        assert addr % 2 == 0
+        assert len(data) % 2 == 0
+        assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
+        return make_cdb(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num))
 
 
 def make_bulk_write_32(data, addr, ap_num):
