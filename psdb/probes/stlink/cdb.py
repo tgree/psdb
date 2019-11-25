@@ -724,6 +724,7 @@ class SetSRST(STLinkCommand):
     Set the level field:
         0 - assert SRST and hold the MCU in reset
         1 - deassert SRST and allow the MCU to run
+        2 - pulse SRST?
 
     Availability: All.
 
