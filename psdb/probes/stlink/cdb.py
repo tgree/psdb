@@ -155,13 +155,30 @@ class ReadIDCodes(STLinkCommand):
         return dpidr, unknown
 
 
-def make_get_current_mode():
-    return make_cdb(pack('<B', 0xF5))
+class GetCurrentMode(STLinkCommand):
+    '''
+    Returns the STLINK probe's current mode.
 
+    Availability: All.
 
-def decode_get_current_mode(rsp):
-    mode, _ = unpack('<BB', rsp)
-    return mode
+    TX_EP (CDB):
+        +----------------+
+        |      0xF5      |
+        +----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |      MODE      |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<B', 0xF5))
+
+    @staticmethod
+    def decode(rsp):
+        mode, _ = unpack('<BB', rsp)
+        return mode
 
 
 def make_mode_leave_dfu():

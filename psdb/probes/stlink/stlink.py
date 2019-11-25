@@ -126,8 +126,8 @@ class STLink(usb_probe.Probe):
         '''
         Returns the current mode that the probe is in (SWIM, JTAG, SWD, etc.).
         '''
-        rsp = self._usb_xfer_in(cdb.make_get_current_mode(), 2)
-        return cdb.decode_get_current_mode(rsp)
+        rsp = self._usb_xfer_in(cdb.GetCurrentMode.make(), 2)
+        return cdb.GetCurrentMode.decode(rsp)
 
     def _mode_leave(self, mode):
         '''
