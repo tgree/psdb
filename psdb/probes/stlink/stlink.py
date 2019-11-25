@@ -317,7 +317,7 @@ class STLink(usb_probe.Probe):
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._write_32(v, addr)
 
-        cmd = cdb.make_write_32(addr, v, ap_num)
+        cmd = cdb.Write32.make(addr, v, ap_num)
         self._cmd_allow_retry(cmd, 2)
 
     def write_16(self, v, addr, ap_num=0):

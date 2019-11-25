@@ -819,6 +819,29 @@ class Read32(STLinkCommand):
         return u32
 
 
-def make_write_32(addr, v, ap_num):
-    assert addr % 4 == 0
-    return make_cdb(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))
+class Write32(STLinkCommand):
+    '''
+    Writes a 32-bit register in the AP bus space.  This is more efficient
+    than a bulk write since the error status is returned as part of the
+    response rather than in a separate transaction.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x35      |           Addr[31:16]          ...
+        +----------------+----------------+---------------------------------+
+       ...           Addr[15:0]           |            Val[31:16]          ...
+        +---------------------------------+----------------+----------------+
+       ...            Val[15:0]           |       AP       |
+        +---------------------------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make(addr, v, ap_num):
+        assert addr % 4 == 0
+        return make_cdb(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))
