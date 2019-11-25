@@ -58,6 +58,10 @@ class STLinkV2_1(stlink.STLink):
         self.ver_vid    = vid
         self.ver_pid    = pid
 
+    def _read_dpidr(self):
+        rsp = self._cmd_allow_retry(cdb.make_read_idcodes(), 12)
+        return cdb.decode_read_idcodes(rsp)[0]
+
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22

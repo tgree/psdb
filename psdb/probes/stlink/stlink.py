@@ -118,17 +118,9 @@ class STLink(usb_probe.Probe):
 
     def _read_dpidr(self):
         '''
-        Reads the DP IDR register.
+        To be implemented by the subclass.
         '''
-        rsp = self._usb_xfer_in(cdb.make_read_coreid(), 4)
-        return cdb.decode_read_coreid(rsp)
-
-    def _read_idcodes(self):
-        '''
-        Reads "IDCODES".  Not entirely sure what this is.
-        '''
-        rsp = self._usb_xfer_in(cdb.make_read_idcodes(), None)
-        return cdb.decode_read_idcodes(rsp)
+        raise NotImplementedError
 
     def _current_mode(self):
         '''

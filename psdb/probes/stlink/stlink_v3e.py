@@ -41,6 +41,10 @@ class STLinkV3E(stlink.STLink):
          self.ver_vid,
          self.ver_pid) = unpack('<BBBBBBBBHH', rsp)
 
+    def _read_dpidr(self):
+        rsp = self._cmd_allow_retry(cdb.make_read_idcodes(), 12)
+        return cdb.decode_read_idcodes(rsp)[0]
+
     def _get_com_freq(self, is_jtag=False):
         '''
         Returns the list of supported frequencies, in kHz.
