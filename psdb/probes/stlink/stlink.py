@@ -40,6 +40,7 @@ FEATURE_RW_STATUS_12  = (1 << 0)
 FEATURE_SWD_SET_FREQ  = (1 << 1)
 FEATURE_BULK_READ_16  = (1 << 2)
 FEATURE_BULK_WRITE_16 = (1 << 3)
+FEATURE_VOLTAGE       = (1 << 4)
 
 
 class STLinkCmdException(Exception):
@@ -146,6 +147,15 @@ class STLink(usb_probe.Probe):
         To be implemented by the subclass.
         '''
         raise NotImplementedError
+
+    def _get_voltage(self):
+        '''
+        Returns the target voltage.
+        '''
+        assert self.features & FEATURE_VOLTAGE
+        rsp = self._usb_xfer_in(cdb.ReadVoltage.make(), 8)
+        vref_adc, target_adc = cdb.ReadVoltage.decode(rsp)
+        return 2.4 * target_adc / vref_adc
 
     def _current_mode(self):
         '''

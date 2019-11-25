@@ -96,6 +96,37 @@ class Version2(STLinkCommand):
         return v_stlink, v_swim, v_jtag, v_msd, v_bridge, vid, pid
 
 
+class ReadVoltage(STLinkCommand):
+    '''
+    Reads the target voltage and a 2.4V reference voltage, returning both
+    values in ADC units.  The target voltage can be computed using:
+
+        target_voltage = 2.4 * target_adc / vref_adc
+
+    Availability: V3 or V2 with J >= 13.
+
+    TX_EP (CDB):
+        +----------------+
+        |      0xF7      |
+        +----------------+
+
+    RX_EP (12 bytes):
+        +-------------------------------------------------------------------+
+        |                             vref_adc                              |
+        +-------------------------------------------------------------------+
+        |                            target_adc                             |
+        +-------------------------------------------------------------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<B', 0xF7))
+
+    @staticmethod
+    def decode(rsp):
+        vref_adc, target_adc = unpack('<LL', rsp)
+        return vref_adc, target_adc
+
+
 class ReadCoreID(STLinkCommand):
     '''
     Returns the DP DPIDR value.
