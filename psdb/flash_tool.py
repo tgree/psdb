@@ -25,6 +25,8 @@ def main(rv):
 
     # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose)
+    f      = target.set_max_tck_freq()
+    print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Flash info if verbose.
     if rv.verbose:
