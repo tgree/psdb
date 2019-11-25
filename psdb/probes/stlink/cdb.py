@@ -355,8 +355,44 @@ class GetComFreqs(STLinkCommand):
         return unpack('<' + 'I'*count, rsp[12:12 + count*4])
 
 
-def make_set_com_freq(freq_khz, is_jtag):
-    return make_cdb(pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, freq_khz))
+class SetComFreq(STLinkCommand):
+    '''
+    Sets the communication frequency to the specified value.  Returns the
+    actual frequency that was set.  The probe only supports the frequencies
+    returned by GetComFreqs() and will select the highest frequency that
+    doesn't exceed the requested one.
+
+    Returns STATUS 8 if the requested frequency is lower than the lowest
+    supported frequency.
+
+    The jtag_or_swd field:
+        0 - SWD frequencies
+        1 - JTAG frequencies
+
+    Availability: V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+----------------+
+        |      0xF2      |      0x61      |  jtag_or_swd   |       0        |
+        +----------------+----------------+----------------+----------------+
+        |                             freq_khz                              |
+        +-------------------------------------------------------------------+
+
+    RX_EP (8 bytes):
+        +----------------+----------------+----------------+----------------+
+        |     STATUS     |       --       |      --        |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                           act_freq_khz                            |
+        +----------------+----------------+----------------+----------------+
+    '''
+    @staticmethod
+    def make(freq_khz, is_jtag):
+        return make_cdb(pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, freq_khz))
+
+    @staticmethod
+    def decode(rsp):
+        status, _, _, _, act_freq_khz = unpack('<BBBBI', rsp)
+        return act_freq_khz
 
 
 def make_bulk_read_8(addr, n, ap_num):

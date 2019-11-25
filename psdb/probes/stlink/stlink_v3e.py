@@ -53,14 +53,17 @@ class STLinkV3E(stlink.STLink):
         that doesn't exceed the requested one.  Returns the actual frequency in
         kHz.
         '''
-        assert not is_jtag
-        for v in self._swd_freqs_khz:
-            if freq_khz >= v:
-                cmd = cdb.make_set_com_freq(v, is_jtag)
-                self._cmd_allow_retry(cmd, 8)
-                return v
-
-        raise Exception('Requested frequency %u kHz too low; minimum is '
+        cmd = cdb.SetComFreq.make(freq_khz, is_jtag)
+        try:
+            rsp = self._cmd_allow_retry(cmd, 8)
+            return cdb.SetComFreq.decode(rsp)
+        except stlink.STLinkCmdException as e:
+            if e.err != 0x08:
+                raise
+        if is_jtag:
+            raise Exception('Requested JTAG frequency %u kHz too low.'
+                            % freq_khz)
+        raise Exception('Requested SWD frequency %u kHz too low; minimum is '
                         '%u kHz.' % (freq_khz, self._swd_freqs_khz[-1]))
 
     def set_tck_freq(self, freq_hz):
