@@ -23,7 +23,7 @@ class STLinkV3E(stlink.STLink):
         '''
         Returns a 12-byte transfer status; the error code is in the first byte.
         '''
-        return self._usb_xfer_in(cdb.make_last_xfer_status_12(), 12)
+        return self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
 
     def _usb_version(self):
         rsp = self._usb_xfer_in(cdb.Version2.make(), 12)

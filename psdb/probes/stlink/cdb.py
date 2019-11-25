@@ -670,8 +670,31 @@ class LastXFERStatus2(STLinkCommand):
         return make_cdb(pack('<BB', 0xF2, 0x3B))
 
 
-def make_last_xfer_status_12():
-    return make_cdb(pack('<BB', 0xF2, 0x3E))
+class LastXFERStatus12(STLinkCommand):
+    '''
+    Returns the status of the last DATA transfer since it is not available in
+    the DATA phase.  Returns a far longer response; unclear what it contains
+    beyond the LastXFERStatus2 command.
+
+    Availability: V3 and V2 with J >= 15.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x3E      |
+        +----------------+----------------+
+
+    RX_EP (12 bytes):
+        +----------------+----------------+----------------+----------------+
+        |     STATUS     |       --       |       --       |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                                --                                 |
+        +-------------------------------------------------------------------+
+        |                                --                                 |
+        +-------------------------------------------------------------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF2, 0x3E))
 
 
 def make_set_srst(asserted):
