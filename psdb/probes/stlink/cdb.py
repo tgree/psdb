@@ -653,7 +653,8 @@ class BulkWrite32(STLinkCommand):
 class LastXFERStatus2(STLinkCommand):
     '''
     Returns the status of the last DATA transfer since it is not available in
-    the DATA phase.
+    the DATA phase.  A None value is also decoded, indicating that the fault
+    address is not available in the event of error.
 
     Availability: V1 and V2.  LastXFERStatus12 is required for V3 and
                   recommended for V2 with J >= 15.
@@ -668,16 +669,23 @@ class LastXFERStatus2(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
+    RSP_LEN = 2
+
     @staticmethod
     def make():
         return make_cdb(pack('<BB', 0xF2, 0x3B))
+
+    @staticmethod
+    def decode(rsp):
+        status, _ = unpack('<BB')
+        return status, None
 
 
 class LastXFERStatus12(STLinkCommand):
     '''
     Returns the status of the last DATA transfer since it is not available in
-    the DATA phase.  Returns a far longer response; unclear what it contains
-    beyond the LastXFERStatus2 command.
+    the DATA phase.  In the event of an error, the faulting address is included
+    in the response.
 
     Availability: V3 and V2 with J >= 15.
 
@@ -690,14 +698,21 @@ class LastXFERStatus12(STLinkCommand):
         +----------------+----------------+----------------+----------------+
         |     STATUS     |       --       |       --       |       --       |
         +----------------+----------------+----------------+----------------+
-        |                                --                                 |
+        |                           Fault Address                           |
         +-------------------------------------------------------------------+
         |                                --                                 |
         +-------------------------------------------------------------------+
     '''
+    RSP_LEN = 12
+
     @staticmethod
     def make():
         return make_cdb(pack('<BB', 0xF2, 0x3E))
+
+    @staticmethod
+    def decode(rsp):
+        status, _, _, _, fault_addr, _ = unpack('<BBBBII', rsp)
+        return status, fault_addr
 
 
 class SetSRST(STLinkCommand):

@@ -36,15 +36,13 @@ class STLinkV2_1(stlink.STLink):
             self.features |= stlink.FEATURE_BULK_WRITE_16
 
     def _usb_last_xfer_status(self):
-        '''
-        Returns a 2-byte or a 12-byte transfer status; the error code is in the
-        first byte.  The 12-byte transfer status is available for versions J15
-        and later.  The 2-byte version will eventually be deprecated in a
-        future probe firmware update.
-        '''
         if self.features & stlink.FEATURE_RW_STATUS_12:
-            return self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
-        return self._usb_xfer_in(cdb.LastXFERStatus2.make(), 2)
+            cls = cdb.LastXFERStatus12
+        else:
+            cls = cdb.LastXFERStatus2
+
+        rsp = self._usb_xfer_in(cls.make(), cls.RSP_LEN)
+        return cls.decode(rsp)
 
     def _usb_version(self):
         rsp = self._usb_xfer_in(cdb.Version1.make(), 6)

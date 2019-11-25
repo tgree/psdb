@@ -50,6 +50,13 @@ class STLinkCmdException(Exception):
         self.err = rsp[0]
 
 
+class STLinkXFERException(Exception):
+    def __init__(self, status, fault_addr, msg):
+        super(Exception, self).__init__(msg)
+        self.status     = status
+        self.fault_addr = fault_addr
+
+
 class STLink(usb_probe.Probe):
     '''
     STLink V2.1 debug probe.  This can be found on the Nucleo 144 board we have
@@ -113,7 +120,12 @@ class STLink(usb_probe.Probe):
     def _usb_last_xfer_status(self):
         '''
         To be implemented by the subclass.  Different STLINK probes get the
-        transfer status in different ways.
+        transfer status in different ways.  This should return a tuple of the
+        form:
+
+            (status, fault_addr)
+
+        If the fault_addr is not available, None should be returned.
         '''
         raise NotImplementedError
 
@@ -122,9 +134,12 @@ class STLink(usb_probe.Probe):
         Raises an exception if the last transfer status code is not in the
         allowed_status list.
         '''
-        err = self._usb_last_xfer_status()
-        if err[0] not in allowed_status:
-            raise Exception('Unexpected error 0x%02X: %s' % (err[0], err))
+        status, fault_addr = self._usb_last_xfer_status()
+        if status not in allowed_status:
+            msg = 'Unexpected error 0x%02X' % status
+            if fault_addr is not None:
+                msg += ' at 0x%08X' % fault_addr
+            raise STLinkXFERException(status, fault_addr, msg)
 
     def _read_dpidr(self):
         '''
