@@ -239,9 +239,11 @@ def main(rv):
         return
 
     probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe.set_tck_freq(rv.probe_freq)
+
     print('Starting server on port %s for %s' % (rv.port, probe))
-    probe.set_tck_freq_max()
     target = probe.probe(verbose=rv.verbose)
+    target.set_max_tck_freq()
     target.resume()
     GDBServer(target, rv.port, rv.verbose)
 
@@ -253,6 +255,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=3333)
     parser.add_argument('--usb-path')
+    parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--dump', action='store_true')
     main(parser.parse_args())

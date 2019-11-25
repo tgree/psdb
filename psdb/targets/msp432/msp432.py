@@ -7,7 +7,7 @@ from psdb.targets import Target
 
 class MSP432P401(Target):
     def __init__(self, db):
-        super(MSP432P401, self).__init__(db)
+        super(MSP432P401, self).__init__(db, 3300000)
         self.ahb_ap = self.db.aps[0]
         self.flash  = FLCTL(self, 'FLCTL', 0x40011000, 0x00201108)
         MemDevice(self, 'FBANK0', 0x00000000, self.flash.flash_size)

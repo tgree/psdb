@@ -202,6 +202,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
     args = parser.parse_args()
 
@@ -212,11 +213,14 @@ if __name__ == '__main__':
         print(e)
         sys.exit(1)
 
-    # Set the max clock frequency.
-    args.probe.set_tck_freq_max()
+    # Set the target-probing frequency.
+    args.probe.set_tck_freq(args.probe_freq)
 
     # Probe the target platform.
     args.target = args.probe.probe(verbose=args.verbose)
+
+    # Set the max clock frequency.
+    args.target.set_max_tck_freq()
 
     # Interact with the UI.
     tgcurses.wrapper(main, args)

@@ -40,6 +40,7 @@ FEATURE_RW_STATUS_12  = (1 << 0)
 FEATURE_SWD_SET_FREQ  = (1 << 1)
 FEATURE_BULK_READ_16  = (1 << 2)
 FEATURE_BULK_WRITE_16 = (1 << 3)
+FEATURE_VOLTAGE       = (1 << 4)
 
 
 class STLinkCmdException(Exception):
@@ -48,6 +49,13 @@ class STLinkCmdException(Exception):
         self.cmd = cmd
         self.rsp = rsp
         self.err = rsp[0]
+
+
+class STLinkXFERException(Exception):
+    def __init__(self, status, fault_addr, msg):
+        super(Exception, self).__init__(msg)
+        self.status     = status
+        self.fault_addr = fault_addr
 
 
 class STLink(usb_probe.Probe):
@@ -113,7 +121,12 @@ class STLink(usb_probe.Probe):
     def _usb_last_xfer_status(self):
         '''
         To be implemented by the subclass.  Different STLINK probes get the
-        transfer status in different ways.
+        transfer status in different ways.  This should return a tuple of the
+        form:
+
+            (status, fault_addr)
+
+        If the fault_addr is not available, None should be returned.
         '''
         raise NotImplementedError
 
@@ -122,15 +135,27 @@ class STLink(usb_probe.Probe):
         Raises an exception if the last transfer status code is not in the
         allowed_status list.
         '''
-        err = self._usb_last_xfer_status()
-        if err[0] not in allowed_status:
-            raise Exception('Unexpected error 0x%02X: %s' % (err[0], err))
+        status, fault_addr = self._usb_last_xfer_status()
+        if status not in allowed_status:
+            msg = 'Unexpected error 0x%02X' % status
+            if fault_addr is not None:
+                msg += ' at 0x%08X' % fault_addr
+            raise STLinkXFERException(status, fault_addr, msg)
 
     def _read_dpidr(self):
         '''
         To be implemented by the subclass.
         '''
         raise NotImplementedError
+
+    def _get_voltage(self):
+        '''
+        Returns the target voltage.
+        '''
+        assert self.features & FEATURE_VOLTAGE
+        rsp = self._usb_xfer_in(cdb.ReadVoltage.make(), 8)
+        vref_adc, target_adc = cdb.ReadVoltage.decode(rsp)
+        return 2.4 * target_adc / vref_adc
 
     def _current_mode(self):
         '''
@@ -248,9 +273,6 @@ class STLink(usb_probe.Probe):
     def deassert_srst(self):
         '''Releases the target from reset.'''
         self._cmd_allow_retry(cdb.SetSRST.make(False), 2)
-
-    def set_tck_freq(self, freq_hz):
-        raise NotImplementedError
 
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''

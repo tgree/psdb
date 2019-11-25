@@ -17,13 +17,12 @@ class STLinkV3E(stlink.STLink):
         self.features      |= stlink.FEATURE_BULK_READ_16
         self.features      |= stlink.FEATURE_BULK_WRITE_16
         self.features      |= stlink.FEATURE_RW_STATUS_12
+        self.features      |= stlink.FEATURE_VOLTAGE
         self._swd_freqs_khz = sorted(self._get_com_freq(), reverse=True)
 
     def _usb_last_xfer_status(self):
-        '''
-        Returns a 12-byte transfer status; the error code is in the first byte.
-        '''
-        return self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
+        rsp = self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
+        return cdb.LastXFERStatus12.decode(rsp)
 
     def _usb_version(self):
         rsp = self._usb_xfer_in(cdb.Version2.make(), 12)

@@ -22,13 +22,13 @@ class STM32H7ROMTable1(psdb.component.Component):
 
 class STM32H7(Target):
     def __init__(self, db):
-        super(STM32H7, self).__init__(db)
+        super(STM32H7, self).__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.apbd_ap    = self.db.aps[2]
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
-        self.flash      = FLASH(self, 'FLASH', 0x52002000, 0x08000000)
+        self.flash      = FLASH(self, 'FLASH', 0x52002000, 0x08000000, 3300000)
         MemDevice(self, 'FBANKS', self.flash.mem_base, self.flash.flash_size)
 
     def __repr__(self):
