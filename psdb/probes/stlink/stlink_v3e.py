@@ -2,11 +2,6 @@ import usb
 from . import stlink
 from . import cdb
 
-from struct import unpack
-
-
-MAX_FREQS = 10
-
 
 class STLinkV3E(stlink.STLink):
     '''
@@ -48,10 +43,9 @@ class STLinkV3E(stlink.STLink):
         '''
         Returns the list of supported frequencies, in kHz.
         '''
-        cmd   = cdb.make_get_com_freq(int(is_jtag))
-        rsp   = self._cmd_allow_retry(cmd, 12 + 4*MAX_FREQS)
-        count = min(rsp[8], MAX_FREQS)
-        return unpack('<' + 'I'*count, rsp[12:12 + count*4])
+        cmd   = cdb.GetComFreqs.make(is_jtag)
+        rsp   = self._cmd_allow_retry(cmd, cdb.GetComFreqs.RSP_LEN)
+        return cdb.GetComFreqs.decode(rsp)
 
     def _set_com_freq(self, freq_khz, is_jtag=False):
         '''

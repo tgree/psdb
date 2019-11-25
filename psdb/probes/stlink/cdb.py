@@ -304,8 +304,55 @@ class SetSWDCLKDivisor(STLinkCommand):
         return make_cdb(pack('<BBH', 0xF2, 0x43, divisor))
 
 
-def make_get_com_freq(is_jtag):
-    return make_cdb(pack('<BBB', 0xF2, 0x62, int(is_jtag)))
+class GetComFreqs(STLinkCommand):
+    '''
+    Returns the list of communication frequencies supported by the debug probe.
+    Presumably, the debug probe only supports specific frequencies now instead
+    of allowing you to select a divider.
+
+    On OpenOCD, the response size is limited to 52 bytes and if N > 10 the list
+    is truncated.  If N < 10, OpenOCD pads the list with zeroes on the end.
+
+    The jtag_or_swd field:
+        0 - SWD frequencies
+        1 - JTAG frequencies
+
+    Availability: V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x62      |  jtag_or_swd   |
+        +----------------+----------------+----------------+
+
+    RX_EP (52 bytes):
+        +----------------+----------------+----------------+----------------+
+        |     STATUS     |       --       |      --        |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                                --                                 |
+        +----------------+----------------+----------------+----------------+
+        |       N        |       --       |      --        |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                             freq_khz[0]                           |
+        +-------------------------------------------------------------------+
+        |                             freq_khz[1]                           |
+        +-------------------------------------------------------------------+
+        |                                ...                                |
+        +-------------------------------------------------------------------+
+        |                            freq_khz[N-1]                          |
+        +-------------------------------------------------------------------+
+    '''
+    MAX_FREQS = 10
+    RSP_LEN   = 12 + 4*MAX_FREQS
+
+    @staticmethod
+    def make(is_jtag):
+        return make_cdb(pack('<BBB', 0xF2, 0x62, int(is_jtag)))
+
+    @staticmethod
+    def decode(rsp):
+        avail = (len(rsp) - 12) / 4
+        count = min(avail, rsp[8], GetComFreqs.MAX_FREQS)
+        return unpack('<' + 'I'*count, rsp[12:12 + count*4])
 
 
 def make_set_com_freq(freq_khz, is_jtag):
