@@ -19,8 +19,47 @@ def make_cdb(cmd):
     return cmd + bytes(b'\x00'*(16 - len(cmd)))
 
 
-def make_version_1():
-    return make_cdb(pack('<B', 0xF1))
+class STLinkCommand(object):
+    pass
+
+
+class Version1(STLinkCommand):
+    '''
+    Returns the version of the STLINK debug probe.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+
+        |      0xF1      |
+        +----------------+
+
+    RX_EP (6 bytes):
+        +----------------+----------------+---------------------------------+
+        |       v0       |       v1       |               VID               |
+        +----------------+----------------+---------------------------------+
+        |               PID               |
+        +---------------------------------+
+
+    (v0 << 8) | v1:
+         15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        | v_stlink  |     v_jtag      |     v_swim      |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<B', 0xF1))
+
+    @staticmethod
+    def decode(rsp):
+        assert len(rsp) == 6
+        v0, v1, vid, pid = unpack('<BBHH', rsp)
+        v = (v0 << 8) | v1
+        v_stlink = (v >> 12) & 0x0F
+        v_jtag   = (v >>  6) & 0x3F
+        v_swim   = (v >>  0) & 0x3F
+        return v_stlink, v_jtag, v_swim, vid, pid
 
 
 def make_version_2():

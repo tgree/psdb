@@ -3,8 +3,6 @@ import usb
 from . import stlink
 from . import cdb
 
-from struct import unpack
-
 
 # Unknown commands sniffed via debugger:
 # --------------------------------------------------------
@@ -49,14 +47,12 @@ class STLinkV2_1(stlink.STLink):
         return self._usb_xfer_in(cdb.make_last_xfer_status_2(), 2)
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(cdb.make_version_1(), 6)
-        v0, v1, vid, pid = unpack('<BBHH', rsp)
-        v = (v0 << 8) | v1
-        self.ver_stlink = (v >> 12) & 0x0F
-        self.ver_jtag   = (v >>  6) & 0x3F
-        self.ver_swim   = (v >>  0) & 0x3F
-        self.ver_vid    = vid
-        self.ver_pid    = pid
+        rsp = self._usb_xfer_in(cdb.Version1.make(), 6)
+        (self.ver_stlink,
+         self.ver_jtag,
+         self.ver_swim,
+         self.ver_vid,
+         self.ver_pid) = cdb.Version1.decode(rsp)
 
     def _read_dpidr(self):
         rsp = self._cmd_allow_retry(cdb.make_read_idcodes(), 12)
