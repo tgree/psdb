@@ -40,6 +40,25 @@ class Flash(object):
         assert 0 <= nsectors and fbit + nsectors <= self.nsectors
         return ((1 << nsectors) - 1) << fbit
 
+    def set_swd_freq_write(self, verbose=True):
+        '''
+        Sets the probe's SWD clock frequency to one supported by the target for
+        writing to flash.
+
+        Only needs to be implemented if the max read/write frequencies differ.
+        '''
+        pass
+
+    def set_swd_freq_read(self, verbose=True):
+        '''
+        Sets the probe's SWD clock frequency to one supported by the target for
+        reading from flash.  This is typically the maximum SWD frequency
+        supported by the target.
+
+        Only needs to be implemented if the max read/write frequencies differ.
+        '''
+        pass
+
     def erase_sector(self, n, verbose=True):
         '''
         Erases the nth sector.
@@ -118,6 +137,8 @@ class Flash(object):
             mask |= self._mask_for_alp(block.addr, len(block.data))
         self.erase_sectors(mask)
 
+        self.set_swd_freq_write(verbose=verbose)
+
         t0 = time.time()
         total_len = 0
         for block in bd.blocks.values():
@@ -130,6 +151,8 @@ class Flash(object):
             elapsed = time.time() - t0
             print('Wrote %u bytes in %.2f seconds (%.2f K/s).' %
                   (total_len, elapsed, total_len / (1024*elapsed)))
+
+        self.set_swd_freq_read(verbose=verbose)
 
         t0 = time.time()
         for block in bd.blocks.values():
