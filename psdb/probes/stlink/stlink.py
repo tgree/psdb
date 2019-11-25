@@ -215,7 +215,7 @@ class STLink(usb_probe.Probe):
         '''
         if not data:
             return
-        self._usb_xfer_out(cdb.BulkWrite16.make(addr, data, ap_num), data)
+        self._usb_xfer_out(cdb.BulkWrite16.make(data, addr, ap_num), data)
         self._usb_raise_for_status()
 
     def _bulk_write_32(self, data, addr, ap_num=0):
@@ -224,7 +224,7 @@ class STLink(usb_probe.Probe):
         '''
         if not data:
             return
-        self._usb_xfer_out(cdb.BulkWrite32.make(addr, data, ap_num), data)
+        self._usb_xfer_out(cdb.BulkWrite32.make(data, addr, ap_num), data)
         self._usb_raise_for_status()
 
     def _should_offload_ap(self, ap_num):
