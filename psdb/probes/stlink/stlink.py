@@ -243,11 +243,11 @@ class STLink(usb_probe.Probe):
 
     def assert_srst(self):
         '''Holds the target in reset.'''
-        self._cmd_allow_retry(cdb.make_set_srst(True), 2)
+        self._cmd_allow_retry(cdb.SetSRST.make(True), 2)
 
     def deassert_srst(self):
         '''Releases the target from reset.'''
-        self._cmd_allow_retry(cdb.make_set_srst(False), 2)
+        self._cmd_allow_retry(cdb.SetSRST.make(False), 2)
 
     def set_tck_freq(self, freq_hz):
         raise NotImplementedError

@@ -697,8 +697,31 @@ class LastXFERStatus12(STLinkCommand):
         return make_cdb(pack('<BB', 0xF2, 0x3E))
 
 
-def make_set_srst(asserted):
-    return make_cdb(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
+class SetSRST(STLinkCommand):
+    '''
+    Asserts or deasserts the nSRST signal to the target MCU.  Note that the API
+    takes a parameter to *assert* SRST while the level field has inverse
+    polarity.
+
+    Set the level field:
+        0 - assert SRST and hold the MCU in reset
+        1 - deassert SRST and allow the MCU to run
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x3C      |      level     |
+        +----------------+----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make(asserted):
+        return make_cdb(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
 
 
 def make_read_ap_reg(apsel, addr):
