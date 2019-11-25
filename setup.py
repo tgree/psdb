@@ -17,6 +17,8 @@ setuptools.setup(
               'psdb.cpus',
               'psdb.elf',
               'psdb.probes',
+              'psdb.probes.stlink',
+              'psdb.probes.xds110',
               'psdb.targets',
               'psdb.targets.msp432',
               'psdb.targets.stm32h7',

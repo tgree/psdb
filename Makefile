@@ -7,6 +7,8 @@ PYPSDB_DEPS := \
 		psdb/cpus/*.py 				\
 		psdb/elf/*.py				\
 		psdb/probes/*.py			\
+		psdb/probes/stlink/*.py		\
+		psdb/probes/xds110/*.py		\
 		psdb/targets/*.py			\
 		psdb/targets/msp432/*.py	\
 		psdb/targets/stm32h7/*.py	\
