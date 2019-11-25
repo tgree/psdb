@@ -31,7 +31,7 @@ DATA_SIZE = 4096
 # Commands to exit DFU, DEBUG or SWIM mode.  We need this table so that we can
 # get the probe out of its current mode and into SWD mode.
 MODE_EXIT_CMD = {cdb.MODE_DFU:   cdb.LeaveDFUMode.make(),
-                 cdb.MODE_DEBUG: cdb.make_mode_leave_debug(),
+                 cdb.MODE_DEBUG: cdb.LeaveDebugMode.make(),
                  cdb.MODE_SWIM:  cdb.make_mode_leave_swim(),
                  }
 

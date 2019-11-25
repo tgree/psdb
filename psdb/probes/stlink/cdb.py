@@ -200,8 +200,23 @@ class LeaveDFUMode(STLinkCommand):
         return make_cdb(pack('<BB', 0xF3, 0x07))
 
 
-def make_mode_leave_debug():
-    return make_cdb(pack('<BB', 0xF2, 0x21))
+class LeaveDebugMode(STLinkCommand):
+    '''
+    Leaves Debug mode.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x21      |
+        +----------------+----------------+
+
+    RX_EP:
+        None
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF2, 0x21))
 
 
 def make_mode_leave_swim():
