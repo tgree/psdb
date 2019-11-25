@@ -249,7 +249,7 @@ class STLink(usb_probe.Probe):
         '''Releases the target from reset.'''
         self._cmd_allow_retry(cdb.make_set_srst(False), 2)
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         raise NotImplementedError
 
     def read_ap_reg(self, apsel, addr):

@@ -64,7 +64,7 @@ class STLinkV2_1(stlink.STLink):
         cmd = cdb.SetSWDCLKDivisor.make(divisor)
         self._cmd_allow_retry(cmd, 2)
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         '''
         Sets the TCK to the nearest frequency that doesn't exceed the
         requested one.  Returns the actual frequency in Hz.
@@ -84,10 +84,10 @@ class STLinkV2_1(stlink.STLink):
                     (  15000, 265),
                     (   5000, 798)]
         for f, d in freq_map:
-            if freq >= f:
+            if freq_hz >= f:
                 self._set_swdclk_divisor(d)
                 return f
-        raise Exception('Frequency %s too low!' % freq)
+        raise Exception('Frequency %s too low!' % freq_hz)
 
     def show_info(self):
         super(STLinkV2_1, self).show_info()
