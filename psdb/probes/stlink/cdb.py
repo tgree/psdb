@@ -724,13 +724,40 @@ class SetSRST(STLinkCommand):
         return make_cdb(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
 
 
-def make_read_ap_reg(apsel, addr):
-    return make_cdb(pack('<BBHB', 0xF2, 0x45, apsel, addr))
+class ReadAPReg(STLinkCommand):
+    '''
+    Reads a 32-bit register from the AP register space.  This is mostly useful
+    so that we can retrieve the BASE register from the AP, allowing us to find
+    the base address of this AP's ROM tables.
 
+    According to an OpenOCD commit message, the STLINK supports AP accesses to
+    AP numbers 0-8. (Commit 5c55fbb065a829beafa233e5c0c0be56d9664934).
+    Attempts to access AP numbers outside this range return STATUS 29.
 
-def decode_read_ap_reg(rsp):
-    status, _, _, _, reg32 = unpack('<BBBBI', rsp)
-    return reg32
+    Availability: Undocumented command.  At least V2.1 J29 and V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x45      |               AP                |
+        +----------------+----------------+---------------------------------+
+        |      ADDR      |
+        +----------------+
+
+    RX_EP (8 bytes):
+        +----------------+----------------+----------------+----------------+
+        |     STATUS     |       --       |       --       |       --       |
+        +----------------+----------------+----------------+----------------+
+        |                           Register Value                          |
+        +-------------------------------------------------------------------+
+    '''
+    @staticmethod
+    def make(ap_num, addr):
+        return make_cdb(pack('<BBHB', 0xF2, 0x45, ap_num, addr))
+
+    @staticmethod
+    def decode(rsp):
+        status, _, _, _, reg32 = unpack('<BBBBI', rsp)
+        return reg32
 
 
 def make_write_ap_reg(apsel, addr, value):

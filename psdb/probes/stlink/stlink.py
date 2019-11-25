@@ -254,9 +254,9 @@ class STLink(usb_probe.Probe):
 
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''
-        cmd = cdb.make_read_ap_reg(apsel, addr)
+        cmd = cdb.ReadAPReg.make(apsel, addr)
         rsp = self._cmd_allow_retry(cmd, 8)
-        return cdb.decode_read_ap_reg(rsp)
+        return cdb.ReadAPReg.decode(rsp)
 
     def write_ap_reg(self, apsel, addr, value):
         '''Write a 32-bit register in the AP address space.'''
