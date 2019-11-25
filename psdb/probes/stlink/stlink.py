@@ -32,7 +32,7 @@ DATA_SIZE = 4096
 # get the probe out of its current mode and into SWD mode.
 MODE_EXIT_CMD = {cdb.MODE_DFU:   cdb.LeaveDFUMode.make(),
                  cdb.MODE_DEBUG: cdb.LeaveDebugMode.make(),
-                 cdb.MODE_SWIM:  cdb.make_mode_leave_swim(),
+                 cdb.MODE_SWIM:  cdb.LeaveSWIMMode.make(),
                  }
 
 # Features supported by various versions of the STLINK firmware.

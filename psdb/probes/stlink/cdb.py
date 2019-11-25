@@ -219,8 +219,23 @@ class LeaveDebugMode(STLinkCommand):
         return make_cdb(pack('<BB', 0xF2, 0x21))
 
 
-def make_mode_leave_swim():
-    return make_cdb(pack('<BB', 0xF4, 0x01))
+class LeaveSWIMMode(STLinkCommand):
+    '''
+    Leaves Debug mode.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF4      |      0x01      |
+        +----------------+----------------+
+
+    RX_EP:
+        None
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF4, 0x01))
 
 
 def make_swd_connect():
