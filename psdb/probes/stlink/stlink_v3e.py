@@ -31,15 +31,14 @@ class STLinkV3E(stlink.STLink):
         return self._usb_xfer_in(cdb.make_last_xfer_status_12(), 12)
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(cdb.make_version_2(), 12)
+        rsp = self._usb_xfer_in(cdb.Version2.make(), 12)
         (self.ver_stlink,
          self.ver_swim,
          self.ver_jtag,
          self.ver_msd,
          self.ver_bridge,
-         _, _, _,
          self.ver_vid,
-         self.ver_pid) = unpack('<BBBBBBBBHH', rsp)
+         self.ver_pid) = cdb.Version2.decode(rsp)
 
     def _read_dpidr(self):
         rsp = self._cmd_allow_retry(cdb.make_read_idcodes(), 12)

@@ -62,8 +62,35 @@ class Version1(STLinkCommand):
         return v_stlink, v_jtag, v_swim, vid, pid
 
 
-def make_version_2():
-    return make_cdb(pack('<B', 0xFB))
+class Version2(STLinkCommand):
+    '''
+    Returns the version of the STLINK/V3 debug probe.
+
+    Availability: V3.
+
+    TX_EP (CDB):
+        +----------------+
+        |      0xFB      |
+        +----------------+
+
+    RX_EP (12 bytes):
+        +----------------+----------------+----------------+----------------+
+        |    v_stlink    |    v_swim      |     v_jtag     |     v_msd      |
+        +----------------+----------------+----------------+----------------+
+        |    v_bridge    |       --       |       --       |       --       |
+        +----------------+----------------+----------------+----------------+
+        |               VID               |               PID               |
+        +---------------------------------+---------------------------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<B', 0xFB))
+
+    @staticmethod
+    def decode(rsp):
+        (v_stlink, v_swim, v_jtag, v_msd, v_bridge,
+         _, _, _, vid, pid) = unpack('<BBBBBBBBHH', rsp)
+        return v_stlink, v_swim, v_jtag, v_msd, v_bridge, vid, pid
 
 
 def make_read_coreid():
