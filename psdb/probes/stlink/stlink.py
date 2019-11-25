@@ -42,6 +42,14 @@ FEATURE_BULK_READ_16  = (1 << 2)
 FEATURE_BULK_WRITE_16 = (1 << 3)
 
 
+class STLinkCmdException(Exception):
+    def __init__(self, cmd, rsp, msg):
+        super(Exception, self).__init__(msg)
+        self.cmd = cmd
+        self.rsp = rsp
+        self.err = rsp[0]
+
+
 class STLink(usb_probe.Probe):
     '''
     STLink V2.1 debug probe.  This can be found on the Nucleo 144 board we have
@@ -96,7 +104,9 @@ class STLink(usb_probe.Probe):
                 return data
 
             if data[0] not in (0x10, 0x14):
-                raise Exception('Unexpected error 0x%02X: %s' % (data[0], data))
+                raise STLinkCmdException(cmd, data,
+                                         'Unexpected error 0x%02X: %s'
+                                         % (data[0], data))
             time.sleep(delay)
         raise Exception('Max retries exceeded!')
 
