@@ -261,8 +261,47 @@ class SWDConnect(STLinkCommand):
         return make_cdb(pack('<BBB', 0xF2, 0x30, 0xA3))
 
 
-def make_set_swdclk_divisor(divisor):
-    return make_cdb(pack('<BBH', 0xF2, 0x43, divisor))
+class SetSWDCLKDivisor(STLinkCommand):
+    '''
+    Sets the clock divider for the debug interface.  I probed the clock on a
+    Nucleo-H743ZI board using an oscilloscope and it seems like the divisor
+    value isn't really a divisor of any specific base clock speed, and it also
+    seems like the clock speeds on the scope are not really in sync with the
+    clock speeds as documented in the OpenOCD source code.  I measured some of
+    the OpenOCD values and documented all the values beloew for reference:
+
+                    | OCD  | Scope
+            Divisor | kHz  |  kHz
+            --------+------+------
+                  0 | 4000 | 2360
+                  1 | 1800 | 1553
+                  2 | 1200 | 1230
+                  3 |  950 |  960
+                  7 |  480 |  484
+                 15 |  240 |  245
+                 31 |  125 |  123
+                 40 |  100 |
+                 79 |   50 |
+                158 |   25 |
+                265 |   15 |
+                798 |    5 |
+            --------+------+------
+
+    Availability: V2 with J >= 22.  On V3, use SetCOMFreq instead.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x43      |             divisor             |
+        +----------------+----------------+---------------------------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make(divisor):
+        return make_cdb(pack('<BBH', 0xF2, 0x43, divisor))
 
 
 def make_get_com_freq(is_jtag):

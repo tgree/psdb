@@ -61,32 +61,13 @@ class STLinkV2_1(stlink.STLink):
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22
-        cmd = cdb.make_set_swdclk_divisor(divisor)
+        cmd = cdb.SetSWDCLKDivisor.make(divisor)
         self._cmd_allow_retry(cmd, 2)
 
     def set_tck_freq(self, freq):
         '''
         Sets the TCK to the nearest frequency that doesn't exceed the
         requested one.  Returns the actual frequency in Hz.
-        According to OCD divisors map to frequencies as follows:
-                    | OCD  | Scope
-            Divisor | kHz  |  kHz
-            --------+------+------
-                  0 | 4000 | 2360
-                  1 | 1800 | 1553
-                  2 | 1200 | 1230
-                  3 |  950 |  960
-                  7 |  480 |  484
-                 15 |  240 |  245
-                 31 |  125 |  123
-                 40 |  100 |
-                 79 |   50 |
-                158 |   25 |
-                265 |   15 |
-                798 |    5 |
-            --------+------+------
-
-        Basically the clock is crap.  We'll just go with the OCD table.
         '''
         assert self.features & stlink.FEATURE_SWD_SET_FREQ
 
