@@ -760,8 +760,30 @@ class ReadAPReg(STLinkCommand):
         return reg32
 
 
-def make_write_ap_reg(apsel, addr, value):
-    return make_cdb(pack('<BBHHI', 0xF2, 0x46, apsel, addr, value))
+class WriteAPReg(STLinkCommand):
+    '''
+    Writes a 32-bit register in the AP register space.  This does get invoked
+    when we probe the sizes supported by an AHBAP or APBAP.
+
+    Availability: Undocumented command.  At least V2.1 J29 and V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x46      |               AP                |
+        +----------------+----------------+---------------------------------+
+        |              ADDR               |            Val[31:16]          ...
+        +---------------------------------+---------------------------------+
+       ...            Val[15:0]           |
+        +---------------------------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make(ap_num, addr, value):
+        return make_cdb(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
 
 
 def make_read_32(addr, ap_num):
