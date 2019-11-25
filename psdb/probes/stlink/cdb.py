@@ -93,14 +93,33 @@ class Version2(STLinkCommand):
         return v_stlink, v_swim, v_jtag, v_msd, v_bridge, vid, pid
 
 
-def make_read_coreid():
-    return make_cdb(pack('<BB', 0xF2, 0x22))
+class ReadCoreID(STLinkCommand):
+    '''
+    Returns the DP DPIDR value.
+    See "ARM Debug Interface Architecture Specification ADIv5.0 to ADIv5.2"
+    section 2.3.5.
 
+    Availability: All.  ReadIDCodes recommended instead for V2+.
 
-def decode_read_coreid(rsp):
-    assert len(rsp) == 4
-    dpidr, = unpack('<I', rsp)
-    return dpidr
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x22      |
+        +----------------+----------------+
+
+    RX_EP (4 bytes):
+        +-------------------------------------------------------------------+
+        |                               DPIDR                               |
+        +-------------------------------------------------------------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF2, 0x22))
+
+    @staticmethod
+    def decode(rsp):
+        assert len(rsp) == 4
+        dpidr, = unpack('<I', rsp)
+        return dpidr
 
 
 def make_read_idcodes():
