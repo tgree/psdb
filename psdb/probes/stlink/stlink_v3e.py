@@ -63,13 +63,13 @@ class STLinkV3E(stlink.STLink):
         raise Exception('Requested frequency %u kHz too low; minimum is '
                         '%u kHz.' % (freq_khz, self._swd_freqs_khz[-1]))
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         '''
         Sets the communication frequency to the highest supported frequency
         that doesn't exceed the requested one.  Returns the actual frequency in
         Hz.
         '''
-        return self._set_com_freq(freq, is_jtag=False) * 1000
+        return self._set_com_freq(freq_hz // 1000, is_jtag=False) * 1000
 
     def show_info(self):
         super(STLinkV3E, self).show_info()
