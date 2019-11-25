@@ -149,8 +149,8 @@ class STLink(usb_probe.Probe):
         Enters SWD mode.
         '''
         self._leave_current_mode()
-        self._cmd_allow_retry(cdb.make_swd_connect(), 2)
-        assert self._current_mode() == 0x02
+        self._cmd_allow_retry(cdb.SWDConnect.make(), 2)
+        assert self._current_mode() == cdb.MODE_DEBUG
 
     def _bulk_read_8(self, addr, n, ap_num=0):
         '''

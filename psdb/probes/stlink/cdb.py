@@ -238,8 +238,27 @@ class LeaveSWIMMode(STLinkCommand):
         return make_cdb(pack('<BB', 0xF4, 0x01))
 
 
-def make_swd_connect():
-    return make_cdb(pack('<BBB', 0xF2, 0x30, 0xA3))
+class SWDConnect(STLinkCommand):
+    '''
+    Connect to the target using SWD mode.  Note that the debug interface clock
+    speed should be set before connecting since this command starts clocking
+    the target.
+
+    Availability: All.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x30      |      0xA3      |
+        +----------------+----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BBB', 0xF2, 0x30, 0xA3))
 
 
 def make_set_swdclk_divisor(divisor):
