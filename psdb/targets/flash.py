@@ -44,7 +44,6 @@ class Flash(object):
         '''
         Erases the nth sector.
         '''
-        assert 0 <= n and n < self.nsectors
         raise NotImplementedError
 
     def erase_sectors(self, mask, verbose=True):
