@@ -205,7 +205,7 @@ class STLink(usb_probe.Probe):
         assert len(data) <= self.max_rw8
         if not data:
             return
-        self._usb_xfer_out(cdb.make_bulk_write_8(data, addr, ap_num), data)
+        self._usb_xfer_out(cdb.BulkWrite8.make(data, addr, ap_num), data)
         self._usb_raise_for_status()
 
     def _bulk_write_16(self, data, addr, ap_num=0):
