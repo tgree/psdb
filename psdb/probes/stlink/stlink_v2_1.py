@@ -44,7 +44,7 @@ class STLinkV2_1(stlink.STLink):
         '''
         if self.features & stlink.FEATURE_RW_STATUS_12:
             return self._usb_xfer_in(cdb.make_last_xfer_status_12(), 12)
-        return self._usb_xfer_in(cdb.make_last_xfer_status_2(), 2)
+        return self._usb_xfer_in(cdb.LastXFERStatus2.make(), 2)
 
     def _usb_version(self):
         rsp = self._usb_xfer_in(cdb.Version1.make(), 6)

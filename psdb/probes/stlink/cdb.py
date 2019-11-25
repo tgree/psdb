@@ -647,8 +647,27 @@ class BulkWrite32(STLinkCommand):
         return make_cdb(pack('<BBIHB', 0xF2, 0x08, addr, len(data), ap_num))
 
 
-def make_last_xfer_status_2():
-    return make_cdb(pack('<BB', 0xF2, 0x3B))
+class LastXFERStatus2(STLinkCommand):
+    '''
+    Returns the status of the last DATA transfer since it is not available in
+    the DATA phase.
+
+    Availability: V1 and V2.  LastXFERStatus12 is required for V3 and
+                  recommended for V2 with J >= 15.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x3B      |
+        +----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make():
+        return make_cdb(pack('<BB', 0xF2, 0x3B))
 
 
 def make_last_xfer_status_12():
