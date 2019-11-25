@@ -224,7 +224,7 @@ class STLink(usb_probe.Probe):
         '''
         if not data:
             return
-        self._usb_xfer_out(cdb.make_bulk_write_32(addr, data, ap_num), data)
+        self._usb_xfer_out(cdb.BulkWrite32.make(addr, data, ap_num), data)
         self._usb_raise_for_status()
 
     def _should_offload_ap(self, ap_num):
