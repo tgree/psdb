@@ -18,6 +18,13 @@ MAX_DATA_BLOCK   = 4096
 USB_PAYLOAD_SIZE = MAX_DATA_BLOCK + 60
 
 
+def version_string(v):
+    return '%u.%u.%u.%u' % (((v & 0xFF000000) >> 24),
+                            ((v & 0x00FF0000) >> 16),
+                            ((v & 0x0000FF00) >>  8),
+                            ((v & 0x000000FF) >>  0))
+
+
 class XDS110CommandException(probe.Exception):
     def __init__(self, error, allowed_errs, response):
         super(XDS110CommandException, self).__init__('XDS110 error %d' % error)
@@ -387,11 +394,7 @@ class XDS110(usb_probe.Probe):
     def show_info(self):
         super(XDS110, self).show_info()
         print(' Hardware Ver: 0x%04X' % self.hw_version)
-        print(' Firmware Ver: %u.%u.%u.%u' % (
-                ((self.fw_version & 0xFF000000) >> 24),
-                ((self.fw_version & 0x00FF0000) >> 16),
-                ((self.fw_version & 0x0000FF00) >>  8),
-                ((self.fw_version & 0x000000FF) >>  0)))
+        print(' Firmware Ver: %s' % version_string(self.fw_version))
 
 
 def enumerate():
