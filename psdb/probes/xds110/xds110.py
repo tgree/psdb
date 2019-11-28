@@ -10,6 +10,8 @@ from struct import pack, unpack, unpack_from
 from builtins import bytes, range
 
 
+MIN_FW_VERSION = 0x02030014
+
 ENDPOINT_IN  = 0x83
 ENDPOINT_OUT = 0x02
 
@@ -25,6 +27,16 @@ def version_string(v):
                             ((v & 0x000000FF) >>  0))
 
 
+class XDS110VersionException(probe.Exception):
+    def __init__(self, fw_version, min_fw_version):
+        super(XDS110VersionException, self).__init__(
+            'Firmware version %s is too old, use Code Composer Studio to '
+            'upgrade to at least %s.' % (version_string(fw_version),
+                                         version_string(min_fw_version)))
+        self.fw_version     = fw_version
+        self.min_fw_version = min_fw_version
+
+
 class XDS110CommandException(probe.Exception):
     def __init__(self, error, allowed_errs, response):
         super(XDS110CommandException, self).__init__('XDS110 error %d' % error)
@@ -38,6 +50,8 @@ class XDS110(usb_probe.Probe):
         super(XDS110, self).__init__(usb_dev, 'XDS110')
         self.fw_version, self.hw_version = self.xds_version()
         self.csw_bases = {}
+        if self.fw_version < MIN_FW_VERSION:
+            raise XDS110VersionException(self.fw_version, MIN_FW_VERSION)
 
     def read(self, n):
         return self.usb_dev.read(ENDPOINT_IN, n, timeout=40000)
@@ -399,4 +413,12 @@ class XDS110(usb_probe.Probe):
 
 def enumerate():
     devices = usb.core.find(find_all=True, idVendor=0x0451, idProduct=0xBEF3)
-    return [XDS110(d) for d in devices]
+    good_devices = []
+    for d in devices:
+        try:
+            good_devices.append(XDS110(d))
+        except XDS110VersionException as e:
+            print('%s:%s: %s'
+                  % (d.bus, '.'.join('%u' % n for n in d.port_numbers), e))
+
+    return good_devices
