@@ -13,6 +13,7 @@ from .general_purpose_timer_32 import GPT32
 from .advanced_control_timer import ACT
 from .basic_timer import BT
 from .adc import ADC
+from .dac import DAC
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -48,6 +49,10 @@ DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (GPIO,   'GPIOG',    0x48001800),
            (ADC,    'ADC12',    0x50000000, 1, 2),
            (ADC,    'ADC345',   0x50000400, 3, 3),
+           (DAC,    'DAC1',     0x50000800),
+           (DAC,    'DAC2',     0x50000C00),
+           (DAC,    'DAC3',     0x50001000),
+           (DAC,    'DAC4',     0x50001400),
           ]
 
 
