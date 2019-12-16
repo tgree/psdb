@@ -14,6 +14,7 @@ from .advanced_control_timer import ACT
 from .basic_timer import BT
 from .adc import ADC
 from .dac import DAC
+from .comparator import COMP
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -29,6 +30,7 @@ DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (BT,     'TIM7',     0x40001400),
            (PWR,    'PWR',      0x40007000),
            (VREF,   'VREF',     0x40010030),
+           (COMP,   'COMP1',    0x40010200),
            (ACT,    'TIM1',     0x40012C00),
            (ACT,    'TIM8',     0x40013400),
            (GPT16,  'TIM15',    0x40014000),
