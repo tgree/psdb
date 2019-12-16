@@ -9,6 +9,7 @@ from .gpio import GPIO
 from .dma import DMA
 from .dma_mux import DMAMUX
 from .general_purpose_timer_16 import GPT16
+from .general_purpose_timer_32 import GPT32
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -16,6 +17,10 @@ from psdb.targets import Target
 DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (SRAM,   'SRAM1',    0x20000000, 0x00014000),
            (SRAM,   'SRAM2',    0x20014000, 0x00004000),
+           (GPT32,  'TIM2',     0x40000000),
+           (GPT32,  'TIM3',     0x40000400),
+           (GPT32,  'TIM4',     0x40000800),
+           (GPT32,  'TIM5',     0x40000C00),
            (PWR,    'PWR',      0x40007000),
            (VREF,   'VREF',     0x40010030),
            (GPT16,  'TIM15',    0x40014000),
