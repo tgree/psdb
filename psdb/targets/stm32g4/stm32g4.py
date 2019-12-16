@@ -9,6 +9,7 @@ from psdb.targets import Target
 DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (SRAM,   'SRAM1',    0x20000000, 0x00014000),
            (SRAM,   'SRAM2',    0x20014000, 0x00004000),
+           (FLASH,  'FLASH',    0x40022000, 0x00000000, 3300000),
           ]
 
 
@@ -19,8 +20,6 @@ class STM32G4(Target):
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FFF75E0) & 0x0000FFFF)*1024
         self.mcu_idcode = self.ahb_ap.read_32(0xE0042000)
-        self.flash      = FLASH(self, 'FLASH', 0x40022000, 0x00000000,
-                                3300000)
 
         for d in DEVICES:
             cls  = d[0]
@@ -29,6 +28,7 @@ class STM32G4(Target):
             args = d[3:]
             cls(self, name, addr, *args)
 
+        self.flash = self.devs['FLASH']
         MemDevice(self, 'FBANKS', self.flash.mem_base, self.flash.flash_size)
 
     def __repr__(self):
