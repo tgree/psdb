@@ -10,6 +10,7 @@ from .dma import DMA
 from .dma_mux import DMAMUX
 from .general_purpose_timer_16 import GPT16
 from .general_purpose_timer_32 import GPT32
+from .advanced_control_timer import ACT
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -23,9 +24,12 @@ DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (GPT32,  'TIM5',     0x40000C00),
            (PWR,    'PWR',      0x40007000),
            (VREF,   'VREF',     0x40010030),
+           (ACT,    'TIM1',     0x40012C00),
+           (ACT,    'TIM8',     0x40013400),
            (GPT16,  'TIM15',    0x40014000),
            (GPT16,  'TIM16',    0x40014400),
            (GPT16,  'TIM17',    0x40014800),
+           (ACT,    'TIM20',    0x40015000),
            (DMA,    'DMA1',     0x40020000),
            (DMA,    'DMA2',     0x40020400),
            (DMAMUX, 'DMAMUX',   0x40020800),
