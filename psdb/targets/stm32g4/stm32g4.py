@@ -6,6 +6,7 @@ from .pwr import PWR
 from .rcc import RCC
 from .vrefbuf import VREF
 from .gpio import GPIO
+from .dma import DMA
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -15,6 +16,8 @@ DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (SRAM,   'SRAM2',    0x20014000, 0x00004000),
            (PWR,    'PWR',      0x40007000),
            (VREF,   'VREF',     0x40010030),
+           (DMA,    'DMA1',     0x40020000),
+           (DMA,    'DMA2',     0x40020400),
            (RCC,    'RCC',      0x40021000),
            (FLASH,  'FLASH',    0x40022000, 0x00000000, 3300000),
            (GPIO,   'GPIOA',    0x48000000),
