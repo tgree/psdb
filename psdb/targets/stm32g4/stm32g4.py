@@ -8,6 +8,7 @@ from .vrefbuf import VREF
 from .gpio import GPIO
 from .dma import DMA
 from .dma_mux import DMAMUX
+from .general_purpose_timer_16 import GPT16
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -17,6 +18,9 @@ DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (SRAM,   'SRAM2',    0x20014000, 0x00004000),
            (PWR,    'PWR',      0x40007000),
            (VREF,   'VREF',     0x40010030),
+           (GPT16,  'TIM15',    0x40014000),
+           (GPT16,  'TIM16',    0x40014400),
+           (GPT16,  'TIM17',    0x40014800),
            (DMA,    'DMA1',     0x40020000),
            (DMA,    'DMA2',     0x40020400),
            (DMAMUX, 'DMAMUX',   0x40020800),
