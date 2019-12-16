@@ -2,6 +2,7 @@
 import psdb
 from .flash import FLASH
 from .sram import SRAM
+from .pwr import PWR
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -9,6 +10,7 @@ from psdb.targets import Target
 DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (SRAM,   'SRAM1',    0x20000000, 0x00014000),
            (SRAM,   'SRAM2',    0x20014000, 0x00004000),
+           (PWR,    'PWR',      0x40007000),
            (FLASH,  'FLASH',    0x40022000, 0x00000000, 3300000),
           ]
 
