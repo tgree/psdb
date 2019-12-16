@@ -1,8 +1,15 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 import psdb
 from .flash import FLASH
+from .sram import SRAM
 from ..device import MemDevice
 from psdb.targets import Target
+
+
+DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
+           (SRAM,   'SRAM1',    0x20000000, 0x00014000),
+           (SRAM,   'SRAM2',    0x20014000, 0x00004000),
+          ]
 
 
 class STM32G4(Target):
@@ -14,6 +21,14 @@ class STM32G4(Target):
         self.mcu_idcode = self.ahb_ap.read_32(0xE0042000)
         self.flash      = FLASH(self, 'FLASH', 0x40022000, 0x00000000,
                                 3300000)
+
+        for d in DEVICES:
+            cls  = d[0]
+            name = d[1]
+            addr = d[2]
+            args = d[3:]
+            cls(self, name, addr, *args)
+
         MemDevice(self, 'FBANKS', self.flash.mem_base, self.flash.flash_size)
 
     def __repr__(self):
