@@ -38,9 +38,9 @@ class ADC(Device):
                     (Reg32,  'CALFACT', 0xB4),
                     (Reg32,  'GCOMP',   0xC0),
                     ]
-    COM_ADC_REGS = [Reg32R('CSR', 0x00),
-                    Reg32 ('CCR', 0x08),
-                    Reg32R('CDR', 0x0C),
+    COM_ADC_REGS = [Reg32R('CSR', 0x300),
+                    Reg32 ('CCR', 0x308),
+                    Reg32R('CDR', 0x30C),
                     ]
 
     def __init__(self, target, name, addr, first_adc, nadcs):
