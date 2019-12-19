@@ -119,7 +119,7 @@ class Probe(object):
         '''Just probe as though it were a v1 DP for now.'''
         self._probe_dp_v1(verbose=verbose)
 
-    def probe(self, verbose=False):
+    def probe(self, verbose=False, connect_under_reset=False):
         '''
         First discovers which APs are attached to the debug probe and then
         performs component topology detection on each AP.  Finally, we attempt
@@ -129,6 +129,9 @@ class Probe(object):
         is further probed.  When we return, the target remains in the halted
         state and Target.resume() must be invoked if it is to continue running.
         '''
+        if connect_under_reset:
+            self.assert_srst()
+
         dpver = ((self.dpidr & 0x0000F000) >> 12)
         if dpver == 1:
             self._probe_dp_v1(verbose=verbose)
@@ -141,6 +144,16 @@ class Probe(object):
         self.cpus = []
         for _, ap in self.aps.items():
             ap.probe_components(verbose=verbose)
+
+        if connect_under_reset:
+            # Set DHSCR.C_DEBUGEN to enable Halting debug.
+            self.cpus[0].write_dhcsr(0xA05F0000 | (1<<0))
+
+            # Set DEMCR.VC_CORERESET to enable reset vector catch.
+            self.cpus[0].write_demcr(0x01000001)
+
+            # Deassert SRST.
+            self.deassert_srst()
 
         self.halt()
         self.target = psdb.targets.probe(self)

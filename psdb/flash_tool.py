@@ -24,7 +24,8 @@ def main(rv):
         probe.srst_target()
 
     # Use the probe to detect a target platform.
-    target = probe.probe(verbose=rv.verbose)
+    target = probe.probe(verbose=rv.verbose,
+                         connect_under_reset=rv.connect_under_reset)
     f      = target.set_max_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
@@ -68,6 +69,7 @@ if __name__ == '__main__':
     parser.add_argument('--usb-path')
     parser.add_argument('--halt', action='store_true')
     parser.add_argument('--srst', action='store_true')
+    parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--read-flash')
     parser.add_argument('--flash')
     parser.add_argument('--erase', action='store_true')

@@ -367,7 +367,7 @@ class STLink(usb_probe.Probe):
             return self.aps[ap_num]._write_bulk(data, addr)
         super(STLink, self).write_bulk(data, addr, ap_num)
 
-    def probe(self, verbose=False):
+    def probe(self, **kwargs):
         self._swd_connect()
         self.dpidr = self._read_dpidr()
-        return super(STLink, self).probe(verbose=verbose)
+        return super(STLink, self).probe(**kwargs)
