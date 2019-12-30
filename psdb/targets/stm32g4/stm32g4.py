@@ -8,7 +8,9 @@ from .vrefbuf import VREF
 from .gpio import GPIO
 from .dma import DMA
 from .dma_mux import DMAMUX
-from .general_purpose_timer_16 import GPT16
+from .general_purpose_timer_16x1 import GPT16x1
+from .general_purpose_timer_16x2 import GPT16x2
+from .general_purpose_timer_16x4 import GPT16x4
 from .general_purpose_timer_32 import GPT32
 from .advanced_control_timer import ACT
 from .basic_timer import BT
@@ -20,12 +22,12 @@ from ..device import MemDevice
 from psdb.targets import Target
 
 
-DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
+DEVICES = [(SRAM,   'CCM SRAM', 0x20018000, 0x00008000),
            (SRAM,   'SRAM1',    0x20000000, 0x00014000),
            (SRAM,   'SRAM2',    0x20014000, 0x00004000),
            (GPT32,  'TIM2',     0x40000000),
-           (GPT32,  'TIM3',     0x40000400),
-           (GPT32,  'TIM4',     0x40000800),
+           (GPT16x4,'TIM3',     0x40000400),
+           (GPT16x4,'TIM4',     0x40000800),
            (GPT32,  'TIM5',     0x40000C00),
            (BT,     'TIM6',     0x40001000),
            (BT,     'TIM7',     0x40001400),
@@ -35,9 +37,9 @@ DEVICES = [(SRAM,   'CCM SRAM', 0x10000000, 0x00008000),
            (OPAMP,  'OPAMP',    0x40010300),
            (ACT,    'TIM1',     0x40012C00),
            (ACT,    'TIM8',     0x40013400),
-           (GPT16,  'TIM15',    0x40014000),
-           (GPT16,  'TIM16',    0x40014400),
-           (GPT16,  'TIM17',    0x40014800),
+           (GPT16x2,'TIM15',    0x40014000),
+           (GPT16x1,'TIM16',    0x40014400),
+           (GPT16x1,'TIM17',    0x40014800),
            (ACT,    'TIM20',    0x40015000),
            (DMA,    'DMA1',     0x40020000),
            (DMA,    'DMA2',     0x40020400),

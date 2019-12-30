@@ -2,13 +2,14 @@
 from ..device import Device, Reg32, Reg32W
 
 
-class GPT16(Device):
+class GPT16x4(Device):
     '''
     Driver for the General-purpose Timer device (GPT) supporting only 16-bit
-    counters.
+    counters and four capture/compare registers.
     '''
     REGS = [Reg32 ('CR1',    0x000),
             Reg32 ('CR2',    0x004),
+            Reg32 ('SMCR',   0x008),
             Reg32 ('DIER',   0x00C),
             Reg32 ('SR',     0x010),
             Reg32W('EGR',    0x014),
@@ -18,10 +19,11 @@ class GPT16(Device):
             Reg32 ('CNT',    0x024),
             Reg32 ('PSC',    0x028),
             Reg32 ('ARR',    0x02C),
-            Reg32 ('RCR',    0x030),
             Reg32 ('CCR1',   0x034),
-            Reg32 ('BDTR',   0x048),
-            Reg32 ('DTR2',   0x054),
+            Reg32 ('CCR2',   0x038),
+            Reg32 ('CCR3',   0x03C),
+            Reg32 ('CCR4',   0x040),
+            Reg32 ('ECR',    0x058),
             Reg32 ('TISEL',  0x05C),
             Reg32 ('AF1',    0x060),
             Reg32 ('AF2',    0x064),
@@ -30,4 +32,4 @@ class GPT16(Device):
             ]
 
     def __init__(self, target, name, addr):
-        super(GPT16, self).__init__(target, addr, name, GPT16.REGS)
+        super(GPT16x4, self).__init__(target, addr, name, GPT16x4.REGS)
