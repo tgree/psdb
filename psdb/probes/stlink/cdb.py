@@ -133,7 +133,8 @@ class ReadCoreID(STLinkCommand):
     See "ARM Debug Interface Architecture Specification ADIv5.0 to ADIv5.2"
     section 2.3.5.
 
-    Availability: All.  ReadIDCodes recommended instead for V2+.
+    Availability: All.  ReadIDCodes recommended instead for V2+ since it also
+                  returns a status code.
 
     TX_EP (CDB):
         +----------------+----------------+
@@ -255,7 +256,7 @@ class LeaveDebugMode(STLinkCommand):
 
 class LeaveSWIMMode(STLinkCommand):
     '''
-    Leaves Debug mode.
+    Leaves SWIM mode.
 
     Availability: All.
 
@@ -302,7 +303,7 @@ class SetSWDCLKDivisor(STLinkCommand):
     value isn't really a divisor of any specific base clock speed, and it also
     seems like the clock speeds on the scope are not really in sync with the
     clock speeds as documented in the OpenOCD source code.  I measured some of
-    the OpenOCD values and documented all the values beloew for reference:
+    the OpenOCD values and documented all the values below for reference:
 
                     | OCD  | Scope
             Divisor | kHz  |  kHz
@@ -432,7 +433,7 @@ class SetComFreq(STLinkCommand):
 class BulkRead8(STLinkCommand):
     '''
     Reads the specified number of bytes from the specified AP and address.  One
-    of the last transfer status commands must be used afterwards to get the
+    of the "last transfer" status commands must be used afterwards to get the
     transfer status since it is not encoded in the response.  The read should
     not cross a 1K page boundary.
 
@@ -478,9 +479,9 @@ class BulkRead8(STLinkCommand):
 class BulkRead16(STLinkCommand):
     '''
     Reads the specified number of halfwords from the specified AP and address.
-    One of the last transfer status commands must be used afterwards to get the
-    transfer status since it is not encoded in the response.  The read should
-    not cross a 1K page boundary and the address must be 2-byte aligned.
+    One of the "last transfer" status commands must be used afterwards to get
+    the transfer status since it is not encoded in the response.  The read
+    should not cross a 1K page boundary and the address must be 2-byte aligned.
 
     Note that the API takes a count of N halfwords, but the CDB itself takes a
     count of N*2 bytes.
@@ -522,9 +523,9 @@ class BulkRead16(STLinkCommand):
 class BulkRead32(STLinkCommand):
     '''
     Reads the specified number of words from the specified AP and address.
-    One of the last transfer status commands must be used afterwards to get the
-    transfer status since it is not encoded in the response.  The read should
-    not cross a 1K page boundary and the address must be 4-byte aligned.
+    One of the "last transfer" status commands must be used afterwards to get
+    the transfer status since it is not encoded in the response.  The read
+    should not cross a 1K page boundary and the address must be 4-byte aligned.
 
     Note that the API takes a count of N words, but the CDB itself takes a
     count of N*4 bytes.
@@ -565,8 +566,8 @@ class BulkRead32(STLinkCommand):
 
 class BulkWrite8(STLinkCommand):
     '''
-    Writes the specified data to the specified AP and address.  One of the last
-    transfer status commands must be used afterwards to get the transfer status
+    Writes the specified data to the specified AP and address.  One of the "last
+    transfer" status commands must be used afterwards to get the transfer status
     since it is not encoded in the response.  The write should not cross a 1K
     page boundary.
 
@@ -599,14 +600,11 @@ class BulkWrite8(STLinkCommand):
 
 class BulkWrite16(STLinkCommand):
     '''
-    Writes the data to the specified AP and address.  One of the last transfer
+    Writes the data to the specified AP and address.  One of the "last transfer"
     status commands must be used afterwards to get the transfer status since it
     is not encoded in the response.  The write should not cross a 1K page
     boundary, should be a multiple of 2 bytes and the address must be 2-byte
     aligned.
-
-    Note that the API takes a count of N halfwords, but the CDB itself takes a
-    count of N*2 bytes.
 
     Note: this command should not be used if the AP type is not an AHBAP.  The
           probe will clobber the upper bits of the CSW register which can
@@ -641,14 +639,11 @@ class BulkWrite16(STLinkCommand):
 
 class BulkWrite32(STLinkCommand):
     '''
-    Writes the data to the specified AP and address.  One of the last transfer
+    Writes the data to the specified AP and address.  One of the "last transfer"
     status commands must be used afterwards to get the transfer status since it
     is not encoded in the response.  The write should not cross a 1K page
     boundary, should be a multiple of 4 bytes and the address must be 4-byte
     aligned.
-
-    Note that the API takes a count of N words, but the CDB itself takes a
-    count of N*4 bytes.
 
     Note: this command should not be used if the AP type is not an AHBAP.  The
           probe will clobber the upper bits of the CSW register which can
