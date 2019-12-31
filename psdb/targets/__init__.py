@@ -14,6 +14,7 @@ __all__ = ['Target',
 
 TARGETS = [msp432.MSP432P401,
            stm32h7.STM32H7,
+           stm32h7.STM32H7_DP,
            stm32g4.STM32G4,
            ]
 
