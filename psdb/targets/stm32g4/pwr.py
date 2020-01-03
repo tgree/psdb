@@ -1,5 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from ..device import Device, Reg32, Reg32R
+from ..device import Device, Reg32
 
 
 class PWR(Device):
