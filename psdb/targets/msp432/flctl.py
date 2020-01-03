@@ -82,7 +82,7 @@ class FLCTL(Device, flash.Flash):
     def __init__(self, target, ap, name, addr, flash_tlv_addr):
         Device.__init__(self, target, ap, addr, name, FLCTL.REGS)
         flash.Flash.__init__(self, 0x00000000, 4096, 64)
-        self.flash_tlv = [self.target.ahb_ap.read_32(flash_tlv_addr + i*4)
+        self.flash_tlv = [self.ap.read_32(flash_tlv_addr + i*4)
                           for i in range(4)]
         assert self.flash_tlv[0] == 4
         assert self.flash_tlv[1] == 2
@@ -171,7 +171,7 @@ class FLCTL(Device, flash.Flash):
 
         verify_bits = (1 << 7) | (1 << 6)
         for _ in range(self.max_programming_pulses):
-            self.target.ahb_ap.write_bulk(data_bytes, self.dev_base + 0x60)
+            self.ap.write_bulk(data_bytes, self.dev_base + 0x60)
             self._write_prgbrst_startaddr(addr)
             self._write_prgbrst_ctlstat(verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
@@ -183,7 +183,7 @@ class FLCTL(Device, flash.Flash):
             if ctlstat & (1 << 19):
                 # Pre-program auto-verify error.
                 self._set_rdmode(addr, 3)
-                exist_data       = self.target.ahb_ap.read_bulk(addr, 64)
+                exist_data       = self.ap.read_bulk(addr, 64)
                 new_data         = data_bytes[:]
                 fail_bits        = not_bytes(or_bytes(exist_data, new_data))
                 updated_new_data = or_bytes(new_data, fail_bits)
@@ -201,7 +201,7 @@ class FLCTL(Device, flash.Flash):
             if ctlstat & (1 << 20):
                 # Post-program auto-verify error.
                 self._set_rdmode(addr, 3)
-                actual_data      = self.target.ahb_ap.read_bulk(addr, 64)
+                actual_data      = self.ap.read_bulk(addr, 64)
                 temp_var         = data_bytes[:]
                 fail_bits        = and_bytes(not_bytes(temp_var), actual_data)
                 updated_new_data = not_bytes(fail_bits)
@@ -280,7 +280,7 @@ class FLCTL(Device, flash.Flash):
         with self._flash_mask_unlocked(self._mask_for_alp(addr, len(data))):
             self._write_clrifg(0x0000033F)
             self._write_prg_ctlstat(0x0000000B)
-            self.target.ahb_ap.write_bulk(data, addr)
+            self.ap.write_bulk(data, addr)
             while self._read_prg_ctlstat() & 0x00030000:
                 pass
 
@@ -374,7 +374,7 @@ class FLCTL(Device, flash.Flash):
         '''
         Reads a region from the flash.
         '''
-        return self.target.ahb_ap.read_bulk(addr, length)
+        return self.ap.read_bulk(addr, length)
 
     def write(self, addr, data, verbose=True):
         '''
