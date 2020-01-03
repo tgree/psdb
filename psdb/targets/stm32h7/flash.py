@@ -11,12 +11,6 @@ class FlashBank(Device):
             Reg32 ('CR',        0x00C),
             Reg32 ('SR',        0x010),
             Reg32W('CCR',       0x014),
-            Reg32R('PRAR_CUR',  0x028),
-            Reg32 ('PRAR_PRG',  0x02C),
-            Reg32R('SCAR_CUR',  0x030),
-            Reg32 ('SCAR_PRG',  0x034),
-            Reg32R('WPSN_CURR', 0x038),
-            Reg32 ('WPSN_PRGR', 0x03C),
             Reg32 ('CRCCR',     0x050),
             Reg32 ('CRCSADDR',  0x054),
             Reg32 ('CRCEADDR',  0x058),
@@ -80,17 +74,7 @@ class FLASH(Device, Flash):
             Reg32 ('SR1',           0x010),
             Reg32W('CCR1',          0x014),
             Reg32 ('OPTCR',         0x018),
-            Reg32 ('OPTSR_CUR',     0x01C),
-            Reg32 ('OPTSR_PRG',     0x020),
             Reg32 ('OPTCCR',        0x024),
-            Reg32R('PRAR_CUR1',     0x028),
-            Reg32 ('PRAR_PRG1',     0x02C),
-            Reg32R('SCAR_CUR1',     0x030),
-            Reg32 ('SCAR_PRG1',     0x034),
-            Reg32R('WPSN_CUR1R',    0x038),
-            Reg32 ('WPSN_PRG1R',    0x03C),
-            Reg32R('BOOT_CURR',     0x040),
-            Reg32 ('BOOT_PRGR',     0x044),
             Reg32 ('CRCCR1',        0x050),
             Reg32 ('CRCSADD1R',     0x054),
             Reg32 ('CRCEADD1R',     0x058),
@@ -100,21 +84,16 @@ class FLASH(Device, Flash):
             Reg32 ('CR2',           0x10C),
             Reg32 ('SR2',           0x110),
             Reg32W('CCR2',          0x114),
-            Reg32R('PRAR_CUR2',     0x128),
-            Reg32 ('PRAR_PRG2',     0x12C),
-            Reg32R('SCAR_CUR2',     0x130),
-            Reg32 ('SCAR_PRG2',     0x134),
-            Reg32R('WPSN_CUR2R',    0x138),
-            Reg32 ('WPSN_PRG2R',    0x13C),
             Reg32 ('CRCCR2',        0x150),
             Reg32 ('CRCSADD2R',     0x154),
             Reg32 ('CRCEADD2R',     0x158),
             Reg32R('ECC_FA2R',      0x160),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq):
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
+                 opt_regs):
         sector_size = 128*1024
-        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
+        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS + opt_regs)
         Flash.__init__(self, mem_base, sector_size,
                        target.flash_size // sector_size)
         self.max_write_freq   = max_write_freq
