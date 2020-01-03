@@ -7,7 +7,7 @@ import math
 import sys
 
 import psdb.probes
-from psdb.targets import Reg
+from psdb.targets import Reg, RegDiv
 import tgcurses
 import tgcurses.ui
 
@@ -33,7 +33,9 @@ def draw_dev_registers(reg_win, dev):
         assert max_reg_len < reg_win.content.width - 11
         y = 0
         for r in regs:
-            if r.flags & Reg.READABLE:
+            if isinstance(r, RegDiv):
+                rv = '--------'
+            elif r.flags & Reg.READABLE:
                 rv = '%08X' % r.read(dev)
             else:
                 rv = '-WrOnly-'
