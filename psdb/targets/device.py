@@ -62,10 +62,10 @@ class Device(object):
         self.target.devs[self.name] = self
 
     def _read_32(self, offset):
-        return self.target.ahb_ap.read_32(self.dev_base + offset)
+        return self.ap.read_32(self.dev_base + offset)
 
     def _write_32(self, v, offset):
-        self.target.ahb_ap.write_32(v, self.dev_base + offset)
+        self.ap.write_32(v, self.dev_base + offset)
 
     def _set_field(self, v, width, shift, offset):
         assert width + shift <= 32
@@ -102,4 +102,4 @@ class MemDevice(Device):
         self.size = size
 
     def read_mem_block(self, addr, size):
-        return self.target.ahb_ap.read_bulk(addr, size)
+        return self.ap.read_bulk(addr, size)
