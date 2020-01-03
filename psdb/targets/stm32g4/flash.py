@@ -101,7 +101,7 @@ class FLASH(Device, Flash):
         '''
         Reads a region from the flash.
         '''
-        return self.target.ahb_ap.read_bulk(addr, length)
+        return self.ap.read_bulk(addr, length)
 
     def write(self, addr, data, verbose=True):
         '''
@@ -126,6 +126,6 @@ class FLASH(Device, Flash):
         with self._flash_unlocked():
             self._clear_errors()
             self._write_cr(1 << 0)
-            self.target.ahb_ap.write_bulk(data, addr)
+            self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
