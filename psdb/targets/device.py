@@ -13,6 +13,11 @@ class Reg(object):
         self.flags  = flags
 
 
+class RegDiv(Reg):
+    def __init__(self, name):
+        super(RegDiv, self).__init__(name, None, None, 0)
+
+
 class Reg32(Reg):
     def __init__(self, name, offset):
         super(Reg32, self).__init__(name, offset, 4,
