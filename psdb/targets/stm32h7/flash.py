@@ -161,7 +161,7 @@ class FLASH(Device, Flash):
         '''
         Reads a region from the flash.
         '''
-        return self.target.ahb_ap.read_bulk(addr, length)
+        return self.ap.read_bulk(addr, length)
 
     def write(self, addr, data, verbose=True):
         '''
@@ -188,6 +188,6 @@ class FLASH(Device, Flash):
         bank = self.banks[(addr - self.mem_base) // self.bank_size]
         with self._flash_bank_unlocked(bank):
             bank._clear_errors()
-            self.target.ahb_ap.write_bulk(data, addr)
+            self.ap.write_bulk(data, addr)
             bank._wait_prg_idle()
             bank._check_errors()
