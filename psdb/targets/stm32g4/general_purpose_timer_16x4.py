@@ -31,5 +31,5 @@ class GPT16x4(Device):
             Reg32 ('DMAR',   0x3E0),
             ]
 
-    def __init__(self, target, name, addr):
-        super(GPT16x4, self).__init__(target, addr, name, GPT16x4.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(GPT16x4, self).__init__(target, ap, addr, name, GPT16x4.REGS)

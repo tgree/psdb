@@ -31,5 +31,5 @@ class DAC(Device):
             Reg32('STMODR',  0x060),
             ]
 
-    def __init__(self, target, name, addr):
-        super(DAC, self).__init__(target, addr, name, DAC.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(DAC, self).__init__(target, ap, addr, name, DAC.REGS)

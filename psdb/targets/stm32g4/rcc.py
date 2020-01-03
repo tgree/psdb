@@ -114,8 +114,8 @@ class RCC(Device):
             Reg32('CCIPR2',     0x09C),
             ]
 
-    def __init__(self, target, name, addr):
-        super(RCC, self).__init__(target, addr, name, RCC.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(RCC, self).__init__(target, ap, addr, name, RCC.REGS)
 
     def enable_device(self, name):
         offset, bit = ENABLE_BITS[name]

@@ -36,5 +36,5 @@ class ACT(Device):
             Reg32 ('DMAR',   0x3E0),
             ]
 
-    def __init__(self, target, name, addr):
-        super(ACT, self).__init__(target, addr, name, ACT.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(ACT, self).__init__(target, ap, addr, name, ACT.REGS)

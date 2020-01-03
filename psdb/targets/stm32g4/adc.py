@@ -43,7 +43,7 @@ class ADC(Device):
                     Reg32R('CDR', 0x30C),
                     ]
 
-    def __init__(self, target, name, addr, first_adc, nadcs):
+    def __init__(self, target, ap, name, addr, first_adc, nadcs):
         regs = []
         for i in range(nadcs):
             base = 0x100*i
@@ -51,4 +51,4 @@ class ADC(Device):
                      for cls, _name, offset in ADC.PER_ADC_REGS]
         regs += ADC.COM_ADC_REGS
 
-        super(ADC, self).__init__(target, addr, name, regs)
+        super(ADC, self).__init__(target, ap, addr, name, regs)

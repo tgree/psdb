@@ -42,5 +42,5 @@ class DMA(Device):
             Reg32('CMAR8',  0x0A0),
             ]
 
-    def __init__(self, target, name, addr):
-        super(DMA, self).__init__(target, addr, name, DMA.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(DMA, self).__init__(target, ap, addr, name, DMA.REGS)

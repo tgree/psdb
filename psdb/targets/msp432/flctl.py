@@ -79,8 +79,8 @@ class FLCTL(Device, flash.Flash):
             Reg32('CLRIFG',            0xF8),
             ]
 
-    def __init__(self, target, name, addr, flash_tlv_addr):
-        Device.__init__(self, target, addr, name, FLCTL.REGS)
+    def __init__(self, target, ap, name, addr, flash_tlv_addr):
+        Device.__init__(self, target, ap, addr, name, FLCTL.REGS)
         flash.Flash.__init__(self, 0x00000000, 4096, 64)
         self.flash_tlv = [self.target.ahb_ap.read_32(flash_tlv_addr + i*4)
                           for i in range(4)]

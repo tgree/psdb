@@ -24,7 +24,8 @@ class FlashBank(Device):
             ]
 
     def __init__(self, flash, bank_num):
-        Device.__init__(self, flash.target, flash.dev_base + 0x100*bank_num,
+        Device.__init__(self, flash.target, flash.ap,
+                        flash.dev_base + 0x100*bank_num,
                         '%s.%u' % (flash.name, bank_num), FlashBank.REGS)
 
     def _clear_errors(self):
@@ -111,9 +112,9 @@ class FLASH(Device, Flash):
             Reg32R('ECC_FA2R',      0x160),
             ]
 
-    def __init__(self, target, name, dev_base, mem_base, max_write_freq):
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq):
         sector_size = 128*1024
-        Device.__init__(self, target, dev_base, name, FLASH.REGS)
+        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
         Flash.__init__(self, mem_base, sector_size,
                        target.flash_size // sector_size)
         self.max_write_freq   = max_write_freq

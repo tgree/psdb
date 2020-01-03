@@ -42,8 +42,9 @@ class Reg32W(Reg):
 
 
 class Device(object):
-    def __init__(self, target, dev_base, name, regs):
+    def __init__(self, target, ap, dev_base, name, regs):
         self.target   = target
+        self.ap       = ap
         self.dev_base = dev_base
         self.name     = name
         self.regs     = regs
@@ -96,8 +97,8 @@ class MemDevice(Device):
     '''
     Base class for memory-type devices (SRAM, Flash, etc.).
     '''
-    def __init__(self, target, name, addr, size):
-        super(MemDevice, self).__init__(target, addr, name, [])
+    def __init__(self, target, ap, name, addr, size):
+        super(MemDevice, self).__init__(target, ap, addr, name, [])
         self.size = size
 
     def read_mem_block(self, addr, size):

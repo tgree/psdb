@@ -42,8 +42,8 @@ class FLASH(Device, Flash):
             Reg32 ('SEC2R',         0x074),
             ]
 
-    def __init__(self, target, name, dev_base, mem_base, max_write_freq):
-        Device.__init__(self, target, dev_base, name, FLASH.REGS)
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq):
+        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
         optr        = self._read_optr()
         if optr == 0:
             raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
