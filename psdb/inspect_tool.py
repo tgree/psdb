@@ -150,13 +150,23 @@ def main(screen, args):
     dev_win.content.keypad(1)
 
     # Add a CPU window.
-    cpu_win = ws.make_edge_window('CPU', w=17)
-    draw_cpu_registers(cpu_win, t.cpus[0])
+    cpu_wins = []
+    for i, c in enumerate(t.cpus):
+        if i == 0:
+            cpu_wins.append(ws.make_edge_window('CPU%u' % i, w=17))
+        else:
+            cpu_wins.append(ws.make_anchored_window(
+                'CPU%u' % i, width=17,
+                left_anchor=cpu_wins[-1].frame.right_anchor(),
+                top_anchor=ws.canvas.frame.top_anchor(),
+                bottom_anchor=ws.canvas.frame.bottom_anchor(),
+                ))
+        draw_cpu_registers(cpu_wins[-1], c)
 
     # Add a register window.
     reg_win = ws.make_anchored_window(
             'Registers',
-            left_anchor=cpu_win.frame.right_anchor(),
+            left_anchor=cpu_wins[-1].frame.right_anchor(),
             top_anchor=ws.canvas.frame.top_anchor(),
             bottom_anchor=ws.canvas.frame.bottom_anchor(),
             width=max_reg_name + 14)
@@ -164,7 +174,7 @@ def main(screen, args):
     # Add a memory window.
     mem_win = ws.make_anchored_window(
             'Memory',
-            left_anchor=cpu_win.frame.right_anchor(),
+            left_anchor=cpu_wins[-1].frame.right_anchor(),
             top_anchor=ws.canvas.frame.top_anchor(),
             bottom_anchor=ws.canvas.frame.bottom_anchor(),
             width=145)
