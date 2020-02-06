@@ -6,22 +6,28 @@ class Reg(object):
     READABLE  = (1 << 0)
     WRITEABLE = (1 << 1)
 
-    def __init__(self, name, offset, size, flags):
+    def __init__(self, name, offset, size, flags, fields):
         self.name   = name
         self.offset = offset
         self.size   = size
         self.flags  = flags
+        self.fields = fields
+        if size is not None:
+            nbits       = sum(f[1] for f in fields)
+            assert(nbits <= size*8)
+            if nbits < size*8:
+                self.fields = self.fields + [('', size*8 - nbits)]
 
 
 class RegDiv(Reg):
     def __init__(self, name):
-        super(RegDiv, self).__init__(name, None, None, 0)
+        super(RegDiv, self).__init__(name, None, None, 0, [])
 
 
 class Reg32(Reg):
-    def __init__(self, name, offset):
+    def __init__(self, name, offset, fields=[]):
         super(Reg32, self).__init__(name, offset, 4,
-                                    Reg.READABLE | Reg.WRITEABLE)
+                                    Reg.READABLE | Reg.WRITEABLE, fields)
 
     def read(self, dev):
         return dev._read_32(self.offset)
@@ -31,16 +37,16 @@ class Reg32(Reg):
 
 
 class Reg32R(Reg):
-    def __init__(self, name, offset):
-        super(Reg32R, self).__init__(name, offset, 4, Reg.READABLE)
+    def __init__(self, name, offset, fields=[]):
+        super(Reg32R, self).__init__(name, offset, 4, Reg.READABLE, fields)
 
     def read(self, dev):
         return dev._read_32(self.offset)
 
 
 class Reg32W(Reg):
-    def __init__(self, name, offset):
-        super(Reg32W, self).__init__(name, offset, 4, Reg.WRITEABLE)
+    def __init__(self, name, offset, fields=[]):
+        super(Reg32W, self).__init__(name, offset, 4, Reg.WRITEABLE, fields)
 
     def write(self, dev, v):
         dev._write_32(v, self.offset)
