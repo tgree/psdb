@@ -42,8 +42,8 @@ class FLASH(Device, Flash):
             Reg32 ('SEC2R',         0x074),
             ]
 
-    def __init__(self, target, name, dev_base, mem_base, max_write_freq):
-        Device.__init__(self, target, dev_base, name, FLASH.REGS)
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq):
+        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
         optr        = self._read_optr()
         if optr == 0:
             raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
@@ -101,7 +101,7 @@ class FLASH(Device, Flash):
         '''
         Reads a region from the flash.
         '''
-        return self.target.ahb_ap.read_bulk(addr, length)
+        return self.ap.read_bulk(addr, length)
 
     def write(self, addr, data, verbose=True):
         '''
@@ -126,6 +126,6 @@ class FLASH(Device, Flash):
         with self._flash_unlocked():
             self._clear_errors()
             self._write_cr(1 << 0)
-            self.target.ahb_ap.write_bulk(data, addr)
+            self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()

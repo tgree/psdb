@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+from . import scs
+
 import collections
 
 
@@ -14,6 +16,8 @@ class Target(object):
         self.max_tck_freq = max_tck_freq
         self.cpus         = self.db.cpus
         self.devs         = collections.OrderedDict()
+        for i, c in enumerate(self.cpus):
+            scs.SCS(self, c.scb.ap, 'SCS%u' % i, c.scb.addr)
 
     def set_max_tck_freq(self):
         '''

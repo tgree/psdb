@@ -18,5 +18,5 @@ class BT(Device):
             Reg32('ARR',  0x2C),
             ]
 
-    def __init__(self, target, name, addr):
-        super(BT, self).__init__(target, addr, name, BT.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(BT, self).__init__(target, ap, addr, name, BT.REGS)

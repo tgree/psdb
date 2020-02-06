@@ -10,5 +10,5 @@ class VREF(Device):
             Reg32 ('CCR', 0x04),
             ]
 
-    def __init__(self, target, name, addr):
-        super(VREF, self).__init__(target, addr, name, VREF.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(VREF, self).__init__(target, ap, addr, name, VREF.REGS)

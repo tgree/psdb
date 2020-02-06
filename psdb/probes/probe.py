@@ -146,11 +146,12 @@ class Probe(object):
             ap.probe_components(verbose=verbose)
 
         if connect_under_reset:
-            # Set DHSCR.C_DEBUGEN to enable Halting debug.
-            self.cpus[0].write_dhcsr(0xA05F0000 | (1<<0))
+            for c in self.cpus:
+                # Set DHSCR.C_DEBUGEN to enable Halting debug.
+                c.write_dhcsr(0xA05F0000 | (1<<0))
 
-            # Set DEMCR.VC_CORERESET to enable reset vector catch.
-            self.cpus[0].write_demcr(0x01000001)
+                # Set DEMCR.VC_CORERESET to enable reset vector catch.
+                c.write_demcr(0x01000001)
 
             # Deassert SRST.
             self.deassert_srst()

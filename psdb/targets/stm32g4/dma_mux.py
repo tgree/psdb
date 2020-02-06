@@ -32,5 +32,5 @@ class DMAMUX(Device):
             Reg32W('RGCFR', 0x144),
             ]
 
-    def __init__(self, target, name, addr):
-        super(DMAMUX, self).__init__(target, addr, name, DMAMUX.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(DMAMUX, self).__init__(target, ap, addr, name, DMAMUX.REGS)

@@ -30,5 +30,5 @@ class GPT32(Device):
             Reg32 ('DMAR',   0x3E0),
             ]
 
-    def __init__(self, target, name, addr):
-        super(GPT32, self).__init__(target, addr, name, GPT32.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(GPT32, self).__init__(target, ap, addr, name, GPT32.REGS)

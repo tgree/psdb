@@ -1,5 +1,5 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from ..device import Device, Reg32, Reg32R
+from ..device import Device, Reg32
 
 
 class DAC(Device):
@@ -31,5 +31,5 @@ class DAC(Device):
             Reg32('STMODR',  0x060),
             ]
 
-    def __init__(self, target, name, addr):
-        super(DAC, self).__init__(target, addr, name, DAC.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(DAC, self).__init__(target, ap, addr, name, DAC.REGS)

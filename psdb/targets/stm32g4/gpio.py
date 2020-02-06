@@ -19,5 +19,5 @@ class GPIO(Device):
             Reg32 ('BRR',       0x28),
             ]
 
-    def __init__(self, target, name, addr):
-        super(GPIO, self).__init__(target, addr, name, GPIO.REGS)
+    def __init__(self, target, ap, name, addr):
+        super(GPIO, self).__init__(target, ap, addr, name, GPIO.REGS)
