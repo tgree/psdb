@@ -15,7 +15,7 @@ class Probe(probe.Probe):
         self.usb_path = '%s:%s' % (
                 self.usb_dev.bus,
                 '.'.join('%u' % n for n in self.usb_dev.port_numbers))
-        configurations  = usb_dev.configurations()
+        configurations = usb_dev.configurations()
         assert len(configurations) == 1
 
         usb_dev.reset()
