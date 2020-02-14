@@ -3,7 +3,7 @@ from . import probe
 
 
 class Probe(probe.Probe):
-    def __init__(self, usb_dev, name):
+    def __init__(self, usb_dev, name, usb_reset=False):
         super(Probe, self).__init__(name)
         self.usb_dev = usb_dev
         try:
@@ -18,7 +18,9 @@ class Probe(probe.Probe):
         configurations = usb_dev.configurations()
         assert len(configurations) == 1
 
-        usb_dev.reset()
+        if usb_reset:
+            usb_dev.reset()
+
         if (usb_dev.get_active_configuration().bConfigurationValue !=
                 configurations[0].bConfigurationValue):
             usb_dev.set_configuration(configurations[0].bConfigurationValue)
