@@ -231,10 +231,10 @@ def handle_pageup(reg_win, mem_win, decode_win, d):
         mem_up(reg_win, mem_win, decode_win, d, nrows*32)
 
 
-def handle_pagedown(reg_win, mem_win, d):
+def handle_pagedown(reg_win, mem_win, decode_win, d):
     if hasattr(d, '_mem_dump_addr'):
         nrows = mem_win.content.height
-        mem_down(reg_win, mem_win, d, nrows*32)
+        mem_down(reg_win, mem_win, decode_win, d, nrows*32)
 
 
 def main(screen, args):
