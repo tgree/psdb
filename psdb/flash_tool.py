@@ -4,6 +4,7 @@ import psdb.probes
 import psdb.elf
 
 import argparse
+import hashlib
 import sys
 
 
@@ -46,6 +47,9 @@ def main(rv):
 
     # Write a new image to flash if requested.
     if rv.flash:
+        print('Burning "%s"...' % rv.flash)
+        md5 = hashlib.md5(open(rv.flash, 'rb').read())
+        print('MD5: %s' % md5.hexdigest())
         target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash))
         target.reset_halt()
 
