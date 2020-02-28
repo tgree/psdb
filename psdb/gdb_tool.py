@@ -158,8 +158,8 @@ class GDBServer(object):
                 print('Connection closed.')
             except psdb.probes.xds110.XDS110CommandException as e:
                 print('XDS110 Exception: %s' % e)
-            finally:
                 sock.shutdown(socket.SHUT_RDWR)
+            finally:
                 sock.close()
 
     def _process_connection(self, sock):
