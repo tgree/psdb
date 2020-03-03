@@ -3,6 +3,15 @@ from ..device import Device, Reg32, Reg32W
 from ..flash import Flash
 
 
+def block_in_region(addr, size, region_base, region_len):
+    return ((region_base <= addr) and
+            (addr + size <= region_base + region_len))
+
+
+def write_in_region(addr, data, region_base, region_len):
+    return block_in_region(addr, len(data), region_base, region_len)
+
+
 class UnlockedContextManager(object):
     def __init__(self, flash):
         self.flash = flash
@@ -116,8 +125,7 @@ class FLASH(Device, Flash):
             return
         assert len(data) % 8 == 0
         assert addr % 8 == 0
-        assert self.mem_base <= addr
-        assert addr + len(data) <= self.mem_base + self.flash_size
+        assert write_in_region(addr, data, self.mem_base, self.flash_size)
 
         if verbose:
             print('Flashing region [0x%08X - 0x%08X]...' % (
