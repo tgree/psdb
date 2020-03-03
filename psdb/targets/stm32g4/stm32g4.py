@@ -81,6 +81,8 @@ class STM32G4(Target):
         self.flash = self.devs['FLASH']
         MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
                   self.flash.flash_size)
+        MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
+                  self.flash.otp_len)
 
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
