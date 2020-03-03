@@ -51,9 +51,13 @@ class FLASH(Device, Flash):
             Reg32 ('SEC2R',         0x074),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq):
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
+                 otp_base, otp_len):
         Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
-        optr        = self._read_optr()
+        self.otp_base = otp_base
+        self.otp_len  = otp_len
+
+        optr = self._read_optr()
         if optr == 0:
             raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
                             'try using --srst')
@@ -125,7 +129,8 @@ class FLASH(Device, Flash):
             return
         assert len(data) % 8 == 0
         assert addr % 8 == 0
-        assert write_in_region(addr, data, self.mem_base, self.flash_size)
+        assert (write_in_region(addr, data, self.mem_base, self.flash_size) or
+                write_in_region(addr, data, self.otp_base, self.otp_len))
 
         if verbose:
             print('Flashing region [0x%08X - 0x%08X]...' % (
@@ -137,3 +142,31 @@ class FLASH(Device, Flash):
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
+
+    def read_otp(self, offset, size):
+        '''
+        Reads a block of one-time-programmable memory.
+        '''
+        assert offset + size <= self.otp_len
+        return self.ap.read_bulk(self.otp_base + offset, size)
+
+    def is_otp_writeable(self, offset, size, verbose=True):
+        '''
+        Determines if the selected region of one-time-programmable memory is
+        still writeable.
+        '''
+        return self.read_otp(offset, size) == (b'\xFF'*size)
+
+    def write_otp(self, offset, data, verbose=True):
+        '''
+        Writes 8-byte lines of data to the one-time-programmable area in flash.
+        The address must be 8-byte aligned and the data to write must be a
+        multiple of 8 bytes in length.
+
+        The target region to be written must be in the erased state (every 8-
+        byte double-word must be exactly 0xFFFFFFFFFFFFFFFF - if any of the 64
+        bits has already been written, the entire double-word is no longer
+        writeable).
+        '''
+        assert self.is_otp_writeable(offset, len(data))
+        self.write(self.otp_base + offset, data)
