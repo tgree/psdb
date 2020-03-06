@@ -71,7 +71,7 @@ class Flash(object):
         '''
         for i in range(int(math.floor(math.log(mask, 2))) + 1):
             if (mask & (1 << i)):
-                self.erase_sector(i)
+                self.erase_sector(i, verbose=verbose)
 
     def erase(self, addr, length, verbose=True):
         '''
@@ -135,7 +135,7 @@ class Flash(object):
         mask = 0
         for block in bd.blocks.values():
             mask |= self._mask_for_alp(block.addr, len(block.data))
-        self.erase_sectors(mask)
+        self.erase_sectors(mask, verbose=verbose)
 
         self.set_swd_freq_write(verbose=verbose)
 
@@ -144,7 +144,7 @@ class Flash(object):
         for block in bd.blocks.values():
             while block.data.endswith(b'\xff'*64):
                 block.data = block.data[:-64]
-            self.write(block.addr, block.data)
+            self.write(block.addr, block.data, verbose=verbose)
             total_len += len(block.data)
 
         if verbose:
@@ -166,7 +166,7 @@ class Flash(object):
             print('Verified %u bytes in %.2f seconds (%.2f K/s).' %
                   (total_len, elapsed, total_len / (1024*elapsed)))
 
-    def burn_elf(self, elf_bin, verbose=True):
+    def burn_elf(self, elf_bin, **kwargs):
         '''
         Given a psdb.elf.ELFBinary whose layout is appropriate for our target
         device, burn it into flash.  ELF program headers targetting regions
@@ -174,4 +174,4 @@ class Flash(object):
         '''
         dv = [(s['p_paddr'], s.data() + b'\x00'*(s['p_memsz'] - s['p_filesz']))
               for s in elf_bin.iter_segments() if s['p_type'] == 'PT_LOAD']
-        self.burn_dv(dv)
+        self.burn_dv(dv, **kwargs)
