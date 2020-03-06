@@ -50,7 +50,9 @@ def main(rv):
         print('Burning "%s"...' % rv.flash)
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
-        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash))
+        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=rv.verbose,
+                              bank_swap=rv.flash_inactive)
+        print('Flash completed successfully.')
         target.reset_halt()
 
     # Resume if halt wasn't requested.
@@ -66,6 +68,11 @@ def main(rv):
         mem          = target.cpus[0].read_bulk(base, length)
         psdb.hexdump(mem, addr=base)
 
+    # If bank-swapping was requested, do it now.  This operation kills the
+    # connection to the debug probe, so there's no coming back from it.
+    if rv.swap_banks:
+        target.flash.swap_banks_and_reset()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -76,10 +83,12 @@ if __name__ == '__main__':
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--read-flash')
     parser.add_argument('--flash')
+    parser.add_argument('--flash-inactive', action='store_true')
     parser.add_argument('--erase', action='store_true')
     parser.add_argument('--mem-dump', '-m')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--swap-banks', action='store_true')
     rv = parser.parse_args()
 
     try:

@@ -38,7 +38,28 @@ class FLASH(Device, Flash):
             Reg32 ('SR',            0x010),
             Reg32 ('CR',            0x014),
             Reg32 ('ECCR',          0x018),
-            Reg32 ('OPTR',          0x020),
+            Reg32 ('OPTR',          0x020, [('RDP',         8),
+                                            ('BOR_LEV',     3),
+                                            ('',            1),
+                                            ('nRST_STOP',   1),
+                                            ('nRST_STDBY',  1),
+                                            ('nRST_SHDW',   1),
+                                            ('',            1),
+                                            ('IWDG_SW',     1),
+                                            ('IWDG_STOP',   1),
+                                            ('IWDG_STDBY',  1),
+                                            ('WWDG_SW',     1),
+                                            ('BFB2',        1),
+                                            ('',            1),
+                                            ('DBANK',       1),
+                                            ('nBOOT1',      1),
+                                            ('SRAM_PE',     1),
+                                            ('CCMSRAM_RST', 1),
+                                            ('nSWBOOT0',    1),
+                                            ('nBOOT0',      1),
+                                            ('NRST_MODE',   2),
+                                            ('IRHEN',       1),
+                                            ]),
             Reg32 ('PCROP1SR',      0x024),
             Reg32 ('PCROP1ER',      0x028),
             Reg32 ('WRP1AR',        0x02C),
@@ -103,10 +124,17 @@ class FLASH(Device, Flash):
             print('Erasing sector [0x%08X - 0x%08X]...' % (
                     addr, addr + self.sector_size - 1))
 
+        # In dual-bank mode, do the right thing.
+        if self.sector_size == 2048 and n >= 128:
+            bker = (1 << 11);
+            n   -= 128
+        else:
+            bker = 0
+
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1))
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1))
+            self._write_cr((n << 3) | (1 << 1) | bker)
+            self._write_cr((1 << 16) | (n << 3) | (1 << 1) | bker)
             self._wait_bsy_clear()
             self._check_errors()
 
@@ -170,3 +198,29 @@ class FLASH(Device, Flash):
         '''
         assert self.is_otp_writeable(offset, len(data))
         self.write(self.otp_base + offset, data)
+
+    def swap_banks_and_reset(self):
+        '''
+        Swap the flash banks in dual-bank mode.  This also triggers a reset.
+        Note: After resetting the target, it will start executing but it also
+        terminates the connection to the debugger (at least, in the case of the
+        XDS110) - so this is some sort of real hard reset.  You will not be
+        able to communicate with the target beyond this call unless you re-
+        probe it.
+        '''
+        UnlockedContextManager(self).__enter__()
+        self._write_optkeyr(0x08192A3B)
+        self._write_optkeyr(0x4C5D6E7F)
+        self._write_optr(self._read_optr() ^ (1 << 20))
+        self._write_cr(1 << 17)
+        self._wait_bsy_clear()
+
+        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
+        # causes an exception with the XDS110 (and possibly the ST-Link), so
+        # catch it and exit cleanly.
+        try:
+            self._write_cr(1 << 27)
+        except Exception:
+            return
+
+        raise Exception('Expected disconnect exception but never got one.')
