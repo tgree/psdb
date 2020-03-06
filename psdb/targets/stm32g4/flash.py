@@ -124,10 +124,17 @@ class FLASH(Device, Flash):
             print('Erasing sector [0x%08X - 0x%08X]...' % (
                     addr, addr + self.sector_size - 1))
 
+        # In dual-bank mode, do the right thing.
+        if self.sector_size == 2048 and n >= 128:
+            bker = (1 << 11);
+            n   -= 128
+        else:
+            bker = 0
+
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1))
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1))
+            self._write_cr((n << 3) | (1 << 1) | bker)
+            self._write_cr((1 << 16) | (n << 3) | (1 << 1) | bker)
             self._wait_bsy_clear()
             self._check_errors()
 
