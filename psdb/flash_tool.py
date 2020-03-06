@@ -51,6 +51,7 @@ def main(rv):
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
         target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash))
+        print('Flash completed successfully.')
         target.reset_halt()
 
     # Resume if halt wasn't requested.
