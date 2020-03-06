@@ -198,3 +198,29 @@ class FLASH(Device, Flash):
         '''
         assert self.is_otp_writeable(offset, len(data))
         self.write(self.otp_base + offset, data)
+
+    def swap_banks_and_reset(self):
+        '''
+        Swap the flash banks in dual-bank mode.  This also triggers a reset.
+        Note: After resetting the target, it will start executing but it also
+        terminates the connection to the debugger (at least, in the case of the
+        XDS110) - so this is some sort of real hard reset.  You will not be
+        able to communicate with the target beyond this call unless you re-
+        probe it.
+        '''
+        UnlockedContextManager(self).__enter__()
+        self._write_optkeyr(0x08192A3B)
+        self._write_optkeyr(0x4C5D6E7F)
+        self._write_optr(self._read_optr() ^ (1 << 20))
+        self._write_cr(1 << 17)
+        self._wait_bsy_clear()
+
+        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
+        # causes an exception with the XDS110 (and possibly the ST-Link), so
+        # catch it and exit cleanly.
+        try:
+            self._write_cr(1 << 27)
+        except Exception:
+            return
+
+        raise Exception('Expected disconnect exception but never got one.')
