@@ -40,6 +40,18 @@ class Flash(object):
         assert 0 <= nsectors and fbit + nsectors <= self.nsectors
         return ((1 << nsectors) - 1) << fbit
 
+    def _swap_addr(self, addr, data):
+        '''
+        Inverts the address about the midpoint of the flash.
+        '''
+        if addr < self.mem_base or addr > self.mem_base + self.flash_size:
+            return addr
+
+        halfsize = self.flash_size // 2
+        midpoint = self.mem_base + halfsize
+        assert (addr < midpoint) == (addr + len(data) <= midpoint)
+        return (addr + halfsize) if addr < midpoint else (addr - halfsize)
+
     def set_swd_freq_write(self, verbose=True):
         '''
         Sets the probe's SWD clock frequency to one supported by the target for
@@ -107,7 +119,7 @@ class Flash(object):
         '''
         raise NotImplementedError
 
-    def burn_dv(self, dv, verbose=True):
+    def burn_dv(self, dv, bank_swap=0, verbose=True):
         '''
         Burns the specified data vector to flash, erasing sectors as necessary
         to perform the operation.  The data vector is a list of the form:
@@ -122,13 +134,21 @@ class Flash(object):
         within a sector is erased.
 
         Data written to sectors outside flash boundaries is silently discarded.
+
+        The bank_swap option can be used to invert data vector addresses about
+        the midpoint of the flash.  So, for an 8K flash writes to the lower 4K
+        would instead be performed to the upper 4K and writes to the upper 4K
+        would be performed to the lower 4K.  This is to allow writing a binary
+        linked at an active base address into the inactive half of flash in a
+        dual-banked system.
         '''
         bd = RAMBD(self.sector_size,
                    first_block=self.mem_base // self.sector_size,
                    nblocks=self.nsectors)
         for v in dv:
             try:
-                bd.write(v[0], v[1])
+                addr = self._swap_addr(v[0], v[1]) if bank_swap else v[0]
+                bd.write(addr, v[1])
             except BlockOutOfRangeException:
                 pass
 
