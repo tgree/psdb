@@ -115,7 +115,9 @@ class FLASH(Device, Flash):
     def erase_sector(self, n, verbose=True):
         '''
         Erases the nth sector in flash.
-        The sector is verified to be erased before returning.
+        The sector is verified to be erased before returning.  This checks if
+        the flash banks are swapped and erases the appropriate sector if it
+        needs to reverse the numbers.
         '''
         assert 0 <= n and n < self.nsectors
 
@@ -125,11 +127,16 @@ class FLASH(Device, Flash):
                     addr, addr + self.sector_size - 1))
 
         # In dual-bank mode, do the right thing.
-        if self.sector_size == 2048 and n >= 128:
-            bker = (1 << 11);
-            n   -= 128
-        else:
-            bker = 0
+        if self.sector_size == 2048:
+            syscfg  = self.target.devs['SYSCFG']
+            fb_mode = bool(syscfg._read_memrmp() & (1 << 8))
+            if not fb_mode and n >= 128:
+                bker = (1 << 11)
+            elif fb_mode and n < 128:
+                bker = (1 << 11)
+            else:
+                bker = 0
+            n = (n % 128)
 
         with self._flash_unlocked():
             self._clear_errors()
