@@ -18,6 +18,7 @@ from .adc import ADC
 from .dac import DAC
 from .comparator import COMP
 from .opamp import OPAMP
+from .syscfg import SYSCFG
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -32,6 +33,7 @@ DEVICES = [(SRAM,    'CCM SRAM', 0x20018000, 0x00008000),
            (BT,      'TIM6',     0x40001000),
            (BT,      'TIM7',     0x40001400),
            (PWR,     'PWR',      0x40007000),
+           (SYSCFG,  'SYSCFG',   0x40010000),
            (VREF,    'VREF',     0x40010030),
            (COMP,    'COMP1',    0x40010200),
            (OPAMP,   'OPAMP',    0x40010300),
