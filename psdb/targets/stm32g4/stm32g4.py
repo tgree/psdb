@@ -19,6 +19,7 @@ from .dac import DAC
 from .comparator import COMP
 from .opamp import OPAMP
 from .syscfg import SYSCFG
+from .dbgmcu import DBGMCU
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -62,6 +63,7 @@ DEVICES = [(SRAM,    'CCM SRAM', 0x20018000, 0x00008000),
            (DAC,     'DAC2',     0x50000C00),
            (DAC,     'DAC3',     0x50001000),
            (DAC,     'DAC4',     0x50001400),
+           (DBGMCU,  'DBGMCU',   0xE0042000),
            ]
 
 
