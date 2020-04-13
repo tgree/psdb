@@ -26,6 +26,9 @@ CORE_REGISTERS = collections.OrderedDict([
     ('lr',   14),
     ('pc',   15),
     ('xpsr', 16),
+    ('msp',  17),
+    ('psp',  18),
+    ('cfbp', 20),
 ])
 
 
