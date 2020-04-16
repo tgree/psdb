@@ -45,13 +45,23 @@ def main(rv):
         target.flash.erase_all()
         target.reset_halt()
 
-    # Write a new image to flash if requested.
+    # Write a new ELF image to flash if requested.
     if rv.flash:
         print('Burning "%s"...' % rv.flash)
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
         target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=rv.verbose,
                               bank_swap=rv.flash_inactive)
+        print('Flash completed successfully.')
+        target.reset_halt()
+
+    # Write a raw binary file to flash if requested.
+    if rv.write_raw_binary:
+        print('Burning "%s"...' % rv.flash)
+        with open(rv.write_raw_binary, 'rb') as f:
+            data = f.read()
+        target.flash.burn_dv([(target.flash.mem_base, data)],
+                             verbose=rv.verbose, bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
@@ -83,6 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--read-flash')
     parser.add_argument('--flash')
+    parser.add_argument('--write-raw-binary')
     parser.add_argument('--flash-inactive', action='store_true')
     parser.add_argument('--erase', action='store_true')
     parser.add_argument('--mem-dump', '-m')

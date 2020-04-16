@@ -4,6 +4,7 @@ from .device import Reg, RegDiv, MemDevice
 from . import msp432
 from . import stm32h7
 from . import stm32g4
+from . import stm32wb55
 
 
 __all__ = ['Target',
@@ -16,6 +17,7 @@ TARGETS = [msp432.MSP432P401,
            stm32h7.STM32H7,
            stm32h7.STM32H7_DP,
            stm32g4.STM32G4,
+           stm32wb55.STM32WB55,
            ]
 
 
