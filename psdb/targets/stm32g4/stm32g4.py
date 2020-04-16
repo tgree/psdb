@@ -73,6 +73,7 @@ class STM32G4(Target):
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FFF75E0) & 0x0000FFFF)*1024
+        self.package    = self.ahb_ap.read_32(0x1FFF7500) & 0x0000001F
         self.mcu_idcode = self.ahb_ap.read_32(0xE0042000)
 
         for d in DEVICES:
