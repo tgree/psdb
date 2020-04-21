@@ -205,15 +205,15 @@ class GDBServer(object):
             return b''
 
     def _handle_write_memory(self, pkt):
-        args  = pkt[1:].split(',')
-        addr  = int(args[0:1], 16)
-        args  = args[1].split(':')
-        size  = int(args[0:1], 16)
+        args  = pkt[1:].split(b',')
+        addr  = int(args[0], 16)
+        args  = args[1].split(b':')
+        size  = int(args[0], 16)
         chars = args[1]
         assert len(chars) == size*2
         data = b''
         for i in range(size):
-            v = (int(chars[2*i], 16) << 4) | int(chars[2*i + 1], 16)
+            v = int(chars[2*i:2*i+2], 16)
             data += bytes([v])
 
         try:
