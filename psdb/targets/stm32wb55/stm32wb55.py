@@ -6,6 +6,7 @@ from .pwr import PWR
 from .rcc import RCC
 from .ipcc import IPCC
 from ..device import MemDevice
+from .ipc import IPC
 from psdb.targets import Target
 
 
@@ -43,6 +44,12 @@ class STM32WB55(Target):
                   self.flash.otp_len)
         self.devs['SRAM2a'].size = self.flash.user_sram2a_size
         self.devs['SRAM2b'].size = self.flash.user_sram2b_size
+
+        ipccdba = self.flash.get_ipccdba()
+        sram1   = self.devs['SRAM1']
+        sram2a  = self.devs['SRAM2a']
+        size    = sram2a.size - (ipccdba - sram2a.dev_base)
+        self.ipc = IPC(self, self.ahb_ap, ipccdba, size, sram1.dev_base)
 
     def __repr__(self):
         return 'STM32WB55 MCU_IDCODE 0x%08X' % self.mcu_idcode
