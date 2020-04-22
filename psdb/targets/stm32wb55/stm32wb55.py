@@ -4,6 +4,7 @@ from .flash import FLASH
 from .sram import SRAM
 from .pwr import PWR
 from .rcc import RCC
+from .ipcc import IPCC
 from ..device import MemDevice
 from psdb.targets import Target
 
@@ -13,6 +14,7 @@ DEVICES = [(SRAM,   'SRAM1',    0x20000000, 0x00030000),
            (SRAM,   'SRAM2b',   0x20038000, 0x00008000),
            (RCC,    'RCC',      0x58000000),
            (PWR,    'PWR',      0x58000400),
+           (IPCC,   'IPCC',     0x58000C00),
            (FLASH,  'FLASH',    0x58004000, 0x08000000, 3300000,
                                 0x1FFF7000, 1024),
            ]
