@@ -1,6 +1,12 @@
 This package provides Python access to various ARM-compatible debug probes.
 
-All tools support the --help option.  It is recommended to use python3.
+All tools support the --help option.  It is recommended to use python3.  You
+may install the package locally using:
+
+make install3
+
+which will require super-user privileges.  Alternatively, you can run all
+commands from the root of the repository.
 
 
 ===============================================================================
