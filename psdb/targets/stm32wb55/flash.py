@@ -300,6 +300,7 @@ class FLASH(Device, Flash):
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
+            self._write_cr(0)
 
     def read_otp(self, offset, size):
         '''
