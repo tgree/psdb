@@ -244,7 +244,8 @@ def main(rv):
     print('Starting server on port %s for %s' % (rv.port, probe))
     target = probe.probe(verbose=rv.verbose)
     target.set_max_tck_freq()
-    target.resume()
+    if not rv.halt:
+        target.resume()
     GDBServer(target, rv.port, rv.verbose)
 
     while True:
@@ -258,4 +259,5 @@ if __name__ == '__main__':
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--dump', action='store_true')
+    parser.add_argument('--halt', action='store_true')
     main(parser.parse_args())
