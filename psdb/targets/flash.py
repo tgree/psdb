@@ -91,14 +91,13 @@ class Flash(object):
         to start and end sector boundaries, then the erase operation will also
         erase the edge sectors.
         '''
-        return self.erase_sectors(self._mask_for_alp(addr, length),
-                                  verbose=verbose)
+        self.erase_sectors(self._mask_for_alp(addr, length), verbose=verbose)
 
     def erase_all(self, verbose=True):
         '''
         Erases the entire flash.
         '''
-        return self.erase(self.mem_base, self.flash_size, verbose=verbose)
+        self.erase(self.mem_base, self.flash_size, verbose=verbose)
 
     def read(self, addr, length):
         '''
