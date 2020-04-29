@@ -14,7 +14,8 @@ PYPSDB_DEPS := \
 		psdb/targets/stm32h7/*.py		\
 		psdb/targets/stm32g4/*.py   	\
 		psdb/targets/stm32wb55/*.py		\
-		psdb/targets/stm32wb55/ipc/*.py
+		psdb/targets/stm32wb55/ipc/*.py \
+		psdb/util/*.py
 
 .PHONY: all
 all: pypsdb pypsdb3

@@ -25,6 +25,7 @@ setuptools.setup(
               'psdb.targets.stm32g4',
               'psdb.targets.stm32wb55',
               'psdb.targets.stm32wb55.ipc',
+              'psdb.util',
               ],
     classifiers=[
         "Programming Language :: Python :: 2.7",
