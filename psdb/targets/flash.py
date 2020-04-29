@@ -118,7 +118,7 @@ class Flash(object):
         '''
         raise NotImplementedError
 
-    def burn_dv(self, dv, bank_swap=0, verbose=True):
+    def burn_dv(self, dv, bank_swap=0, verbose=True, erase=True):
         '''
         Burns the specified data vector to flash, erasing sectors as necessary
         to perform the operation.  The data vector is a list of the form:
@@ -151,10 +151,11 @@ class Flash(object):
             except BlockOutOfRangeException:
                 pass
 
-        mask = 0
-        for block in bd.blocks.values():
-            mask |= self._mask_for_alp(block.addr, len(block.data))
-        self.erase_sectors(mask, verbose=verbose)
+        if erase:
+            mask = 0
+            for block in bd.blocks.values():
+                mask |= self._mask_for_alp(block.addr, len(block.data))
+            self.erase_sectors(mask, verbose=verbose)
 
         self.set_swd_freq_write(verbose=verbose)
 
