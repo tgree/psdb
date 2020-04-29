@@ -6,10 +6,6 @@ import time
 from builtins import range
 
 
-class Exception(Exception):
-    pass
-
-
 class Probe(object):
     def __init__(self, name):
         self.name   = name
@@ -138,8 +134,8 @@ class Probe(object):
         elif dpver == 2:
             self._probe_dp_v2(verbose=verbose)
         else:
-            raise Exception('Unsupported DP version %u (0x%08X)' % (
-                            dpver, self.dpidr))
+            raise psdb.ProbeException('Unsupported DP version %u (0x%08X)' % (
+                                      dpver, self.dpidr))
 
         self.cpus = []
         for _, ap in self.aps.items():

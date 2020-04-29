@@ -43,17 +43,17 @@ FEATURE_BULK_WRITE_16 = (1 << 3)
 FEATURE_VOLTAGE       = (1 << 4)
 
 
-class STLinkCmdException(Exception):
+class STLinkCmdException(psdb.ProbeException):
     def __init__(self, cmd, rsp, msg):
-        super(Exception, self).__init__(msg)
+        super(psdb.ProbeException, self).__init__(msg)
         self.cmd = cmd
         self.rsp = rsp
         self.err = rsp[0]
 
 
-class STLinkXFERException(Exception):
+class STLinkXFERException(psdb.ProbeException):
     def __init__(self, status, fault_addr, msg):
-        super(Exception, self).__init__(msg)
+        super(psdb.ProbeException, self).__init__(msg)
         self.status     = status
         self.fault_addr = fault_addr
 
@@ -116,7 +116,7 @@ class STLink(usb_probe.Probe):
                                          'Unexpected error 0x%02X: %s'
                                          % (data[0], data))
             time.sleep(delay)
-        raise Exception('Max retries exceeded!')
+        raise psdb.ProbeException('Max retries exceeded!')
 
     def _usb_last_xfer_status(self):
         '''

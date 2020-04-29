@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .. import probe
 from .. import usb_probe
+import psdb
 
 import usb.core
 
@@ -27,7 +28,7 @@ def version_string(v):
                             ((v & 0x000000FF) >>  0))
 
 
-class XDS110VersionException(probe.Exception):
+class XDS110VersionException(psdb.ProbeException):
     def __init__(self, fw_version, min_fw_version):
         super(XDS110VersionException, self).__init__(
             'Firmware version %s is too old, use Code Composer Studio to '
@@ -37,7 +38,7 @@ class XDS110VersionException(probe.Exception):
         self.min_fw_version = min_fw_version
 
 
-class XDS110CommandException(probe.Exception):
+class XDS110CommandException(psdb.ProbeException):
     def __init__(self, error, allowed_errs, response):
         super(XDS110CommandException, self).__init__('XDS110 error %d' % error)
         self.error        = error

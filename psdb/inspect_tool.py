@@ -362,7 +362,7 @@ if __name__ == '__main__':
     # Find a debug probe.
     try:
         args.probe = psdb.probes.find_default(usb_path=args.usb_path)
-    except psdb.probes.Exception as e:
+    except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
 

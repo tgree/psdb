@@ -2,6 +2,7 @@
 from . import access_port
 from . import component
 from . import cpus
+from .exception import PSDBException, ProbeException
 from .hexdump import hexdump
 
 

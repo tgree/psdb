@@ -104,6 +104,6 @@ if __name__ == '__main__':
 
     try:
         main(rv)
-    except psdb.probes.Exception as e:
+    except psdb.ProbeException as e:
         print(e)
         sys.exit(1)

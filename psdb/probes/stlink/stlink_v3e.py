@@ -60,10 +60,11 @@ class STLinkV3E(stlink.STLink):
             if e.err != 0x08:
                 raise
         if is_jtag:
-            raise Exception('Requested JTAG frequency %u kHz too low.'
-                            % freq_khz)
-        raise Exception('Requested SWD frequency %u kHz too low; minimum is '
-                        '%u kHz.' % (freq_khz, self._swd_freqs_khz[-1]))
+            raise psdb.ProbeException('Requested JTAG frequency %u kHz too low.'
+                                      % freq_khz)
+        raise psdb.ProbeException('Requested SWD frequency %u kHz too low; '
+                                  'minimum is %u kHz.'
+                                  % (freq_khz, self._swd_freqs_khz[-1]))
 
     def set_tck_freq(self, freq_hz):
         '''

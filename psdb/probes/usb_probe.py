@@ -10,7 +10,8 @@ class Probe(probe.Probe):
             self.serial_num = usb_dev.serial_number
         except ValueError as e:
             if str(e) == 'The device has no langid':
-                raise Exception('Device has no langid; ensure running as root!')
+                raise psdb.ProbeException('Device has no langid; ensure '
+                                          'running as root!')
 
         self.usb_path = '%s:%s' % (
                 self.usb_dev.bus,
