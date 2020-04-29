@@ -21,6 +21,8 @@ class UnlockedContextManager(object):
         if v & (1<<31):
             self.flash._write_keyr(0x45670123)
             self.flash._write_keyr(0xCDEF89AB)
+            v = self.flash._read_cr()
+            assert not (v & (1<<31))
 
     def __exit__(self, type, value, traceback):
         v = self.flash._read_cr()
