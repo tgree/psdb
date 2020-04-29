@@ -51,6 +51,17 @@ class Target(object):
         for c in cpus:
             c.resume()
 
+    def wait_reset_and_reprobe(self, **kwargs):
+        # Wait for the initial disconnect.
+        try:
+            while True:
+                self.cpus[0].scb.read_cpuid()
+                time.sleep(0.1)
+        except psdb.ProbeException:
+            time.sleep(0.1)
+
+        return self.reprobe(**kwargs)
+
     def reprobe(self, **kwargs):
         assert self.is_halted()
 
