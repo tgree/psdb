@@ -87,7 +87,7 @@ class STLinkV2_1(stlink.STLink):
             if freq_hz >= f:
                 self._set_swdclk_divisor(d)
                 return f
-        raise Exception('Frequency %s too low!' % freq_hz)
+        raise psdb.ProbeException('Frequency %s too low!' % freq_hz)
 
     def show_info(self):
         super(STLinkV2_1, self).show_info()

@@ -47,6 +47,9 @@ class SystemControlBlock(psdb.component.Component):
     def write_demcr(self, v):
         return self.ap.write_32(v, self.addr + 0xDFC)
 
+    def read_cpuid(self):
+        return self.ap.read_32(self.addr + 0xD00)
+
 
 class Cortex(psdb.component.Component):
     '''

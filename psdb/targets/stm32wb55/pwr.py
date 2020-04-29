@@ -97,3 +97,9 @@ class PWR(Device):
 
     def __init__(self, target, ap, name, addr):
         super(PWR, self).__init__(target, ap, addr, name, PWR.REGS)
+
+    def enable_cpu2_boot(self):
+        self._write_cr4(self._read_cr4() | (1 << 15))
+
+    def is_cpu2_boot_enabled(self):
+        return (self._read_cr4() & (1 << 15)) != 0

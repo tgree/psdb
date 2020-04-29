@@ -357,12 +357,13 @@ if __name__ == '__main__':
     parser.add_argument('--usb-path')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--resume', '-r', action='store_true')
     args = parser.parse_args()
 
     # Find a debug probe.
     try:
         args.probe = psdb.probes.find_default(usb_path=args.usb_path)
-    except psdb.probes.Exception as e:
+    except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
 
@@ -379,4 +380,5 @@ if __name__ == '__main__':
     tgcurses.wrapper(main, args)
 
     # Resume the target.
-    args.target.resume()
+    if args.resume:
+        args.target.resume()

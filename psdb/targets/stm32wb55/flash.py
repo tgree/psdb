@@ -21,10 +21,30 @@ class UnlockedContextManager(object):
         if v & (1<<31):
             self.flash._write_keyr(0x45670123)
             self.flash._write_keyr(0xCDEF89AB)
+            v = self.flash._read_cr()
+            assert not (v & (1<<31))
 
     def __exit__(self, type, value, traceback):
         v = self.flash._read_cr()
         self.flash._write_cr(v | (1<<31))
+
+
+class UnlockedOptionsContextManager(object):
+    def __init__(self, flash):
+        self.flash = flash
+
+    def __enter__(self):
+        v = self.flash._read_cr()
+        if v & (1<<30):
+            assert not (v & (1<<31))
+            self.flash._write_optkeyr(0x08192A3B)
+            self.flash._write_optkeyr(0x4C5D6E7F)
+            v = self.flash._read_cr()
+            assert not (v & (1<<30))
+
+    def __exit__(self, type, value, traceback):
+        v = self.flash._read_cr()
+        self.flash._write_cr(v | (1<<30))
 
 
 class FLASH(Device, Flash):
@@ -208,8 +228,16 @@ class FLASH(Device, Flash):
         else:
             self.user_sram2b_size = target.devs['SRAM2b'].size
 
+        # Clear OPTVERR if set; the MCU startup is buggy and some revisions
+        # always set this bit even though there are no options problems.
+        if self._read_sr() & (1 << 15):
+            self._write_sr(1 << 15)
+
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
+
+    def _options_unlocked(self):
+        return UnlockedOptionsContextManager(self)
 
     def _clear_errors(self):
         self._write_sr(self._read_sr())
@@ -298,6 +326,7 @@ class FLASH(Device, Flash):
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
+            self._write_cr(0)
 
     def read_otp(self, offset, size):
         '''
@@ -326,3 +355,78 @@ class FLASH(Device, Flash):
         '''
         assert self.is_otp_writeable(offset, len(data))
         self.write(self.otp_base + offset, data)
+
+    def get_ipccdba(self):
+        '''
+        Returns the address of the IPCC mailbox data buffer.  Note that in the
+        flash this value is stored as a double-word offset in SRAM2; here, we
+        convert it to a full 32-bit address.
+        '''
+        offset = (self._read_ipccbr() & 0x00003FFF) * 8
+        return self.target.devs['SRAM2a'].dev_base + offset
+
+    def get_optr(self):
+        '''
+        Returns the current options register.
+        '''
+        return self._read_optr()
+
+    def flash_optr(self, new_optr, verbose=True):
+        '''
+        Records the current option values in flash.
+        '''
+        assert self.target.is_halted()
+        old_optr = self.get_optr()
+        if verbose:
+            print('Flashing options (Old OPTR=0x%08X, New OPTR=0x%08X)'
+                  % (old_optr, new_optr))
+        with self._flash_unlocked():
+            with self._options_unlocked():
+                self._write_optr(new_optr)
+                self._clear_errors()
+                self._write_cr(1 << 17)
+                self._wait_bsy_clear()
+                self._check_errors()
+
+    def set_boot_sram1(self, **kwargs):
+        '''
+        Configures the MCU to boot CPU1 from SRAM1 by updating the options
+        register and writing it to flash.  The original options register value
+        is returned for saving.
+        '''
+        optr  = self.get_optr()
+        optr &= ~((1 << 27) | (1 << 26) | (1 << 23))
+        self.flash_optr(optr, **kwargs)
+        return optr
+
+    def set_boot_sysmem(self, **kwargs):
+        '''
+        Configures the MCU to boot from system memory.
+        '''
+        optr  = self.get_optr()
+        optr &= ~((1 << 27) | (1 << 26) | (1 << 23))
+        optr |= ((1 << 27) | (1 << 23))
+        self.flash_optr(optr, **kwargs)
+        return optr
+
+    def trigger_obl_launch(self, **kwargs):
+        '''
+        Set OBL_LAUNCH to trigger a reset of the device using the new options.
+        This reset triggers a disconnect of the debug probe, so a full
+        target.reprobe() sequence is required.  The correct idiom for use of
+        trigger_obl_launch() is:
+
+            target = target.flash.trigger_obl_launch()
+        '''
+        UnlockedContextManager(self).__enter__()
+        UnlockedOptionsContextManager(self).__enter__()
+        self._write_cr(1 << 27)
+        return self.target.wait_reset_and_reprobe(**kwargs)
+
+    def is_sram_boot_enabled(self):
+        mask = (1 << 27) | (1 << 26) | (1 << 23)
+        return ((self.get_optr() & mask) == 0)
+
+    def is_flash_boot_enabled(self):
+        mask = (1 << 27) | (1 << 26) | (1 << 23)
+        return ((self.get_optr() & mask) == mask)

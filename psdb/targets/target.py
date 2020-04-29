@@ -1,7 +1,9 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from . import scs
+import psdb
 
 import collections
+import time
 
 
 class MemRegion(object):
@@ -48,3 +50,27 @@ class Target(object):
         cpus = cpus or self.cpus
         for c in cpus:
             c.resume()
+
+    def wait_reset_and_reprobe(self, **kwargs):
+        # Wait for the initial disconnect.
+        try:
+            while True:
+                self.cpus[0].scb.read_cpuid()
+                time.sleep(0.1)
+        except psdb.ProbeException:
+            time.sleep(0.1)
+
+        return self.reprobe(**kwargs)
+
+    def reprobe(self, **kwargs):
+        assert self.is_halted()
+
+        # Reprobe until we succeed.
+        while True:
+            try:
+                t = self.db.probe(**kwargs)
+                assert type(t) == type(self)
+                assert t.is_halted()
+                return t
+            except psdb.ProbeException:
+                time.sleep(0.1)
