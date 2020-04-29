@@ -7,6 +7,7 @@ import os
 import psdb
 from .mailbox import Mailbox
 from .system_channel import SystemChannel
+from . import binaries
 
 
 SYSTEM_CMD_RSP_CHANNEL  = 2
@@ -23,57 +24,6 @@ STOMP_BIN = (
 
 EVT_PAYLOAD_WS_RUNNING  = b'\x00'
 EVT_PAYLOAD_FUS_RUNNING = b'\x01'
-
-
-class STBinary(object):
-    def __init__(self, fname, version, md5sum, addr_1M, addr_512K, addr_256K):
-        super(STBinary, self).__init__()
-        self.fname     = fname
-        self.version   = version
-        self.md5sum    = md5sum
-        self.addr      = {0x00100000 : addr_1M,
-                          0x00080000 : addr_512K,
-                          0x00040000 : addr_256K,
-                          }
-        self.version_str = ('%u.%u.%u' % ((version >> 24) & 0xFF,
-                                          (version >> 16) & 0xFF,
-                                          (version >>  8) & 0xFF))
-
-
-# Note: The FUS v1.1.0 binary that ships with the v1.5.0 GitHub release is bad
-#       (missing footers and stuff - possibly not encrypted or packaged
-#       correctly by ST) and you need to get the one from the v1.6.0 GitHub
-#       release.
-FUS_BINARIES = {
-    # 1.0.2 - this can be installed on any STM32WB55 from 0.5.3; but you can't
-    #         upgrade to it from 1.0.1 - you must go straight to 1.1.0.
-    0x01000200 : STBinary('stm32wb5x_FUS_fw_1_0_2.bin', 0x01000200,
-                          'e5c01503170dd68f4ff645073cb55bd9',
-                          0x080EC000, 0x0807A000, 0x0803A000),
-
-    # 1.1.0 - this can be installed on any STM32WB55 that has either 1.0.1 or
-    #         1.0.2 installed, but you can't go here straight from 0.5.3.  If
-    #         you have 0.5.3 installed, you need to install 1.0.2 first.
-    0x01010000 : STBinary('stm32wb5x_FUS_fw.bin', 0x01010000,
-                          'f8c05283ed3cdae4cc11bd6afe6b2131',
-                          0x080EC000, 0x0807A000, 0x0803A000),
-    }
-FUS_BINARY_LATEST = FUS_BINARIES[0x01010000]
-
-
-FW_BINARIES = {
-    'af381ee93e812325542864acac6611e7' :
-        STBinary('stm32wb5x_BLE_Stack_full_fw.bin', 0x01050000,
-                 'af381ee93e812325542864acac6611e7',
-                 0x080CB000, 0x08057000, 0x08017000
-                 ),
-
-    '5a1bbd9af07fbef316abfe311d6b3675' :
-        STBinary('stm32wb5x_BLE_Stack_full_fw.bin', 0x01060000,
-                 '5a1bbd9af07fbef316abfe311d6b3675',
-                 0x080CB000, 0x08057000, 0x08017000
-                 ),
-    }
 
 
 class IPC(object):
@@ -265,14 +215,14 @@ class IPC(object):
         assert t.ipc.mailbox.get_ws_version() == 0
 
         version = (t.ipc.mailbox.get_fus_version() & 0xFFFFFF00)
-        if version == FUS_BINARY_LATEST.version:
+        if version == binaries.FUS_BINARY_LATEST.version:
             print('FUS already at latest version %s.'
-                  % FUS_BINARY_LATEST.version_str)
+                  % binaries.FUS_BINARY_LATEST.version_str)
             return t
         elif version == 0x00050300:
-            fb = FUS_BINARIES[0x01000200]
+            fb = binaries.find_fus_binary(0x01000200)
         elif version == 0x01000200:
-            fb = FUS_BINARIES[0x01010000]
+            fb = binaries.find_fus_binary(0x01010000)
         else:
             raise Exception("Don't know how to upgrade from 0x%08X" % version)
 
@@ -367,7 +317,7 @@ class IPC(object):
 
         with open(bin_path, 'rb') as f:
             data = f.read()
-        key = hashlib.md5(data).hexdigest()
-        fb  = FW_BINARIES[key]
+        md5sum = hashlib.md5(data).hexdigest()
+        fb     = binaries.find_ws_binary(md5sum)
 
         return self._upgrade_firmware(data, fb)
