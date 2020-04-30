@@ -50,7 +50,7 @@ def main(rv):
         print('Burning "%s"...' % rv.flash)
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
-        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=rv.verbose,
+        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=True,
                               bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
@@ -61,7 +61,7 @@ def main(rv):
         with open(rv.write_raw_binary, 'rb') as f:
             data = f.read()
         target.flash.burn_dv([(target.flash.mem_base, data)],
-                             verbose=rv.verbose, bank_swap=rv.flash_inactive)
+                             verbose=True, bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
