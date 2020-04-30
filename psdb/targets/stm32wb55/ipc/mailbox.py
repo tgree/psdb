@@ -51,8 +51,6 @@ class Mailbox(object):
         self.ap        = ap
         self.base_addr = base_addr
         self.ram_size  = ram_size
-        print('Mailbox base: 0x%08X' % self.base_addr)
-        print('Mailbox size: 0x%08X' % self.ram_size)
 
     def _queue_pop(self, addr):
         '''

@@ -1,5 +1,6 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 from ..block import RAMBD, BlockOutOfRangeException
+import psdb
 
 import math
 import time
@@ -81,9 +82,12 @@ class Flash(object):
         '''
         Erases the sectors specified in the bit mask.
         '''
+        sectors = []
         for i in range(int(math.floor(math.log(mask, 2))) + 1):
             if (mask & (1 << i)):
-                self.erase_sector(i, verbose=verbose)
+                sectors.append(i)
+        for i in psdb.piter(sectors, verbose=verbose):
+            self.erase_sector(i, verbose=False)
 
     def erase(self, addr, length, verbose=True):
         '''
@@ -152,6 +156,8 @@ class Flash(object):
                 pass
 
         if erase:
+            if verbose:
+                print('Erasing flash...')
             mask = 0
             for block in bd.blocks.values():
                 mask |= self._mask_for_alp(block.addr, len(block.data))
@@ -161,10 +167,12 @@ class Flash(object):
 
         t0 = time.time()
         total_len = 0
-        for block in bd.blocks.values():
+        if verbose:
+            print('Burning flash...')
+        for block in psdb.piter(bd.blocks.values(), verbose=verbose):
             while block.data.endswith(b'\xff'*64):
                 block.data = block.data[:-64]
-            self.write(block.addr, block.data, verbose=verbose)
+            self.write(block.addr, block.data, verbose=False)
             total_len += len(block.data)
 
         if verbose:
@@ -174,11 +182,10 @@ class Flash(object):
 
         self.set_swd_freq_read(verbose=verbose)
 
+        if verbose:
+            print('Verifying flash...')
         t0 = time.time()
-        for block in bd.blocks.values():
-            if verbose:
-                print('Verifying [0x%08X : 0x%08X]...' % (
-                      block.addr, block.addr + len(block.data) - 1))
+        for block in psdb.piter(bd.blocks.values(), verbose=verbose):
             mem = self.read(block.addr, len(block.data))
             assert mem == block.data
         if verbose:

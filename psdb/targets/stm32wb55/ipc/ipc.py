@@ -13,15 +13,6 @@ from . import binaries
 SYSTEM_CMD_RSP_CHANNEL  = 2
 SYSTEM_EVENT_CHANNEL    = 2
 
-STOMP_BIN = (
-    b'\x08\x22'     # movs  r2, #8
-    b'\x0c\x23'     # movs  r3, #12
-    b'\x12\x68'     # ldr   r2, [r2, #0]
-    b'\x1b\x68'     # ldr   r3, [r3, #0]
-    b'\x13\x60'     # str   r3, [r2, #0]
-    b'\xfd\xe7'     # bne.n STOMP_BIN
-    )
-
 EVT_PAYLOAD_WS_RUNNING  = b'\x00'
 EVT_PAYLOAD_FUS_RUNNING = b'\x01'
 
@@ -58,18 +49,16 @@ class IPC(object):
     def _configure_sram_boot(self):
         t = self.target
 
-        # Write the SRAM1 stub.
+        # Write an infinite loop out of the reset handler vector.
         sp   = self.vtor_addr + 512
-        pc   = (self.vtor_addr + 20) | 1
-        vtor = struct.pack('<LLLLL', sp, pc, 16, 0xABCADABA, 0x11111111)
-        self.ap.write_bulk(vtor + STOMP_BIN, self.vtor_addr)
+        pc   = (self.vtor_addr + 8) | 1
+        vtor = struct.pack('<LLH', sp, pc, 0xE7FE)
+        self.ap.write_bulk(vtor, self.vtor_addr)
 
         # Configure to boot from SRAM1 and reset.
         if not t.flash.is_sram_boot_enabled():
-            initial_optr = t.flash.get_optr()
-            optr = t.flash.set_boot_sram1(verbose=True)
-            print('OPTR change from 0x%08X to 0x%08X' % (initial_optr, optr))
-            t = t.flash.trigger_obl_launch(connect_under_reset=True)
+            t = t.flash.set_boot_sram1(verbose=True,
+                                       connect_under_reset=True)
 
         return t
 
@@ -108,7 +97,6 @@ class IPC(object):
         if len(data) % 8 == 4:
             data += b'\x00\x00\x00\x00'
 
-        print('Erasing flash...')
         addr = fb.addr[t.flash.flash_size]
         t.flash.burn_dv([(addr, data)])
 
@@ -125,7 +113,7 @@ class IPC(object):
             try:
                 r = t.ipc.system_channel.exec_get_state()
                 print('FUS_GET_STATE: %s' % r)
-                assert r != 0xFF
+                assert r.status != 0xFF
                 if r.status == 0x00:
                     print('Finished in FUS mode.')
                     t.ipc._print_fus_version()
@@ -167,10 +155,8 @@ class IPC(object):
         '''
         t = self.target
 
-        print('0. Configuring SRAM booting...')
         t = t.ipc._configure_sram_boot()
 
-        print('1. Starting firmware and waiting for first event...')
         t, events = t.ipc._start_firmware()
         if (events[0].payload == EVT_PAYLOAD_FUS_RUNNING and
                 t.ipc.mailbox.check_dit_key_fus()):
@@ -179,24 +165,17 @@ class IPC(object):
             print('Already in FUS mode, FUS_GET_STATE: %s' % r)
             return t
 
-        print('Not in FUS mode.')
-        print('2. Executing first FUS_GET_STATE...')
-        r = t.ipc.system_channel.exec_get_state()
-        if r.status != 0xFF:
-            r.dump()
-            raise Exception('Unexpected FUS status 0x%02X' % r.status)
-
-        print('3. Executing second FUS_GET_STATE...')
-        t.ipc.system_channel._start_get_state()
-
-        print('4. Waiting for reset and reprobing...')
-        t = t.wait_reset_and_reprobe()
-
-        print('5. Starting firmware and waiting up to 5 seconds for reset...')
-        t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
-        t.ipc._print_fus_version()
-
-        return t
+        print('Not in FUS mode, repeating FUS_GET_STATE.')
+        while True:
+            try:
+                r = t.ipc.system_channel.exec_get_state()
+                print('FUS_GET_STATE: %s' % r)
+                time.sleep(0.1)
+            except psdb.ProbeException:
+                time.sleep(0.1)
+                t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
+                t.ipc._print_fus_version()
+                return t
 
     def upgrade_fus_firmware(self, bin_dir):
         '''
@@ -206,7 +185,7 @@ class IPC(object):
             stm32wb5x_FUS_fw_1_0_2.bin - 1.0.2 FUS binary
             stm32wb5x_FUS_fw.bin       - 1.1.0 FUS binary
 
-        The FUS firmware should already have been started via
+        The current FUS firmware should already have been started via
         start_fus_firmware().
         '''
         t = self.target
@@ -255,15 +234,21 @@ class IPC(object):
 
         t, events = t.ipc._start_firmware()
         if events[0].payload == EVT_PAYLOAD_WS_RUNNING:
+            print('Already in WS mode.')
             return t
         assert t.ipc.mailbox.get_ws_version() != 0
 
-        t.ipc.system_channel._start_start_ws()
-        t = t.wait_reset_and_reprobe()
-
-        t, events = t.ipc._start_firmware(EVT_PAYLOAD_WS_RUNNING)
-
-        return t
+        print('Not in WS mode, executing FUS_START_WS.')
+        while True:
+            try:
+                r = t.ipc.system_channel.exec_start_ws()
+                print('FUS_START_WS: %s' % r)
+                assert r.status != 0xFF
+                time.sleep(0.1)
+            except psdb.ProbeException:
+                time.sleep(0.1)
+                t, events = t.ipc._start_firmware(EVT_PAYLOAD_WS_RUNNING)
+                return t
 
     def delete_ws_firmware(self):
         '''
@@ -299,7 +284,7 @@ class IPC(object):
             try:
                 r = t.ipc.system_channel.exec_get_state()
                 print('FUS_GET_STATE: %s' % r)
-                assert r != 0xFF
+                assert r.status != 0xFF
                 if r.status == 0x00:
                     break
                 time.sleep(0.1)

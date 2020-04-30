@@ -40,6 +40,24 @@ def main(rv):
         with open(rv.read_flash, 'wb') as f:
             f.write(target.flash.read_all())
 
+    # Dump options if requested.
+    if rv.get_options or rv.option:
+        print('Initial OPTR: 0x%08X' % target.flash._read_optr())
+        print(target.flash.get_options())
+
+    # Option bytes if requested.
+    if rv.option:
+        options = {k.lower() : int(v, 0) for k, v in rv.option}
+        target = target.flash.set_options(options, verbose=rv.verbose,
+                                          connect_under_reset=True)
+        print('Final OPTR: 0x%08X' % target.flash._read_optr())
+        final_opts = target.flash.get_options()
+        print(final_opts)
+        for k, v in options.items():
+            if final_opts[k] != v:
+                print('Warning: option "%s" is %u not %u.'
+                      % (k, final_opts[k], v))
+
     # Erase the flash if requested.
     if rv.erase:
         target.flash.erase_all()
@@ -50,18 +68,18 @@ def main(rv):
         print('Burning "%s"...' % rv.flash)
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
-        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=rv.verbose,
+        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=True,
                               bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
     # Write a raw binary file to flash if requested.
     if rv.write_raw_binary:
-        print('Burning "%s"...' % rv.flash)
+        print('Burning "%s"...' % rv.write_raw_binary)
         with open(rv.write_raw_binary, 'rb') as f:
             data = f.read()
         target.flash.burn_dv([(target.flash.mem_base, data)],
-                             verbose=rv.verbose, bank_swap=rv.flash_inactive)
+                             verbose=True, bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
@@ -100,6 +118,8 @@ if __name__ == '__main__':
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--swap-banks', action='store_true')
+    parser.add_argument('--get-options', action='store_true')
+    parser.add_argument('--option', '-o', nargs=2, action='append')
     rv = parser.parse_args()
 
     try:

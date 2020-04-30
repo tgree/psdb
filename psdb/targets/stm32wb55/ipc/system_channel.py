@@ -31,18 +31,6 @@ class SystemChannel(object):
         self.ipc.wait_tx_free(self.cmd_rsp_channel)
         return self.ipc.mailbox.read_sys_response()
 
-    def _start_get_state(self):
-        self._start_sys_command(FUS_GET_STATE)
-
-    def _start_start_ws(self):
-        self._start_sys_command(FUS_START_WS)
-
-    def _start_fw_delete(self):
-        self._start_sys_command(FUS_FW_DELETE)
-
-    def _start_fw_upgrade(self):
-        self._start_sys_command(FUS_FW_UPGRADE)
-
     def exec_sys_command(self, opcode, payload=b''):
         self._start_sys_command(opcode, payload)
         return self._wait_sys_response()
@@ -55,6 +43,9 @@ class SystemChannel(object):
 
     def exec_fw_upgrade(self):
         return self.exec_sys_command(FUS_FW_UPGRADE)
+
+    def exec_start_ws(self):
+        return self.exec_sys_command(FUS_START_WS)
 
     def pop_all_events(self):
         '''
