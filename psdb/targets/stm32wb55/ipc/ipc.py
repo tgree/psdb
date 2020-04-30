@@ -99,7 +99,6 @@ class IPC(object):
         if len(data) % 8 == 4:
             data += b'\x00\x00\x00\x00'
 
-        print('Erasing flash...')
         addr = fb.addr[t.flash.flash_size]
         t.flash.burn_dv([(addr, data)])
 
