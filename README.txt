@@ -55,6 +55,19 @@ python3 -m psdb.fus_tool --fw-upgrade Projects/STM32WB_Copro_Wireless_Binaries/S
 python3 -m psdb.fus_tool --fw-delete
 python3 -m psdb.fus_tool --bin-dir Projects/STM32WB_Copro_Wireless_Binaries/STM32WB5x --fus-upgrade
 
+Or, a compound command to remove the old WS firmware, install new WS firmware
+and then start the application back up:
+
+python3 -m psdb.fus_tool \
+    --fw-delete \
+    --fw-upgrade Projects/STM32WB_Copro_Wireless_Binaries/STM32WB5x/stm32wb5x_BLE_Stack_full_fw.bin \
+    --set-flash-boot
+
+Note that an invocation with --set-flash-boot is required when you are done;
+in order to properly communicate with FUS, we need to prevent any user
+firmware from starting CPU2 or trying to use the IPC channels - we do that by
+switching the system to boot from SRAM1 until we are done with it.
+
 
 ===============================================================================
 We also attempt to document the STLINK protocol inside the stlink package.
