@@ -365,18 +365,14 @@ class FLASH(Device, Flash):
         offset = (self._read_ipccbr() & 0x00003FFF) * 8
         return self.target.devs['SRAM2a'].dev_base + offset
 
-    def get_optr(self):
+    def _flash_optr(self, new_optr, verbose=True):
         '''
-        Returns the current options register.
-        '''
-        return self._read_optr()
-
-    def flash_optr(self, new_optr, verbose=True):
-        '''
-        Records the current option values in flash.
+        Records the current option values in flash, but doesn't reset the MCU
+        so they won't yet take effect or even read back from the flash
+        registers.
         '''
         assert self.target.is_halted()
-        old_optr = self.get_optr()
+        old_optr = self._read_optr()
         if verbose:
             print('Flashing options (Old OPTR=0x%08X, New OPTR=0x%08X)'
                   % (old_optr, new_optr))
@@ -388,45 +384,123 @@ class FLASH(Device, Flash):
                 self._wait_bsy_clear()
                 self._check_errors()
 
-    def set_boot_sram1(self, **kwargs):
-        '''
-        Configures the MCU to boot CPU1 from SRAM1 by updating the options
-        register and writing it to flash.  The original options register value
-        is returned for saving.
-        '''
-        optr  = self.get_optr()
-        optr &= ~((1 << 27) | (1 << 26) | (1 << 23))
-        self.flash_optr(optr, **kwargs)
-        return optr
-
-    def set_boot_sysmem(self, **kwargs):
-        '''
-        Configures the MCU to boot from system memory.
-        '''
-        optr  = self.get_optr()
-        optr &= ~((1 << 27) | (1 << 26) | (1 << 23))
-        optr |= ((1 << 27) | (1 << 23))
-        self.flash_optr(optr, **kwargs)
-        return optr
-
-    def trigger_obl_launch(self, **kwargs):
+    def _trigger_obl_launch(self, **kwargs):
         '''
         Set OBL_LAUNCH to trigger a reset of the device using the new options.
         This reset triggers a disconnect of the debug probe, so a full
         target.reprobe() sequence is required.  The correct idiom for use of
-        trigger_obl_launch() is:
+        _trigger_obl_launch() is:
 
-            target = target.flash.trigger_obl_launch()
+            target = target.flash._trigger_obl_launch()
         '''
         UnlockedContextManager(self).__enter__()
         UnlockedOptionsContextManager(self).__enter__()
         self._write_cr(1 << 27)
         return self.target.wait_reset_and_reprobe(**kwargs)
 
+    def get_options(self):
+        options = {}
+        optr = self._read_optr()
+        options['agc_trim']   = ((optr >> 29) & 0x07)
+        options['nboot0']     = ((optr >> 27) & 0x01)
+        options['nswboot0']   = ((optr >> 26) & 0x01)
+        options['sram2_rst']  = ((optr >> 25) & 0x01)
+        options['sram2_pe']   = ((optr >> 24) & 0x01)
+        options['nboot1']     = ((optr >> 23) & 0x01)
+        options['wwdg_sw']    = ((optr >> 19) & 0x01)
+        options['iwgd_stdby'] = ((optr >> 18) & 0x01)
+        options['iwdg_stop']  = ((optr >> 17) & 0x01)
+        options['iwdg_sw']    = ((optr >> 16) & 0x01)
+        options['nrst_shdw']  = ((optr >> 14) & 0x01)
+        options['nrst_stdby'] = ((optr >> 13) & 0x01)
+        options['nrst_stop']  = ((optr >> 12) & 0x01)
+        options['bor_lev']    = ((optr >>  9) & 0x07)
+        options['ese']        = ((optr >>  8) & 0x01)
+        options['rdp']        = ((optr >>  0) & 0xFF)
+        return options
+
+    def set_options(self, options, verbose=True, connect_under_reset=False):
+        assert options.get('agc_trim',   0) <= 0x07
+        assert options.get('nboot0',     0) <= 0x01
+        assert options.get('nswboot0',   0) <= 0x01
+        assert options.get('sram2_rst',  0) <= 0x01
+        assert options.get('sram2_pe',   0) <= 0x01
+        assert options.get('nboot1',     0) <= 0x01
+        assert options.get('wwdg_sw',    0) <= 0x01
+        assert options.get('iwgd_stdby', 0) <= 0x01
+        assert options.get('iwdg_stop',  0) <= 0x01
+        assert options.get('iwdg_sw',    0) <= 0x01
+        assert options.get('nrst_shdw',  0) <= 0x01
+        assert options.get('nrst_stdby', 0) <= 0x01
+        assert options.get('nrst_stop',  0) <= 0x01
+        assert options.get('bor_lev',    0) <= 0x07
+        assert options.get('ese',        0) <= 0x01
+        assert options.get('rdp',        0) <= 0xFF
+
+        cur_options = self.get_options()
+        for k, v in options.items():
+            assert k in cur_options
+            cur_options[k] = v
+
+        optr  = 0x10708000
+        optr |= (cur_options['agc_trim']   << 29)
+        optr |= (cur_options['nboot0']     << 27)
+        optr |= (cur_options['nswboot0']   << 26)
+        optr |= (cur_options['sram2_rst']  << 25)
+        optr |= (cur_options['sram2_pe']   << 24)
+        optr |= (cur_options['nboot1']     << 23)
+        optr |= (cur_options['wwdg_sw']    << 19)
+        optr |= (cur_options['iwgd_stdby'] << 18)
+        optr |= (cur_options['iwdg_stop']  << 17)
+        optr |= (cur_options['iwdg_sw']    << 16)
+        optr |= (cur_options['nrst_shdw']  << 14)
+        optr |= (cur_options['nrst_stdby'] << 13)
+        optr |= (cur_options['nrst_stop']  << 12)
+        optr |= (cur_options['bor_lev']    <<  9)
+        optr |= (cur_options['ese']        <<  8)
+        optr |= (cur_options['rdp']        <<  0)
+        self._flash_optr(optr, verbose=verbose)
+
+        return self._trigger_obl_launch(verbose=verbose,
+                                        connect_under_reset=connect_under_reset)
+
+    def set_boot_sram1(self, **kwargs):
+        '''
+        Configures the MCU to boot CPU1 from SRAM1 by updating the options
+        register and writing it to flash.  The original options register value
+        is returned for saving.
+        '''
+        return self.set_options({'nboot0'   : 0,
+                                 'nswboot0' : 0,
+                                 'nboot1'   : 0,
+                                 }, **kwargs)
+
+    def set_boot_sysmem(self, **kwargs):
+        '''
+        Configures the MCU to boot from system memory.
+        '''
+        return self.set_options({'nboot0'   : 1,
+                                 'nswboot0' : 0,
+                                 'nboot1'   : 1,
+                                 }, **kwargs)
+
+    def set_boot_flash(self, **kwargs):
+        '''
+        Configures the MCU to boot from flash.
+        '''
+        return self.set_options({'nboot0'   : 1,
+                                 'nswboot0' : 1,
+                                 'nboot1'   : 1,
+                                 }, **kwargs)
+
     def is_sram_boot_enabled(self):
-        mask = (1 << 27) | (1 << 26) | (1 << 23)
-        return ((self.get_optr() & mask) == 0)
+        options = self.get_options()
+        return (options['nboot0']   == 0 and
+                options['nswboot0'] == 0 and
+                options['nboot1']   == 0)
 
     def is_flash_boot_enabled(self):
-        mask = (1 << 27) | (1 << 26) | (1 << 23)
-        return ((self.get_optr() & mask) == mask)
+        options = self.get_options()
+        return (options['nboot0']   == 1 and
+                options['nswboot0'] == 1 and
+                options['nboot1']   == 1)

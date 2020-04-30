@@ -57,10 +57,8 @@ class IPC(object):
 
         # Configure to boot from SRAM1 and reset.
         if not t.flash.is_sram_boot_enabled():
-            initial_optr = t.flash.get_optr()
-            optr = t.flash.set_boot_sram1(verbose=True)
-            print('OPTR change from 0x%08X to 0x%08X' % (initial_optr, optr))
-            t = t.flash.trigger_obl_launch(connect_under_reset=True)
+            t = t.flash.set_boot_sram1(verbose=True,
+                                       connect_under_reset=True)
 
         return t
 
