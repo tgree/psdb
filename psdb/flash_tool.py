@@ -57,7 +57,7 @@ def main(rv):
 
     # Write a raw binary file to flash if requested.
     if rv.write_raw_binary:
-        print('Burning "%s"...' % rv.flash)
+        print('Burning "%s"...' % rv.write_raw_binary)
         with open(rv.write_raw_binary, 'rb') as f:
             data = f.read()
         target.flash.burn_dv([(target.flash.mem_base, data)],
