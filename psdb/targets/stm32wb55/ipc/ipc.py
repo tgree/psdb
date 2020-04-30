@@ -116,7 +116,7 @@ class IPC(object):
             try:
                 r = t.ipc.system_channel.exec_get_state()
                 print('FUS_GET_STATE: %s' % r)
-                assert r != 0xFF
+                assert r.status != 0xFF
                 if r.status == 0x00:
                     print('Finished in FUS mode.')
                     t.ipc._print_fus_version()
@@ -290,7 +290,7 @@ class IPC(object):
             try:
                 r = t.ipc.system_channel.exec_get_state()
                 print('FUS_GET_STATE: %s' % r)
-                assert r != 0xFF
+                assert r.status != 0xFF
                 if r.status == 0x00:
                     break
                 time.sleep(0.1)
