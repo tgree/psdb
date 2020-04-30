@@ -13,15 +13,6 @@ from . import binaries
 SYSTEM_CMD_RSP_CHANNEL  = 2
 SYSTEM_EVENT_CHANNEL    = 2
 
-STOMP_BIN = (
-    b'\x08\x22'     # movs  r2, #8
-    b'\x0c\x23'     # movs  r3, #12
-    b'\x12\x68'     # ldr   r2, [r2, #0]
-    b'\x1b\x68'     # ldr   r3, [r3, #0]
-    b'\x13\x60'     # str   r3, [r2, #0]
-    b'\xfd\xe7'     # bne.n STOMP_BIN
-    )
-
 EVT_PAYLOAD_WS_RUNNING  = b'\x00'
 EVT_PAYLOAD_FUS_RUNNING = b'\x01'
 
@@ -58,11 +49,11 @@ class IPC(object):
     def _configure_sram_boot(self):
         t = self.target
 
-        # Write the SRAM1 stub.
+        # Write an infinite loop out of the reset handler vector.
         sp   = self.vtor_addr + 512
-        pc   = (self.vtor_addr + 20) | 1
-        vtor = struct.pack('<LLLLL', sp, pc, 16, 0xABCADABA, 0x11111111)
-        self.ap.write_bulk(vtor + STOMP_BIN, self.vtor_addr)
+        pc   = (self.vtor_addr + 8) | 1
+        vtor = struct.pack('<LLH', sp, pc, 0xE7FE)
+        self.ap.write_bulk(vtor, self.vtor_addr)
 
         # Configure to boot from SRAM1 and reset.
         if not t.flash.is_sram_boot_enabled():
