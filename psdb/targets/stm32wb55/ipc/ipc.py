@@ -157,10 +157,8 @@ class IPC(object):
         '''
         t = self.target
 
-        print('0. Configuring SRAM booting...')
         t = t.ipc._configure_sram_boot()
 
-        print('1. Starting firmware and waiting for first event...')
         t, events = t.ipc._start_firmware()
         if (events[0].payload == EVT_PAYLOAD_FUS_RUNNING and
                 t.ipc.mailbox.check_dit_key_fus()):
@@ -169,24 +167,17 @@ class IPC(object):
             print('Already in FUS mode, FUS_GET_STATE: %s' % r)
             return t
 
-        print('Not in FUS mode.')
-        print('2. Executing first FUS_GET_STATE...')
-        r = t.ipc.system_channel.exec_get_state()
-        if r.status != 0xFF:
-            r.dump()
-            raise Exception('Unexpected FUS status 0x%02X' % r.status)
-
-        print('3. Executing second FUS_GET_STATE...')
-        t.ipc.system_channel._start_get_state()
-
-        print('4. Waiting for reset and reprobing...')
-        t = t.wait_reset_and_reprobe()
-
-        print('5. Starting firmware and waiting up to 5 seconds for reset...')
-        t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
-        t.ipc._print_fus_version()
-
-        return t
+        print('Not in FUS mode, repeating FUS_GET_STATE.')
+        while True:
+            try:
+                r = t.ipc.system_channel.exec_get_state()
+                print('FUS_GET_STATE: %s' % r)
+                time.sleep(0.1)
+            except psdb.ProbeException:
+                time.sleep(0.1)
+                t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
+                t.ipc._print_fus_version()
+                return t
 
     def upgrade_fus_firmware(self, bin_dir):
         '''
@@ -245,15 +236,21 @@ class IPC(object):
 
         t, events = t.ipc._start_firmware()
         if events[0].payload == EVT_PAYLOAD_WS_RUNNING:
+            print('Already in WS mode.')
             return t
         assert t.ipc.mailbox.get_ws_version() != 0
 
-        t.ipc.system_channel._start_start_ws()
-        t = t.wait_reset_and_reprobe()
-
-        t, events = t.ipc._start_firmware(EVT_PAYLOAD_WS_RUNNING)
-
-        return t
+        print('Not in WS mode, executing FUS_START_WS.')
+        while True:
+            try:
+                r = t.ipc.system_channel.exec_start_ws()
+                print('FUS_START_WS: %s' % r)
+                assert r.status != 0xFF
+                time.sleep(0.1)
+            except psdb.ProbeException:
+                time.sleep(0.1)
+                t, events = t.ipc._start_firmware(EVT_PAYLOAD_WS_RUNNING)
+                return t
 
     def delete_ws_firmware(self):
         '''
