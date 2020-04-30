@@ -196,7 +196,7 @@ class IPC(object):
             stm32wb5x_FUS_fw_1_0_2.bin - 1.0.2 FUS binary
             stm32wb5x_FUS_fw.bin       - 1.1.0 FUS binary
 
-        The FUS firmware should already have been started via
+        The current FUS firmware should already have been started via
         start_fus_firmware().
         '''
         t = self.target
