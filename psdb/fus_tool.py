@@ -64,6 +64,13 @@ def main(rv):
         print('Entering wireless firmware...')
         target = target.ipc.start_ws_firmware()
 
+    # Configure for booting into flash again.
+    if rv.set_flash_boot:
+        print('Setting to boot from flash...')
+        target = target.flash.set_boot_flash(verbose=rv.verbose,
+                                             connect_under_reset=True)
+        target.resume()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -77,6 +84,7 @@ if __name__ == '__main__':
     parser.add_argument('--fw-enter', action='store_true')
     parser.add_argument('--fw-delete', action='store_true')
     parser.add_argument('--fw-upgrade')
+    parser.add_argument('--set-flash-boot', action='store_true')
     rv = parser.parse_args()
 
     try:
