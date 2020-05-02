@@ -84,7 +84,7 @@ class IPC(object):
     def _make_client(self, stack_type):
         if stack_type == WS_TYPE_BLE_STANDARD:
             return BLEClient(self)
-        raise Exception('No client for WS stack type 0x%02X' % stack_type)
+        return WSClient(self)
 
     def _start_firmware(self, *args):
         t = self.target

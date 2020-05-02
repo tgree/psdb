@@ -9,6 +9,7 @@ class WSClient(object):
         super(WSClient, self).__init__()
         self.ipc = ipc
         assert not self.ipc.mailbox.check_dit_key_fus()
+        self.fw_type = 'WS Generic'
 
     def start_fus_firmware(self):
         '''
