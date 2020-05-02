@@ -16,7 +16,7 @@ class FUSClient(object):
         assert self.ipc.mailbox.check_dit_key_fus()
 
     def _print_fus_version(self):
-        version = self.ipc.mailbox.get_fus_version()
+        version = self.get_fus_version()
         print('FUS version: 0x%08X (%u.%u.%u)' % (version,
                                                   ((version >> 24) & 0xFF),
                                                   ((version >> 16) & 0xFF),
@@ -30,7 +30,7 @@ class FUSClient(object):
     def _upgrade_firmware(self, data, fb):
         t, client = self.ipc.target, self
 
-        assert t.ipc.mailbox.get_ws_version() == 0
+        assert client.get_ws_version() == 0
         assert hashlib.md5(data).hexdigest() == fb.md5sum
         assert len(data) % 4 == 0
 
@@ -66,6 +66,18 @@ class FUSClient(object):
                     print('Finished in WS firmware mode.')
                     return t, client
 
+    def get_fus_version(self):
+        '''
+        Returns the FUS version field.
+        '''
+        return self.ipc.ap.read_32(self.ipc.mailbox.dit_addr + 12)
+
+    def get_ws_version(self):
+        '''
+        Returns the WS firmware version field.
+        '''
+        return self.ipc.ap.read_32(self.ipc.mailbox.dit_addr + 20)
+
     def upgrade_fus_firmware(self, bin_dir):
         '''
         Upgrades to the next binary in the chain to the latest FUS firmware.
@@ -81,9 +93,9 @@ class FUSClient(object):
         '''
         t, client = self.ipc.target, self
 
-        assert t.ipc.mailbox.get_ws_version() == 0
+        assert client.get_ws_version() == 0
 
-        version = (t.ipc.mailbox.get_fus_version() & 0xFFFFFF00)
+        version = (client.get_fus_version() & 0xFFFFFF00)
         if version == binaries.FUS_BINARY_LATEST.version:
             print('FUS already at latest version %s.'
                   % binaries.FUS_BINARY_LATEST.version_str)
@@ -110,7 +122,7 @@ class FUSClient(object):
 
             target, client = client.start_ws_firmware()
         '''
-        assert self.ipc.mailbox.get_ws_version() != 0
+        assert self.get_ws_version() != 0
 
         while True:
             try:
@@ -132,7 +144,7 @@ class FUSClient(object):
         '''
         t, client = self.ipc.target, self
 
-        assert t.ipc.mailbox.get_ws_version() != 0
+        assert client.get_ws_version() != 0
 
         try:
             r = t.ipc.system_channel.exec_fw_delete()
@@ -154,7 +166,7 @@ class FUSClient(object):
                 time.sleep(0.1)
                 t, client = t.ipc._start_firmware(FUSClient)
 
-        assert t.ipc.mailbox.get_ws_version() == 0
+        assert client.get_ws_version() == 0
 
         return t, client
 
@@ -170,7 +182,7 @@ class FUSClient(object):
         WS firmware mode, so the final client object will likely be a BLEClient
         instead of a FUSClient.
         '''
-        assert self.ipc.mailbox.get_ws_version() == 0
+        assert self.get_ws_version() == 0
 
         with open(bin_path, 'rb') as f:
             data = f.read()

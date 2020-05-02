@@ -207,20 +207,6 @@ class Mailbox(object):
         '''
         return self.ap.read_32(self.dit_addr) == 0xA94656B9
 
-    def get_fus_version(self):
-        '''
-        Asserts that we are in FUS mode then returns the FUS version field.
-        '''
-        assert self.check_dit_key_fus()
-        return self.ap.read_32(self.dit_addr + 12)
-
-    def get_ws_version(self):
-        '''
-        Asserts that we are in FUS mode then returns the FUS version field.
-        '''
-        assert self.check_dit_key_fus()
-        return self.ap.read_32(self.dit_addr + 20)
-
     def write_sys_command(self, opcode, payload):
         '''
         Writes a command packet to the system command buffer address.
