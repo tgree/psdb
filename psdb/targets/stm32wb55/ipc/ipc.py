@@ -73,6 +73,7 @@ class IPC(object):
                 t.ipc.rcc.enable_device('IPCC')
                 t.ipc.pwr.enable_cpu2_boot()
                 events = t.ipc.system_channel.wait_and_pop_all_events()
+                assert len(events) == 1
                 assert events[0].subevtcode == 0x9200
                 if args:
                     assert events[0].payload in args
