@@ -16,6 +16,23 @@ SYSTEM_EVENT_CHANNEL    = 2
 EVT_PAYLOAD_WS_RUNNING  = b'\x00'
 EVT_PAYLOAD_FUS_RUNNING = b'\x01'
 
+WS_TYPE_BLE_STANDARD          = 0x01
+WS_TYPE_BLE_HCI               = 0x02
+WS_TYPE_BLE_LIGHT             = 0x03
+WS_TYPE_THREAD_FTD            = 0x10
+WS_TYPE_THREAD_MTD            = 0x11
+WS_TYPE_ZIGBEE_FFD            = 0x30
+WS_TYPE_ZIGBEE_RFD            = 0x31
+WS_TYPE_MAC                   = 0x40
+WS_TYPE_BLE_THREAD_FTD_STATIC = 0x50
+WS_TYPE_802154_LLD_TESTS      = 0x60
+WS_TYPE_802154_PHY_VALID      = 0x61
+WS_TYPE_BLE_PHY_VALID         = 0x62
+WS_TYPE_BLE_LLD_TESTS         = 0x63
+WS_TYPE_BLE_RLV               = 0x64
+WS_TYPE_802154_RLV            = 0x65
+WS_TYPE_BLE_ZIGBEE_FFD_STATIC = 0x70
+
 
 class IPC(object):
     def __init__(self, target, ap, base_addr, ram_size, vtor_addr):
@@ -48,7 +65,6 @@ class IPC(object):
     def clear_rx_flag(self, channel):
         self.ipcc.clear_rx_flag(channel)
 
-
     def _configure_sram_boot(self):
         t = self.target
 
@@ -64,6 +80,11 @@ class IPC(object):
                                        connect_under_reset=True)
 
         return t
+
+    def _make_client(self, stack_type):
+        if stack_type == WS_TYPE_BLE_STANDARD:
+            return BLEClient(self)
+        raise Exception('No client for WS stack type 0x%02X' % stack_type)
 
     def _start_firmware(self, *args):
         t = self.target
@@ -81,9 +102,7 @@ class IPC(object):
                 if events[0].payload == EVT_PAYLOAD_FUS_RUNNING:
                     client = FUSClient(t.ipc)
                 elif events[0].payload == EVT_PAYLOAD_WS_RUNNING:
-                    # TODO: Always BLE for now - how to detect the actual type
-                    #       of wireless stack without querying FUS mode first?
-                    client = BLEClient(t.ipc)
+                    client = t.ipc._make_client(t.ipc.mailbox.read_stack_type())
                 else:
                     raise Exception('Unrecognized event %s' % events[0])
                 if args:
