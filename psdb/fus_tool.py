@@ -59,17 +59,20 @@ def main(rv):
         print('Upgrading FUS...')
         assert rv.bin_dir
         target, client = client.upgrade_fus_firmware(rv.bin_dir)
+        client.print_fus_version()
 
     # Attempt a WS firmare upgrade.
     if rv.fw_upgrade:
         print('Upgrading WS firmware...')
         target, client = client.upgrade_ws_firmware(rv.fw_upgrade)
+        client.print_ws_version()
 
     # Attempt an entry into wireless firmware.
     if rv.fw_enter:
         if client.fw_type == 'FUS':
             print('Entering wireless firmware...')
             target, client = client.start_ws_firmware()
+        client.print_ws_version()
 
     # Configure for booting into flash again.
     if rv.set_flash_boot:
