@@ -207,6 +207,18 @@ class Mailbox(object):
         '''
         return self.ap.read_32(self.dit_addr) == 0xA94656B9
 
+    def read_stack_info(self):
+        '''
+        Returns the stack info field when the WS firmware is running.
+        '''
+        return self.ap.read_32(self.dit_addr + 24)
+
+    def read_stack_type(self):
+        '''
+        Returns the stack type field when the WS firmware is running.
+        '''
+        return (self.read_stack_info() & 0xFF)
+
     def write_sys_command(self, opcode, payload):
         '''
         Writes a command packet to the system command buffer address.
