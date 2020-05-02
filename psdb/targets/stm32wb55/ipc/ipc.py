@@ -7,6 +7,9 @@ import os
 import psdb
 from .mailbox import Mailbox
 from .system_channel import SystemChannel
+from .fus_client import FUSClient
+from .ws_client import WSClient
+from .ble_client import BLEClient
 from . import binaries
 
 
@@ -75,13 +78,17 @@ class IPC(object):
                 events = t.ipc.system_channel.wait_and_pop_all_events()
                 assert len(events) == 1
                 assert events[0].subevtcode == 0x9200
-                if args:
-                    assert events[0].payload in args
                 if events[0].payload == EVT_PAYLOAD_FUS_RUNNING:
-                    assert t.ipc.mailbox.check_dit_key_fus()
+                    client = FUSClient(t.ipc)
                 elif events[0].payload == EVT_PAYLOAD_WS_RUNNING:
-                    assert not t.ipc.mailbox.check_dit_key_fus()
-                return t, events
+                    # TODO: Always BLE for now - how to detect the actual type
+                    #       of wireless stack without querying FUS mode first?
+                    client = BLEClient(t.ipc)
+                else:
+                    raise Exception('Unrecognized event %s' % events[0])
+                if args:
+                    assert isinstance(client, args)
+                return t, client
             except psdb.ProbeException:
                 print('Reset detected, re-probing...')
                 time.sleep(0.1)
@@ -108,7 +115,7 @@ class IPC(object):
             assert r.status == 0x00
         except psdb.ProbeException:
             time.sleep(0.1)
-            t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
+            t, client = t.ipc._start_firmware(FUSClient)
 
         while True:
             try:
@@ -122,8 +129,8 @@ class IPC(object):
                 time.sleep(0.1)
             except psdb.ProbeException:
                 time.sleep(0.1)
-                t, events = t.ipc._start_firmware()
-                if events[0].payload == EVT_PAYLOAD_WS_RUNNING:
+                t, client = t.ipc._start_firmware()
+                if isinstance(client, WSClient):
                     print('Finished in WS firmware mode.')
                     return t
 
@@ -158,9 +165,8 @@ class IPC(object):
 
         t = t.ipc._configure_sram_boot()
 
-        t, events = t.ipc._start_firmware()
-        if (events[0].payload == EVT_PAYLOAD_FUS_RUNNING and
-                t.ipc.mailbox.check_dit_key_fus()):
+        t, client = t.ipc._start_firmware()
+        if isinstance(client, FUSClient):
             t.ipc._print_fus_version()
             r = t.ipc.system_channel.exec_get_state()
             print('Already in FUS mode, FUS_GET_STATE: %s' % r)
@@ -174,7 +180,7 @@ class IPC(object):
                 time.sleep(0.1)
             except psdb.ProbeException:
                 time.sleep(0.1)
-                t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
+                t, client = t.ipc._start_firmware(FUSClient)
                 t.ipc._print_fus_version()
                 return t
 
@@ -233,8 +239,8 @@ class IPC(object):
 
         t = t.ipc._configure_sram_boot()
 
-        t, events = t.ipc._start_firmware()
-        if events[0].payload == EVT_PAYLOAD_WS_RUNNING:
+        t, client = t.ipc._start_firmware()
+        if isinstance(client, WSClient):
             print('Already in WS mode.')
             return t
         assert t.ipc.mailbox.get_ws_version() != 0
@@ -248,7 +254,7 @@ class IPC(object):
                 time.sleep(0.1)
             except psdb.ProbeException:
                 time.sleep(0.1)
-                t, events = t.ipc._start_firmware(EVT_PAYLOAD_WS_RUNNING)
+                t, client = t.ipc._start_firmware(WSClient)
                 return t
 
     def delete_ws_firmware(self):
@@ -279,7 +285,7 @@ class IPC(object):
             assert r.status == 0x00
         except psdb.ProbeException:
             time.sleep(0.1)
-            t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
+            t, client = t.ipc._start_firmware(FUSClient)
 
         while True:
             try:
@@ -291,7 +297,7 @@ class IPC(object):
                 time.sleep(0.1)
             except psdb.ProbeException:
                 time.sleep(0.1)
-                t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
+                t, client = t.ipc._start_firmware(FUSClient)
 
         assert t.ipc.mailbox.get_ws_version() == 0
 
