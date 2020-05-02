@@ -207,19 +207,17 @@ class Mailbox(object):
         '''
         return self.ap.read_32(self.dit_addr) == 0xA94656B9
 
-    def get_fus_version(self):
+    def read_stack_info(self):
         '''
-        Asserts that we are in FUS mode then returns the FUS version field.
+        Returns the stack info field when the WS firmware is running.
         '''
-        assert self.check_dit_key_fus()
-        return self.ap.read_32(self.dit_addr + 12)
+        return self.ap.read_32(self.dit_addr + 24)
 
-    def get_ws_version(self):
+    def read_stack_type(self):
         '''
-        Asserts that we are in FUS mode then returns the FUS version field.
+        Returns the stack type field when the WS firmware is running.
         '''
-        assert self.check_dit_key_fus()
-        return self.ap.read_32(self.dit_addr + 20)
+        return (self.read_stack_info() & 0xFF)
 
     def write_sys_command(self, opcode, payload):
         '''

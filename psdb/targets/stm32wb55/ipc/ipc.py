@@ -1,13 +1,13 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 import time
 import struct
-import hashlib
-import os
 
 import psdb
 from .mailbox import Mailbox
 from .system_channel import SystemChannel
-from . import binaries
+from .fus_client import FUSClient
+from .ws_client import WSClient
+from .ble_client import BLEClient
 
 
 SYSTEM_CMD_RSP_CHANNEL  = 2
@@ -15,6 +15,23 @@ SYSTEM_EVENT_CHANNEL    = 2
 
 EVT_PAYLOAD_WS_RUNNING  = b'\x00'
 EVT_PAYLOAD_FUS_RUNNING = b'\x01'
+
+WS_TYPE_BLE_STANDARD          = 0x01
+WS_TYPE_BLE_HCI               = 0x02
+WS_TYPE_BLE_LIGHT             = 0x03
+WS_TYPE_THREAD_FTD            = 0x10
+WS_TYPE_THREAD_MTD            = 0x11
+WS_TYPE_ZIGBEE_FFD            = 0x30
+WS_TYPE_ZIGBEE_RFD            = 0x31
+WS_TYPE_MAC                   = 0x40
+WS_TYPE_BLE_THREAD_FTD_STATIC = 0x50
+WS_TYPE_802154_LLD_TESTS      = 0x60
+WS_TYPE_802154_PHY_VALID      = 0x61
+WS_TYPE_BLE_PHY_VALID         = 0x62
+WS_TYPE_BLE_LLD_TESTS         = 0x63
+WS_TYPE_BLE_RLV               = 0x64
+WS_TYPE_802154_RLV            = 0x65
+WS_TYPE_BLE_ZIGBEE_FFD_STATIC = 0x70
 
 
 class IPC(object):
@@ -33,18 +50,20 @@ class IPC(object):
         self.system_channel = SystemChannel(self, SYSTEM_CMD_RSP_CHANNEL,
                                             SYSTEM_EVENT_CHANNEL)
 
+    def set_tx_flag(self, channel):
+        self.ipcc.set_tx_flag(channel)
 
-    def _print_fus_version(self):
-        version = self.mailbox.get_fus_version()
-        print('FUS version: 0x%08X (%u.%u.%u)' % (version,
-                                                  ((version >> 24) & 0xFF),
-                                                  ((version >> 16) & 0xFF),
-                                                  ((version >>  8) & 0xFF)))
-        version = self.mailbox.get_ws_version()
-        print(' WS version: 0x%08X (%u.%u.%u)' % (version,
-                                                  ((version >> 24) & 0xFF),
-                                                  ((version >> 16) & 0xFF),
-                                                  ((version >>  8) & 0xFF)))
+    def wait_tx_free(self, channel, timeout=None):
+        self.ipcc.wait_tx_free(channel, timeout=timeout)
+
+    def get_rx_flag(self, channel):
+        return self.ipcc.get_rx_flag(channel)
+
+    def wait_rx_occupied(self, channel, timeout=None):
+        self.ipcc.wait_rx_occupied(channel, timeout=timeout)
+
+    def clear_rx_flag(self, channel):
+        self.ipcc.clear_rx_flag(channel)
 
     def _configure_sram_boot(self):
         t = self.target
@@ -62,6 +81,11 @@ class IPC(object):
 
         return t
 
+    def _make_client(self, stack_type):
+        if stack_type == WS_TYPE_BLE_STANDARD:
+            return BLEClient(self)
+        raise Exception('No client for WS stack type 0x%02X' % stack_type)
+
     def _start_firmware(self, *args):
         t = self.target
 
@@ -73,236 +97,29 @@ class IPC(object):
                 t.ipc.rcc.enable_device('IPCC')
                 t.ipc.pwr.enable_cpu2_boot()
                 events = t.ipc.system_channel.wait_and_pop_all_events()
+                assert len(events) == 1
                 assert events[0].subevtcode == 0x9200
-                if args:
-                    assert events[0].payload in args
                 if events[0].payload == EVT_PAYLOAD_FUS_RUNNING:
-                    assert t.ipc.mailbox.check_dit_key_fus()
+                    client = FUSClient(t.ipc)
                 elif events[0].payload == EVT_PAYLOAD_WS_RUNNING:
-                    assert not t.ipc.mailbox.check_dit_key_fus()
-                return t, events
+                    client = t.ipc._make_client(t.ipc.mailbox.read_stack_type())
+                else:
+                    raise Exception('Unrecognized event %s' % events[0])
+                if args:
+                    assert isinstance(client, args)
+                return t, client
             except psdb.ProbeException:
                 print('Reset detected, re-probing...')
                 time.sleep(0.1)
                 t = t.reprobe()
 
-    def _upgrade_firmware(self, data, fb):
-        t = self.target
-
-        assert t.ipc.mailbox.check_dit_key_fus()
-        assert t.ipc.mailbox.get_ws_version() == 0
-        assert hashlib.md5(data).hexdigest() == fb.md5sum
-        assert len(data) % 4 == 0
-
-        if len(data) % 8 == 4:
-            data += b'\x00\x00\x00\x00'
-
-        addr = fb.addr[t.flash.flash_size]
-        t.flash.burn_dv([(addr, data)])
-
-        print('Executing FUS_FW_UPGRADE...')
-        try:
-            r = t.ipc.system_channel.exec_fw_upgrade()
-            print('FUS_FW_UPGRADE: %s' % r)
-            assert r.status == 0x00
-        except psdb.ProbeException:
-            time.sleep(0.1)
-            t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
-
-        while True:
-            try:
-                r = t.ipc.system_channel.exec_get_state()
-                print('FUS_GET_STATE: %s' % r)
-                assert r.status != 0xFF
-                if r.status == 0x00:
-                    print('Finished in FUS mode.')
-                    t.ipc._print_fus_version()
-                    return t
-                time.sleep(0.1)
-            except psdb.ProbeException:
-                time.sleep(0.1)
-                t, events = t.ipc._start_firmware()
-                if events[0].payload == EVT_PAYLOAD_WS_RUNNING:
-                    print('Finished in WS firmware mode.')
-                    return t
-
-    def set_tx_flag(self, channel):
-        self.ipcc.set_tx_flag(channel)
-
-    def wait_tx_free(self, channel, timeout=None):
-        self.ipcc.wait_tx_free(channel, timeout=timeout)
-
-    def get_rx_flag(self, channel):
-        return self.ipcc.get_rx_flag(channel)
-
-    def wait_rx_occupied(self, channel, timeout=None):
-        self.ipcc.wait_rx_occupied(channel, timeout=timeout)
-
-    def clear_rx_flag(self, channel):
-        self.ipcc.clear_rx_flag(channel)
-
-    def start_fus_firmware(self):
+    def start_firmware(self):
         '''
-        Start CPU2 up in FUS mode.  The sequence is convoluted and may
-        involve multiple reboots, which invalidates the debugger connection
-        and target object.
-
-        This method returns a new psdb.target object and the old object must be
-        discarded since it is no longer valid after the reset.  The correct
-        idiom for use is:
-
-            target = target.ipc.start_fus_firmware()
+        Places the target into boot-from-SRAM mode and then starts CPU2
+        firmware, returning a client that knows how to communicate with
+        whatever stack (FUS or BLE) starts up on CPU2.  This may entail one or
+        more MCU reboots, so a new target and client instance are both
+        returned.
         '''
-        t = self.target
-
-        t = t.ipc._configure_sram_boot()
-
-        t, events = t.ipc._start_firmware()
-        if (events[0].payload == EVT_PAYLOAD_FUS_RUNNING and
-                t.ipc.mailbox.check_dit_key_fus()):
-            t.ipc._print_fus_version()
-            r = t.ipc.system_channel.exec_get_state()
-            print('Already in FUS mode, FUS_GET_STATE: %s' % r)
-            return t
-
-        print('Not in FUS mode, repeating FUS_GET_STATE.')
-        while True:
-            try:
-                r = t.ipc.system_channel.exec_get_state()
-                print('FUS_GET_STATE: %s' % r)
-                time.sleep(0.1)
-            except psdb.ProbeException:
-                time.sleep(0.1)
-                t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
-                t.ipc._print_fus_version()
-                return t
-
-    def upgrade_fus_firmware(self, bin_dir):
-        '''
-        Upgrades to the latest FUS firmware.  The following images must be
-        present in the bin_dir directory:
-
-            stm32wb5x_FUS_fw_1_0_2.bin - 1.0.2 FUS binary
-            stm32wb5x_FUS_fw.bin       - 1.1.0 FUS binary
-
-        The current FUS firmware should already have been started via
-        start_fus_firmware().
-        '''
-        t = self.target
-
-        assert t.ipc.mailbox.check_dit_key_fus()
-        assert t.ipc.mailbox.get_ws_version() == 0
-
-        version = (t.ipc.mailbox.get_fus_version() & 0xFFFFFF00)
-        if version == binaries.FUS_BINARY_LATEST.version:
-            print('FUS already at latest version %s.'
-                  % binaries.FUS_BINARY_LATEST.version_str)
-            return t
-        elif version == 0x00050300:
-            fb = binaries.find_fus_binary(0x01000200)
-        elif version == 0x01000200:
-            fb = binaries.find_fus_binary(0x01010000)
-        else:
-            raise Exception("Don't know how to upgrade from 0x%08X" % version)
-
-        print('Upgrading to %s' % fb.version_str)
-        bin_path = os.path.join(bin_dir, fb.fname)
-        with open(bin_path, 'rb') as f:
-            data = f.read()
-
-        return self._upgrade_firmware(data, fb)
-
-    def start_ws_firmware(self):
-        '''
-        Start CPU2 in wireless firmware mode.  The sequence is fairly
-        straightforward:
-
-            1. Connect under reste.
-        will switch it over to firmware mode and then it will reboot.  We'll
-        have to reset it again to halt it at the reset vector.  It's an ugly
-        procedure.
-
-        This method returns a new psdb.target object and the old object must be
-        discarded since it is no longer valid after the reset.  The correct
-        idiom for use of fw_enter is:
-
-            target = target.ipc.fw_enter()
-        '''
-        t = self.target
-
-        t = t.ipc._configure_sram_boot()
-
-        t, events = t.ipc._start_firmware()
-        if events[0].payload == EVT_PAYLOAD_WS_RUNNING:
-            print('Already in WS mode.')
-            return t
-        assert t.ipc.mailbox.get_ws_version() != 0
-
-        print('Not in WS mode, executing FUS_START_WS.')
-        while True:
-            try:
-                r = t.ipc.system_channel.exec_start_ws()
-                print('FUS_START_WS: %s' % r)
-                assert r.status != 0xFF
-                time.sleep(0.1)
-            except psdb.ProbeException:
-                time.sleep(0.1)
-                t, events = t.ipc._start_firmware(EVT_PAYLOAD_WS_RUNNING)
-                return t
-
-    def delete_ws_firmware(self):
-        '''
-        Delete the wireless firmware.  The sequence is:
-
-            1. Enter FUS firwmare mode via start_fus_firmware().
-            2. Start FUS_FW_DELETE - a device reset is expected.
-            3. Reprobe not under reset.
-            4. Start firwmare and wait for first event.
-               - if event is 'FUS running' and FUS key found, done
-               - otherwise, panic.
-
-        This method returns a new psdb.target object and the old object must be
-        discarded since it is no longer valid after the reset.  The correct
-        idiom for use is:
-
-            target = target.ipc.delete_ws_firmware()
-        '''
-        t = self.target
-
-        assert t.ipc.mailbox.check_dit_key_fus()
-        assert t.ipc.mailbox.get_ws_version() != 0
-
-        try:
-            r = t.ipc.system_channel.exec_fw_delete()
-            print('FUS_FW_DELETE: %s' % r)
-            assert r.status == 0x00
-        except psdb.ProbeException:
-            time.sleep(0.1)
-            t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
-
-        while True:
-            try:
-                r = t.ipc.system_channel.exec_get_state()
-                print('FUS_GET_STATE: %s' % r)
-                assert r.status != 0xFF
-                if r.status == 0x00:
-                    break
-                time.sleep(0.1)
-            except psdb.ProbeException:
-                time.sleep(0.1)
-                t, events = t.ipc._start_firmware(EVT_PAYLOAD_FUS_RUNNING)
-
-        assert t.ipc.mailbox.get_ws_version() == 0
-
-        return t
-
-    def upgrade_ws_firmware(self, bin_path):
-        assert self.mailbox.check_dit_key_fus()
-        assert self.mailbox.get_ws_version() == 0
-
-        with open(bin_path, 'rb') as f:
-            data = f.read()
-        md5sum = hashlib.md5(data).hexdigest()
-        fb     = binaries.find_ws_binary(md5sum)
-
-        return self._upgrade_firmware(data, fb)
+        self._configure_sram_boot()
+        return self._start_firmware()
