@@ -47,7 +47,7 @@ def main(rv):
         if client.fw_type != 'FUS':
             print('Entering FUS mode...')
             target, client = client.start_fus_firmware()
-        client._print_fus_version()
+        client.print_fus_version()
 
     # Delete an existing firmware if requested.
     if rv.fw_delete:

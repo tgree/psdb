@@ -15,18 +15,6 @@ class FUSClient(object):
         self.fw_type = 'FUS'
         assert self.ipc.mailbox.check_dit_key_fus()
 
-    def _print_fus_version(self):
-        version = self.get_fus_version()
-        print('FUS version: 0x%08X (%u.%u.%u)' % (version,
-                                                  ((version >> 24) & 0xFF),
-                                                  ((version >> 16) & 0xFF),
-                                                  ((version >>  8) & 0xFF)))
-        version = self.ipc.mailbox.get_ws_version()
-        print(' WS version: 0x%08X (%u.%u.%u)' % (version,
-                                                  ((version >> 24) & 0xFF),
-                                                  ((version >> 16) & 0xFF),
-                                                  ((version >>  8) & 0xFF)))
-
     def _upgrade_firmware(self, data, fb):
         t, client = self.ipc.target, self
 
@@ -56,7 +44,7 @@ class FUSClient(object):
                 assert r.status != 0xFF
                 if r.status == 0x00:
                     print('Finished in FUS mode.')
-                    client._print_fus_version()
+                    client.print_fus_version()
                     return t, client
                 time.sleep(0.1)
             except psdb.ProbeException:
@@ -65,6 +53,18 @@ class FUSClient(object):
                 if isinstance(client, WSClient):
                     print('Finished in WS firmware mode.')
                     return t, client
+
+    def print_fus_version(self):
+        version = self.get_fus_version()
+        print('FUS version: 0x%08X (%u.%u.%u)' % (version,
+                                                  ((version >> 24) & 0xFF),
+                                                  ((version >> 16) & 0xFF),
+                                                  ((version >>  8) & 0xFF)))
+        version = self.get_ws_version()
+        print(' WS version: 0x%08X (%u.%u.%u)' % (version,
+                                                  ((version >> 24) & 0xFF),
+                                                  ((version >> 16) & 0xFF),
+                                                  ((version >>  8) & 0xFF)))
 
     def get_fus_version(self):
         '''
