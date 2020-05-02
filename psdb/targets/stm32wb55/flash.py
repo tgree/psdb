@@ -264,9 +264,7 @@ class FLASH(Device, Flash):
     def erase_sector(self, n, verbose=True):
         '''
         Erases the nth sector in flash.
-        The sector is verified to be erased before returning.  This checks if
-        the flash banks are swapped and erases the appropriate sector if it
-        needs to reverse the numbers.
+        The sector is verified to be erased before returning.
         '''
         assert 0 <= n and n < self.nsectors
 
@@ -281,6 +279,7 @@ class FLASH(Device, Flash):
             self._write_cr((1 << 16) | (n << 3) | (1 << 1))
             self._wait_bsy_clear()
             self._check_errors()
+            self._write_cr(0)
 
     def erase_all(self, verbose=True):
         '''
