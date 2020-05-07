@@ -1,10 +1,14 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .xds110 import xds110
-from .stlink import stlink_v2_1, stlink_v3e
+from .stlink import stlink_v2_1, stlink_v3e, stlink_v3set
 import psdb
 
 
-PROBES = xds110.enumerate() + stlink_v2_1.enumerate() + stlink_v3e.enumerate()
+PROBES = (xds110.enumerate() +
+          stlink_v2_1.enumerate() +
+          stlink_v3e.enumerate() +
+          stlink_v3set.enumerate()
+          )
 
 
 def find_by_serial_number(serial_number):
