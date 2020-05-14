@@ -44,7 +44,7 @@ def main(rv):
 
     # Attempt an entry into FUS.
     if rv.fus_enter or rv.fus_upgrade or rv.fw_delete or rv.fw_upgrade:
-        if client.fw_type != 'FUS':
+        if client.fw_name != 'FUS':
             print('Entering FUS mode...')
             target, client = client.start_fus_firmware()
         client.print_fus_version()
@@ -69,7 +69,7 @@ def main(rv):
 
     # Attempt an entry into wireless firmware.
     if rv.fw_enter:
-        if client.fw_type == 'FUS':
+        if client.fw_name == 'FUS':
             print('Entering wireless firmware...')
             target, client = client.start_ws_firmware()
         client.print_ws_version()
