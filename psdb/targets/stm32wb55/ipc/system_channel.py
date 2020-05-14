@@ -1,4 +1,24 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+'''
+System commands are issued on the system command/response channel (IPCC
+channel 2) using half-duplex channel mode.  You write the command into
+sys_table->pcmd_buffer and then set the channel TX flag.  The coprocessor
+will take the interrupt and execute the command.  When the coprocessor has
+done executing the command, it will write the response packet back into the
+same sys_table->pcmd_buffer and then clear the TX flag (the RX flag from its
+perspective), at which point we'll get a TX free interrupt.  That interrupt
+tells us both that the response is ready and that we can overwrite it at our
+convenience to send a new command.
+
+Asynchronous events from the firmware are issued on the system event channel
+(also IPCC channel 2).  When an event becomes available, it will be queued on
+to the sys_table->sys_queue and then we will receive a channel RX occupied
+interrupt.  FUS is buggy and does not set the queue sentinel's prev (tail)
+pointer properly.  The head pointer is always the MM Spare System Event Buffer.
+The only safe way to process the queue is to repeatedly pop_front() under a
+while(!sys_table->sys_queue.empty()) loop.  The BLE firmware does not have this
+bug and its queue pointers are in the MM BLE Pool area instead.
+'''
 import psdb.probes
 import time
 

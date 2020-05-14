@@ -1,4 +1,13 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+'''
+FUS really does only use the system channel, system event channel and
+optionally the trace channel.  It does NOT use the memory manager.  FUS
+events come from the sys_spare_evt_buffer - they are not allocated out of
+the memory manager pool.  Trying to post them back into the memory manager
+pool just leaves the IPCC channel flag set.  There can only be one event in
+use at a time (and the documentation even states that FUS only sends out one
+event when it boots up).
+'''
 import time
 import hashlib
 import os
