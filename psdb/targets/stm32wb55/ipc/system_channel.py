@@ -67,12 +67,15 @@ class SystemChannel(object):
     def exec_start_ws(self):
         return self.exec_sys_command(FUS_START_WS)
 
-    def pop_all_events(self):
+    def pop_all_events(self, dump=False):
         '''
         Pop and return all events from the system event queue.
         '''
         if not self.ipc.get_rx_flag(self.event_channel):
             return []
+
+        if dump:
+            self.ipc.mailbox.sys_queue.dump()
 
         events = []
         while True:
@@ -85,14 +88,14 @@ class SystemChannel(object):
             events.append(event)
             self.ipc.mailbox.push_mm_free_event(event)
 
-    def wait_and_pop_all_events(self, timeout=None):
+    def wait_and_pop_all_events(self, timeout=None, dump=False):
         '''
         Waits for the event flag to be set and then pops all events.
         '''
         events = []
         while not events:
             self.ipc.wait_rx_occupied(self.event_channel, timeout=timeout)
-            new_events = self.pop_all_events()
+            new_events = self.pop_all_events(dump=dump)
             if not new_events:
                 print('Empty event list?')
 
