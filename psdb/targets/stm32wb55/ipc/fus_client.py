@@ -12,7 +12,7 @@ class FUSClient(object):
     def __init__(self, ipc):
         super(FUSClient, self).__init__()
         self.ipc     = ipc
-        self.fw_type = 'FUS'
+        self.fw_name = 'FUS'
         assert self.ipc.mailbox.check_dit_key_fus()
 
     def _upgrade_firmware(self, data, fb):

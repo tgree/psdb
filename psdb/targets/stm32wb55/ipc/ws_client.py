@@ -5,11 +5,12 @@ import psdb
 
 
 class WSClient(object):
-    def __init__(self, ipc):
+    def __init__(self, ipc, stack_type, fw_name):
         super(WSClient, self).__init__()
-        self.ipc = ipc
+        self.ipc        = ipc
+        self.stack_type = stack_type
+        self.fw_name    = fw_name
         assert not self.ipc.mailbox.check_dit_key_fus()
-        self.fw_type = 'WS Generic'
 
     def start_fus_firmware(self):
         '''
@@ -42,6 +43,7 @@ class WSClient(object):
                                                   ((version >>  8) & 0xFF)))
         info = self.get_ws_info()
         print('    WS info: 0x%08X' % info)
+        print('    FW name: %s' % self.fw_name)
 
     def get_fus_version(self):
         '''
