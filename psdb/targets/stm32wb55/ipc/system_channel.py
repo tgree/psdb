@@ -19,8 +19,6 @@ The only safe way to process the queue is to repeatedly pop_front() under a
 while(!sys_table->sys_queue.empty()) loop.  The BLE firmware does not have this
 bug and its queue pointers are in the MM BLE Pool area instead.
 '''
-import psdb.probes
-import time
 
 
 FUS_GET_STATE               = 0xFC52
