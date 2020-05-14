@@ -232,6 +232,9 @@ class Mailbox(object):
          evtcode,
          plen,
          subevtcode) = struct.unpack('<BBBH', data)
+        assert _type   == 0x12
+        assert evtcode == 0xFF
+        assert plen    >= 2
         payload = self.ap.read_bulk(evt_addr + 13, plen - 2)
         return SysEvent(evt_addr, subevtcode, payload)
 
