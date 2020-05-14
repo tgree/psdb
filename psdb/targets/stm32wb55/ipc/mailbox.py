@@ -92,10 +92,14 @@ class Mailbox(object):
                            0x00000000)
 
     def _serialize_system_table(self):
-        return struct.pack('<LLL',
+        return struct.pack('<LL',
                            self.sys_cmd_buffer_addr,
-                           self.st_addr + 4,
-                           self.st_addr + 4)
+                           self.sys_queue_addr)
+
+    def _serialize_sys_queue(self):
+        return struct.pack('<LL',
+                           self.sys_queue_addr,
+                           self.sys_queue_addr)
 
     def _serialize_mm_table(self):
         return struct.pack('<LLLLLLL',
@@ -156,8 +160,9 @@ class Mailbox(object):
 
         --------------- System Table (256 bytes) ----------------------------
         0x20030200  0x20030400  Command Buffer address
-        0x20030204  0x20030204  System Queue head
-        0x20030208  0x20030204  System Queue tail
+        0x20030204  0x20030240  System Queue address
+        0x20030240  0x20030240  System Queue head
+        0x20030244  0x20030240  System Queue tail
 
         --------------- Memory Manager Table (256 bytes) --------------------
         0x20030300  0x20030600  Spare BLE buffer address
@@ -168,7 +173,7 @@ class Mailbox(object):
         0x20030314  0x00000000  Trace Event Pool address
         0x20030318  0x00000000  Trace Poll Size: 0 bytes
         0x20030340  0x20030340  Event Free Buffer Queue head
-        0x20030340  0x20030340  Event Free Buffer Queue tail
+        0x20030344  0x20030340  Event Free Buffer Queue tail
 
         --------------- Command Buffer (512 bytes) --------------------------
         0x20030400  ..........  Command or response packet
@@ -184,6 +189,7 @@ class Mailbox(object):
         '''
         self.dit_addr              = self.base_addr + 0x100
         self.st_addr               = self.base_addr + 0x200
+        self.sys_queue_addr        = self.base_addr + 0x240
         self.mmt_addr              = self.base_addr + 0x300
         self.return_evt_queue_addr = self.base_addr + 0x340
         self.sys_cmd_buffer_addr   = self.base_addr + 0x400
@@ -196,6 +202,7 @@ class Mailbox(object):
         self.ap.write_bulk(b'\xCC'*self.ram_size, self.base_addr)
         self.ap.write_bulk(self._serialize_base_table(), self.base_addr)
         self.ap.write_bulk(self._serialize_system_table(), self.st_addr)
+        self.ap.write_bulk(self._serialize_sys_queue(), self.sys_queue_addr)
         self.ap.write_bulk(self._serialize_mm_table(), self.mmt_addr)
         self.ap.write_bulk(self._serialize_evt_queue(),
                            self.return_evt_queue_addr)
@@ -251,7 +258,7 @@ class Mailbox(object):
         Pops an event from the system event queue if one is available and
         returns it; returns None if no event is available.
         '''
-        evt_addr = self._queue_pop(self.st_addr + 4)
+        evt_addr = self._queue_pop(self.sys_queue_addr)
         if evt_addr is None:
             return None
 
