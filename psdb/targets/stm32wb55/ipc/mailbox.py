@@ -84,7 +84,7 @@ class Mailbox(object):
     def write_tables(self):
         '''
         Writes functional mailbox tables to the IPCC mailbox base address.  The
-        different types of firmware have different table requirements:
+        different types of firmware have different minimal table requirements:
 
             | Table        \ FW: | FUS | BLE |
             +---------------+----+-----+-----+
