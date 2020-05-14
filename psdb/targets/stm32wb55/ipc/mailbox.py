@@ -1,6 +1,8 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 import struct
 
+from .circular_queue import Queue
+
 
 class SysResponse(object):
     def __init__(self, num_hci, opcode, status, payload):
@@ -52,33 +54,6 @@ class Mailbox(object):
         self.base_addr = base_addr
         self.ram_size  = ram_size
 
-    def _queue_pop(self, addr):
-        '''
-        Pops the head element off the queue at the specified address, and
-        returns the address of the head elem.  Returns None if the queue is
-        empty.
-        '''
-        head, = struct.unpack('<L', self.ap.read_bulk(addr, 4))
-        if head == addr:
-            return None
-
-        data = self.ap.read_bulk(head, 8)
-        n, p = struct.unpack('<LL', data)
-        self.ap.write_bulk(struct.pack('<L', addr), n + 4)
-        self.ap.write_bulk(struct.pack('<L', n), addr)
-        return head
-
-    def _queue_push(self, queue_addr, link_addr):
-        '''
-        Pushes the specified element link to the tail of the specified queue.
-        '''
-        data       = self.ap.read_bulk(queue_addr, 8)
-        head, tail = struct.unpack('<LL', data)
-        self.ap.write_bulk(struct.pack('<L', queue_addr), link_addr + 0)
-        self.ap.write_bulk(struct.pack('<L', tail),       link_addr + 4)
-        self.ap.write_bulk(struct.pack('<L', link_addr),  tail + 0)
-        self.ap.write_bulk(struct.pack('<L', link_addr),  queue_addr + 4)
-
     def _serialize_base_table(self):
         return struct.pack('<LLLLLLLLL',
                            self.dit_addr,
@@ -96,11 +71,6 @@ class Mailbox(object):
                            self.sys_cmd_buffer_addr,
                            self.sys_queue_addr)
 
-    def _serialize_sys_queue(self):
-        return struct.pack('<LL',
-                           self.sys_queue_addr,
-                           self.sys_queue_addr)
-
     def _serialize_mm_table(self):
         return struct.pack('<LLLLLLL',
                            self.ble_buffer_addr,
@@ -110,11 +80,6 @@ class Mailbox(object):
                            self.return_evt_queue_addr,
                            0x00000000,
                            0x00000000)
-
-    def _serialize_evt_queue(self):
-        return struct.pack('<LL',
-                           self.return_evt_queue_addr,
-                           self.return_evt_queue_addr)
 
     def write_tables(self):
         '''
@@ -202,10 +167,10 @@ class Mailbox(object):
         self.ap.write_bulk(b'\xCC'*self.ram_size, self.base_addr)
         self.ap.write_bulk(self._serialize_base_table(), self.base_addr)
         self.ap.write_bulk(self._serialize_system_table(), self.st_addr)
-        self.ap.write_bulk(self._serialize_sys_queue(), self.sys_queue_addr)
         self.ap.write_bulk(self._serialize_mm_table(), self.mmt_addr)
-        self.ap.write_bulk(self._serialize_evt_queue(),
-                           self.return_evt_queue_addr)
+
+        self.sys_queue        = Queue(self.ap, self.sys_queue_addr)
+        self.return_evt_queue = Queue(self.ap, self.return_evt_queue_addr)
 
     def check_dit_key_fus(self):
         '''
@@ -258,7 +223,7 @@ class Mailbox(object):
         Pops an event from the system event queue if one is available and
         returns it; returns None if no event is available.
         '''
-        evt_addr = self._queue_pop(self.sys_queue_addr)
+        evt_addr = self.sys_queue.pop()
         if evt_addr is None:
             return None
 
@@ -276,4 +241,4 @@ class Mailbox(object):
         queue is used to return events back to the firmware that it allocated
         out of its memory pool when posting an event.
         '''
-        self._queue_push(self.return_evt_queue_addr, evt.addr)
+        self.return_evt_queue.push(evt.addr)
