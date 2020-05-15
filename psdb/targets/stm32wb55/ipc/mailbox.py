@@ -2,41 +2,7 @@
 import struct
 
 from .circular_queue import Queue
-
-
-class SysResponse(object):
-    def __init__(self, num_hci, opcode, status, payload):
-        self.num_hci = num_hci
-        self.opcode  = opcode
-        self.status  = status
-        self.payload = payload
-
-    def dump(self):
-        print('Num HCI: %u' % self.num_hci)
-        print(' Opcode: 0x%04X' % self.opcode)
-        print(' Status: 0x%02X' % self.status)
-        print('Payload: %s' % self.payload)
-
-    def __repr__(self):
-        return ('SysResponse({num_hci: %u, opcode: 0x%04X, status: 0x%02X, '
-                'payload: %s})' % (self.num_hci, self.opcode, self.status,
-                                   self.payload))
-
-
-class SysEvent(object):
-    def __init__(self, addr, subevtcode, payload):
-        self.addr       = addr
-        self.subevtcode = subevtcode
-        self.payload    = payload
-
-    def dump(self):
-        print('   Address: 0x%08X' % self.addr)
-        print('SubEvtCode: 0x%04X' % self.subevtcode)
-        print('   Payload: %s' % self.payload)
-
-    def __repr__(self):
-        return ('SysEvent({subevtcode: 0x%04X, payload: %s})'
-            % (self.subevtcode, self.payload))
+from . import packet
 
 
 class Mailbox(object):
@@ -195,13 +161,8 @@ class Mailbox(object):
         '''
         Writes a command packet to the system command buffer address.
         '''
-        data = struct.pack('<LLBHB',
-                           0x00000000,
-                           0x00000000,
-                           0x10,
-                           opcode,
-                           len(payload)) + payload
-        self.ap.write_bulk(data, self.sys_cmd_buffer_addr)
+        packet.write_sys_command(self.ap, self.sys_cmd_buffer_addr, opcode,
+                                 payload)
 
     def read_sys_response(self):
         '''
@@ -209,14 +170,7 @@ class Mailbox(object):
         that system channel responses do not include the linked-list header in
         their response.
         '''
-        hdr = self.ap.read_bulk(self.sys_cmd_buffer_addr, 7)
-        (_type, evtcode, plen, num_hci,
-         opcode, status) = struct.unpack('<BBBBHB', hdr)
-        assert _type   == 0x11
-        assert evtcode == 0x0E
-        assert plen    >= 4
-        payload = self.ap.read_bulk(self.sys_cmd_buffer_addr + 7, plen - 4)
-        return SysResponse(num_hci, opcode, status, payload)
+        return packet.SysResponse(self.ap, self.sys_cmd_buffer_addr)
 
     def pop_sys_event(self):
         '''
@@ -227,16 +181,7 @@ class Mailbox(object):
         if evt_addr is None:
             return None
 
-        data = self.ap.read_bulk(evt_addr + 8, 5)
-        (_type,
-         evtcode,
-         plen,
-         subevtcode) = struct.unpack('<BBBH', data)
-        assert _type   == 0x12
-        assert evtcode == 0xFF
-        assert plen    >= 2
-        payload = self.ap.read_bulk(evt_addr + 13, plen - 2)
-        return SysEvent(evt_addr, subevtcode, payload)
+        return packet.SysEvent(self.ap, evt_addr)
 
     def push_mm_free_event(self, evt):
         '''
