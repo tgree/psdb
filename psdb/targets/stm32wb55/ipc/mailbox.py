@@ -39,11 +39,11 @@ class Mailbox(object):
 
     def _serialize_mm_table(self):
         return struct.pack('<LLLLLLL',
-                           self.ble_buffer_addr,
-                           self.sys_buffer_addr,
-                           self.ble_pool_addr,
-                           self.ble_pool_len,
-                           self.return_evt_queue_addr,
+                           self.mm_ble_buffer_addr,
+                           self.mm_sys_buffer_addr,
+                           self.mm_ble_pool_addr,
+                           self.mm_ble_pool_len,
+                           self.mm_return_evt_queue_addr,
                            0x00000000,
                            0x00000000)
 
@@ -118,16 +118,16 @@ class Mailbox(object):
         --------------- BLE Pool (2048 bytes) -------------------------------
         0x20030A00  ..........  Memory pool used by BLE
         '''
-        self.dit_addr              = self.base_addr + 0x100
-        self.st_addr               = self.base_addr + 0x200
-        self.sys_queue_addr        = self.base_addr + 0x240
-        self.mmt_addr              = self.base_addr + 0x300
-        self.return_evt_queue_addr = self.base_addr + 0x340
-        self.sys_cmd_buffer_addr   = self.base_addr + 0x400
-        self.ble_buffer_addr       = self.base_addr + 0x600
-        self.sys_buffer_addr       = self.base_addr + 0x800
-        self.ble_pool_addr         = self.base_addr + 0xA00
-        self.ble_pool_len          = 2048
+        self.dit_addr                     = self.base_addr + 0x100
+        self.st_addr                      = self.base_addr + 0x200
+        self.sys_queue_addr               = self.base_addr + 0x240
+        self.mmt_addr                     = self.base_addr + 0x300
+        self.mm_return_evt_queue_addr     = self.base_addr + 0x340
+        self.sys_cmd_buffer_addr          = self.base_addr + 0x400
+        self.mm_ble_buffer_addr           = self.base_addr + 0x600
+        self.mm_sys_buffer_addr           = self.base_addr + 0x800
+        self.mm_ble_pool_addr             = self.base_addr + 0xA00
+        self.mm_ble_pool_len              = 2048
         assert self.ram_size >= 0xA00 + 2048
 
         self.ap.write_bulk(b'\xCC'*self.ram_size, self.base_addr)
@@ -136,7 +136,7 @@ class Mailbox(object):
         self.ap.write_bulk(self._serialize_mm_table(), self.mmt_addr)
 
         self.sys_queue        = Queue(self.ap, self.sys_queue_addr)
-        self.return_evt_queue = Queue(self.ap, self.return_evt_queue_addr)
+        self.return_evt_queue = Queue(self.ap, self.mm_return_evt_queue_addr)
 
     def check_dit_key_fus(self):
         '''
