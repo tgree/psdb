@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 
@@ -128,3 +130,8 @@ class PWR(Device):
 
     def is_cpu2_boot_enabled(self):
         return (self._read_cr4() & (1 << 15)) != 0
+
+    def enable_backup_domain(self):
+        self._CR1.DBP = 1
+        while self._CR1.DBP == 0:
+            time.sleep(0.01)
