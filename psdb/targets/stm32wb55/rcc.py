@@ -1,4 +1,6 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 
@@ -54,6 +56,31 @@ ENABLE_BITS = {
     'SAI1'    : (0x60,  21),
     }
 
+HPRE_MAP = {
+    1   : 0,
+    2   : 8,
+    3   : 1,
+    4   : 9,
+    5   : 2,
+    6   : 5,
+    8   : 10,
+    10  : 6,
+    16  : 11,
+    32  : 7,
+    64  : 12,
+    128 : 13,
+    256 : 14,
+    512 : 15,
+    }
+
+PPRE_MAP = {
+    1  : 0,
+    2  : 4,
+    4  : 5,
+    8  : 6,
+    16 : 7,
+    }
+
 
 class RCC(Device):
     '''
@@ -95,7 +122,7 @@ class RCC(Device):
                                             ('STOPWUCH',        1),
                                             ('HPREF',           1),
                                             ('PPRE1F',          1),
-                                            ('PPREF2F',         1),
+                                            ('PPRE2F',          1),
                                             ('',                5),
                                             ('MCOSEL',          4),
                                             ('MCOPRE',          3),
@@ -566,3 +593,177 @@ class RCC(Device):
         offset, bit = ENABLE_BITS[name]
         if self._get_field(1, bit, offset) == 0:
             self._set_field(1, 1, bit, offset)
+
+    def enable_hse(self):
+        self._CR.HSEON = 1
+        while self._CR.HSERDY == 0:
+            time.sleep(0.01)
+
+    def enable_hsi(self):
+        self._CR.HSION = 1
+        while self._CR.HSIRDY == 0:
+            time.sleep(0.01)
+
+    def enable_lse(self):
+        self._BDCR.LSEON = 1
+        while self._BDCR.LSERDY == 0:
+            time.sleep(0.01)
+
+    def apply_hse_tuning(self):
+        id0_data = self.target.flash.get_st_otp_data_from_key(0x00)
+        assert id0_data is not None
+
+        hse_tuning = id0_data[6]
+        print('hse_tuning 0x%02X' % hse_tuning)
+        self._HSECR.val     = 0xCAFECAFE
+        self._HSECR.HSETUNE = hse_tuning
+
+    def set_lse_drive_capability(self, val):
+        self._BDCR.LSEDRV = val
+
+    def reset_backup_domain(self):
+        self._BDCR.BDRST = 1
+        self._BDCR.BDRST = 0
+
+    def set_hpre(self, divider):
+        '''
+        Sets the CPU1 HPRE divider (HCLK1).  Valid values are:
+
+            1, 2, 3, 4, 5, 6, 8, 10, 16, 32, 64, 128, 256, 512
+        '''
+        self._CFGR.HPRE = HPRE_MAP[divider]
+        while self._CFGR.HPREF == 0:
+            time.sleep(0.01)
+
+    def set_c2hpre(self, divider):
+        '''
+        Sets the CPU2 HPRE divider (HCLK2).  Valid values are:
+
+            1, 2, 3, 4, 5, 6, 8, 10, 16, 32, 64, 128, 256, 512
+        '''
+        self._EXTCFGR.C2HPRE = HPRE_MAP[divider]
+        while self._EXTCFGR.C2HPREF == 0:
+            time.sleep(0.01)
+
+    def set_shdhpre(self, divider):
+        '''
+        Sets the shared HCLK4 divider.  Valid values are:
+
+            1, 2, 3, 4, 5, 6, 8, 10, 16, 32, 64, 128, 256, 512
+        '''
+        self._EXTCFGR.SHDHPRE = HPRE_MAP[divider]
+        while self._EXTCFGR.SHDHPREF == 0:
+            time.sleep(0.01)
+
+    def set_ppre1(self, divider):
+        '''
+        Sets the PPRE1 divider (PCLK1 low-speed prescaler).  Valid values are:
+
+            1, 2, 4, 8, 16
+        '''
+        self._CFGR.PPRE1 = PPRE_MAP[divider]
+        while self._CFGR.PPRE1F == 0:
+            time.sleep(0.01)
+
+    def set_ppre2(self, divider):
+        '''
+        Sets the PPRE2 divider (PCLK2 high-speed prescaler).  Valid values are:
+
+            1, 2, 4, 8, 16
+        '''
+        self._CFGR.PPRE2 = PPRE_MAP[divider]
+        while self._CFGR.PPRE2F == 0:
+            time.sleep(0.01)
+
+    def set_sysclock_source(self, sw):
+        '''
+        Selects the SYSCLOCK source as follows:
+
+                SW | Source
+                ---+-------
+                0  | MSI
+                1  | HSI16
+                2  | HSE
+                3  | PLL
+                ---+-------
+        '''
+        self._CFGR.SW = sw
+        while self._CFGR.SWS != sw:
+            time.sleep(0.01)
+
+    def set_rtcclock_source(self, rtcsel):
+        '''
+        Selects the RTC clock source as follows:
+
+                RTCSEL | Source
+                -------+-------
+                0      | None
+                1      | LSE
+                2      | LSI
+                3      | HSE/32
+                -------+-------
+
+        Note that the backup domain must be reset to change the RTCSEL value
+        from anything other than "None".
+        '''
+        assert self._BDCR.RTCSEL == 0
+        self._BDCR.RTCSEL = rtcsel
+
+    def set_usart1clock_source(self, usart1sel):
+        '''
+        Selects the USART1 clock source as follows:
+
+                USART1SEL | Source
+                ----------+-------
+                0         | PCLK
+                1         | SYSCLK
+                2         | HSI16
+                3         | LSE
+                ----------+-------
+        '''
+        self._CCIPR.USART1SEL = usart1sel
+
+    def set_lpuartclock_source(self, lpuart1sel):
+        '''
+        Selects the LPUART1 clock source as follows:
+
+                LPUART1SEL | Source
+                -----------+-------
+                0          | PCLK
+                1          | SYSCLK
+                2          | HSI16
+                3          | LSE
+                -----------+-------
+        '''
+        self._CCIPR.LPUART1SEL = lpuart1sel
+
+    def set_rfwakeupclock_source(self, rfwkpsel):
+        '''
+        Selects the RF system wakeup clock source as follows:
+
+                RFWKPSEL | Source
+                ---------+---------
+                0        | None
+                1        | LSE
+                3        | HSE/1024
+                ---------+---------
+        '''
+        assert rfwkpsel in (0, 1, 3)
+        self._CSR.RFWKPSEL = rfwkpsel
+
+    def set_smps_div(self, smpsdiv):
+        self._SMPSCR.SMPSDIV = smpsdiv
+
+    def set_smpsclock_source(self, smpssel):
+        '''
+        Selects the SMPS clock source as follows:
+
+                SMPSSEL | Source
+                --------+-------
+                0       | HSI16
+                1       | MSI
+                2       | HSE
+                --------+-------
+        '''
+        assert smpssel in (0, 1, 2)
+        self._SMPSCR.SMPSSEL = smpssel

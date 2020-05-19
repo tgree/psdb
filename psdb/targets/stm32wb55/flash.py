@@ -1,4 +1,6 @@
 # Copyright (c) 2020 by Terry Greeniaus.
+import time
+
 from ..device import Device, Reg32
 from ..flash import Flash
 
@@ -503,3 +505,37 @@ class FLASH(Device, Flash):
         return (options['nboot0']   == 1 and
                 options['nswboot0'] == 1 and
                 options['nboot1']   == 1)
+
+    def get_st_otp_data_from_key(self, key):
+        '''
+        Searches the OTP memory for the 8-byte data identified by the specific
+        key value.  This is an ST convention and probably not compatible with
+        anything we do, but it is useful in the Nucleo boards.
+        '''
+        assert self.otp_len % 8 == 0
+
+        data = self.read_otp(0, self.otp_len)
+        while data:
+            if data[-1] == key:
+                return data[-8:]
+            data = data[:-8]
+
+        return None
+
+    def set_wait_states(self, ws):
+        '''
+        Sets the number of wait states for the flash.  Should be configured as
+        follows:
+
+                |             HCLK4 (MHz)               |
+             WS |   Vcore Range 1   |   Vcore Range 2   |
+            ----+-------------------+-------------------+
+             0  |    <= 18 MHz      |    <= 6 MHz       |
+             1  |    <= 36 MHz      |    <= 12 MHz      |
+             2  |    <= 54 MHz      |    <= 16 MHz      |
+             3  |    <= 64 MHz      |       N/A         |
+            ----+-------------------+-------------------+
+        '''
+        self._ACR.LATENCY = ws
+        while self._ACR.LATENCY != ws:
+            time.sleep(0.01)

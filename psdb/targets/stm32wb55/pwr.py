@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 
@@ -50,8 +52,33 @@ class PWR(Device):
                                          ('',               5),
                                          ('C2BOOT',         1),
                                          ]),
-            Reg32('SR1',        0x010),
-            Reg32('SR2',        0x014),
+            Reg32('SR1',        0x010,  [('WUF1',           1),
+                                         ('WUF2',           1),
+                                         ('WUF3',           1),
+                                         ('WUF4',           1),
+                                         ('WUF5',           1),
+                                         ('',               2),
+                                         ('SMPSFBF',        1),
+                                         ('BORHF',          1),
+                                         ('BLEWUF',         1),
+                                         ('802WUF',         1),
+                                         ('CRPEF',          1),
+                                         ('BLEAF',          1),
+                                         ('802AF',          1),
+                                         ('C2HF',           1),
+                                         ('WUFI',           1),
+                                         ]),
+            Reg32('SR2',        0x014,  [('SMPSBF',         1),
+                                         ('SMPSF',          1),
+                                         ('',               6),
+                                         ('REGLPS',         1),
+                                         ('REGLPF',         1),
+                                         ('VOSF',           1),
+                                         ('PVDO',           1),
+                                         ('PVMO1',          1),
+                                         ('',               1),
+                                         ('PVMO3',          1),
+                                         ]),
             Reg32('SCR',        0x018),
             Reg32('CR5',        0x01C,  [('SMPSVOS',        4),
                                          ('SMPSSC',         3),
@@ -103,3 +130,20 @@ class PWR(Device):
 
     def is_cpu2_boot_enabled(self):
         return (self._read_cr4() & (1 << 15)) != 0
+
+    def enable_backup_domain(self):
+        self._CR1.DBP = 1
+        while self._CR1.DBP == 0:
+            time.sleep(0.01)
+
+    def set_voltage_scaling(self, vos):
+        '''
+        Set the voltage range, which is 1-based:
+
+            Range 1: 1.2 V, up to 64 MHz
+            Range 2: 1.0 V, up to 16 MHz
+        '''
+        assert vos in (1, 2)
+        self._CR1.VOS = vos
+        while self._SR2.VOSF:
+            time.sleep(0.01)

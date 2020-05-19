@@ -90,6 +90,22 @@ class QueueRef(object):
         self._write_head(head_elem._read_next())
         return head_elem.addr
 
+    def dump(self):
+        '''
+        Dump the queue contents.
+        '''
+        print('0x%08X Sentinel N: 0x%08X P: 0x%08X'
+              % (self.addr, self._read_head(), self._read_tail()))
+        link = LinkRef(self.ap, self.addr)
+        while True:
+            next_link_addr = link._read_next()
+            if next_link_addr == self.addr:
+                break
+
+            link = LinkRef(self.ap, next_link_addr)
+            print('0x%08X     Link N: 0x%08X P: 0x%08X'
+                  % (link.addr, link._read_next(), link._read_prev()))
+
 
 class Queue(QueueRef):
     '''
