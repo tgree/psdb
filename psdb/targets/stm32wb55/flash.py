@@ -19,16 +19,13 @@ class UnlockedContextManager(object):
         self.flash = flash
 
     def __enter__(self):
-        v = self.flash._read_cr()
-        if v & (1<<31):
-            self.flash._write_keyr(0x45670123)
-            self.flash._write_keyr(0xCDEF89AB)
-            v = self.flash._read_cr()
-            assert not (v & (1<<31))
+        if self.flash._CR.LOCK:
+            self.flash._KEYR.val = 0x45670123
+            self.flash._KEYR.val = 0xCDEF89AB
+            assert not self.flash._CR.LOCK
 
     def __exit__(self, type, value, traceback):
-        v = self.flash._read_cr()
-        self.flash._write_cr(v | (1<<31))
+        self.flash._CR.LOCK = 1
 
 
 class UnlockedOptionsContextManager(object):
@@ -36,17 +33,14 @@ class UnlockedOptionsContextManager(object):
         self.flash = flash
 
     def __enter__(self):
-        v = self.flash._read_cr()
-        if v & (1<<30):
-            assert not (v & (1<<31))
-            self.flash._write_optkeyr(0x08192A3B)
-            self.flash._write_optkeyr(0x4C5D6E7F)
-            v = self.flash._read_cr()
-            assert not (v & (1<<30))
+        if self.flash._CR.OPTLOCK:
+            assert not self.flash._CR.LOCK
+            self.flash._OPTKEYR.val = 0x08192A3B
+            self.flash._OPTKEYR.val = 0x4C5D6E7F
+            assert not self.flash._CR.OPTLOCK
 
     def __exit__(self, type, value, traceback):
-        v = self.flash._read_cr()
-        self.flash._write_cr(v | (1<<30))
+        self.flash._CR.OPTLOCK = 1
 
 
 class FLASH(Device, Flash):
@@ -232,8 +226,8 @@ class FLASH(Device, Flash):
 
         # Clear OPTVERR if set; the MCU startup is buggy and some revisions
         # always set this bit even though there are no options problems.
-        if self._read_sr() & (1 << 15):
-            self._write_sr(1 << 15)
+        if self._SR.OPTVERR:
+            self._SR.OPTVERR = 1
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
@@ -250,7 +244,7 @@ class FLASH(Device, Flash):
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
     def _wait_bsy_clear(self):
-        while self._read_sr() & (1 << 16):
+        while self._SR.BSY:
             pass
 
     def set_swd_freq_write(self, verbose=True):
