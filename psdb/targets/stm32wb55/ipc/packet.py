@@ -89,8 +89,14 @@ class SysEvent(object):
         +----------------+-----------------
 
     The packet payload starts immediately after the PAYLEN field (SUBEVTCODE
-    is part of the packet payload).  The actuel event payload starts after the
+    is part of the packet payload).  The actual event payload starts after the
     SUBEVTCODE field and its length is PAYLEN.
+
+    This type of event must be freed back to the firmware using the MM
+    return_evt_queue.  This is done automatically by the system_channel code;
+    the object is effectively a copy of the event.  The only exception is if
+    we are in FUS mode - the only event we get is the "ready" event and FUS
+    does not implement the MM interface for it.
     '''
     def __init__(self, ap, addr):
         self.addr = addr
