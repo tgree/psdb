@@ -23,7 +23,7 @@ class Mailbox(object):
     def _serialize_base_table(self):
         return struct.pack('<LLLLLLLLL',
                            self.dit_addr,
-                           0x00000000,
+                           self.blet_addr,
                            0x00000000,
                            self.st_addr,
                            self.mmt_addr,
@@ -36,6 +36,13 @@ class Mailbox(object):
         return struct.pack('<LL',
                            self.sys_cmd_buffer_addr,
                            self.sys_queue_addr)
+
+    def _serialize_ble_table(self):
+        return struct.pack('<LLLL',
+                           self.ble_cmd_buffer_addr,
+                           self.ble_csbuffer_addr,
+                           self.ble_evt_queue_addr,
+                           self.ble_hci_acl_data_buffer_addr)
 
     def _serialize_mm_table(self):
         return struct.pack('<LLLLLLL',
@@ -77,7 +84,7 @@ class Mailbox(object):
         Address     Contents
         --------------- Base Table (256 byes) -------------------------------
         0x20030000  0x20030100  Device Info Table base address
-        0x20030004  0x00000000  NULL (BLE Table base address)
+        0x20030004  0x20030280  BLE Table base address
         0x20030008  0x00000000  NULL (Thread Table base address)
         0x2003000C  0x20030200  System Table base address
         0x20030010  0x20030300  Mem Manager Table base address
@@ -89,53 +96,79 @@ class Mailbox(object):
         --------------- Device Info Table (256 bytes) -----------------------
         0x20030100  ..........  Filled out by firmware
 
-        --------------- System Table (256 bytes) ----------------------------
+        --------------- System Table (128 bytes) ----------------------------
         0x20030200  0x20030400  Command Buffer address
         0x20030204  0x20030240  System Queue address
+        ---------------------------------------------------------------------
         0x20030240  0x20030240  System Queue head
         0x20030244  0x20030240  System Queue tail
 
+        --------------- BLE Table (128 bytes) -------------------------------
+        0x20030280  0x20030600  BLE Command Buffer address
+        0x20030284  0x200302B0  CsBuffer: min 15 bytes
+        0x20030288  0x200302A0  Event Queue address
+        0x2003028C  0x20030800  HciAclDataBuffer: 264 bytes
+        ---------------------------------------------------------------------
+        0x200302A0  0x200302A0  Event Queue head
+        0x200302A4  0x200302A0  Event Queue tail
+        ---------------------------------------------------------------------
+        0x200302B0  ..........  CsBuffer
+
         --------------- Memory Manager Table (256 bytes) --------------------
-        0x20030300  0x20030600  Spare BLE buffer address
-        0x20030304  0x20030800  Spare System event buffer address
-        0x20030308  0x20030A00  BLE Pool
+        0x20030300  0x20030A00  Spare BLE buffer address
+        0x20030304  0x20030C00  Spare System event buffer address
+        0x20030308  0x20030E00  BLE Pool
         0x2003030C  0x00000800  BLE Pool Size: 2048 bytes
         0x20030310  0x20030340  Event Free Buffer Queue address
         0x20030314  0x00000000  Trace Event Pool address
         0x20030318  0x00000000  Trace Poll Size: 0 bytes
+        ---------------------------------------------------------------------
         0x20030340  0x20030340  Event Free Buffer Queue head
         0x20030344  0x20030340  Event Free Buffer Queue tail
 
-        --------------- Command Buffer (512 bytes) --------------------------
+        --------------- System Command Buffer (512 bytes) -------------------
         0x20030400  ..........  Command or response packet
 
-        --------------- Spare BLE Buffer (512 bytes) ------------------------
-        0x20030600  ..........  Something BLE
+        --------------- BLE Command Buffer (512 bytes) ----------------------
+        0x20030600  ..........  Command or response packet
 
-        --------------- Spare System Event Buffer (512 bytes) ---------------
-        0x20030800  ..........  Buffer used by FUS firmware for events
+        --------------- BLE HCI ACL Data Buffer (512 bytes) -----------------
+        0x20030800  ..........  Command or response packet
 
-        --------------- BLE Pool (2048 bytes) -------------------------------
-        0x20030A00  ..........  Memory pool used by BLE
+        --------------- MM Spare BLE Buffer (512 bytes) ---------------------
+        0x20030A00  ..........  Something BLE
+
+        --------------- MM Spare System Event Buffer (512 bytes) ------------
+        0x20030C00  ..........  Buffer used by FUS firmware for events
+
+        --------------- MM BLE Pool (2048 bytes) ----------------------------
+        0x20030E00  ..........  Memory pool used by BLE
         '''
         self.dit_addr                     = self.base_addr + 0x100
         self.st_addr                      = self.base_addr + 0x200
         self.sys_queue_addr               = self.base_addr + 0x240
+        self.blet_addr                    = self.base_addr + 0x280
+        self.ble_evt_queue_addr           = self.base_addr + 0x2A0
+        self.ble_csbuffer_addr            = self.base_addr + 0x2B0
         self.mmt_addr                     = self.base_addr + 0x300
         self.mm_return_evt_queue_addr     = self.base_addr + 0x340
         self.sys_cmd_buffer_addr          = self.base_addr + 0x400
-        self.mm_ble_buffer_addr           = self.base_addr + 0x600
-        self.mm_sys_buffer_addr           = self.base_addr + 0x800
-        self.mm_ble_pool_addr             = self.base_addr + 0xA00
+        self.ble_cmd_buffer_addr          = self.base_addr + 0x600
+        self.ble_hci_acl_data_buffer_addr = self.base_addr + 0x800
+        self.mm_ble_buffer_addr           = self.base_addr + 0xA00
+        self.mm_sys_buffer_addr           = self.base_addr + 0xC00
+        self.mm_ble_pool_addr             = self.base_addr + 0xE00
         self.mm_ble_pool_len              = 2048
-        assert self.ram_size >= 0xA00 + 2048
+        assert self.ram_size >= 0xE00 + 2048
 
         self.ap.write_bulk(b'\xCC'*self.ram_size, self.base_addr)
         self.ap.write_bulk(self._serialize_base_table(), self.base_addr)
         self.ap.write_bulk(self._serialize_system_table(), self.st_addr)
+        self.ap.write_bulk(self._serialize_ble_table(), self.blet_addr)
         self.ap.write_bulk(self._serialize_mm_table(), self.mmt_addr)
 
         self.sys_queue        = Queue(self.ap, self.sys_queue_addr)
+        self.ble_evt_queue    = Queue(self.ap, self.ble_evt_queue_addr)
         self.return_evt_queue = Queue(self.ap, self.mm_return_evt_queue_addr)
 
     def check_dit_key_fus(self):
@@ -182,6 +215,24 @@ class Mailbox(object):
             return None
 
         return packet.SysEvent(self.ap, evt_addr)
+
+    def write_ble_command(self, cmdcode, payload):
+        '''
+        Writes a command packet to the BLE command buffer address.
+        '''
+        packet.write_ble_command(self.ap, self.ble_cmd_buffer_addr, cmdcode,
+                                 payload)
+
+    def pop_ble_event(self):
+        '''
+        Pops an event from the BLE event queue if one is available and returns
+        it; returns None if no event is available.
+        '''
+        evt_addr = self.ble_evt_queue.pop()
+        if evt_addr is None:
+            return None
+
+        return packet.make_ble_event(self.ap, evt_addr)
 
     def push_mm_free_event(self, evt):
         '''
