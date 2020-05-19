@@ -126,10 +126,10 @@ class PWR(Device):
         super(PWR, self).__init__(target, ap, addr, name, PWR.REGS)
 
     def enable_cpu2_boot(self):
-        self._write_cr4(self._read_cr4() | (1 << 15))
+        self._CR4.C2BOOT = 1
 
     def is_cpu2_boot_enabled(self):
-        return (self._read_cr4() & (1 << 15)) != 0
+        return self._CR4.C2BOOT != 0
 
     def enable_backup_domain(self):
         self._CR1.DBP = 1
