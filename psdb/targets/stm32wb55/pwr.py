@@ -135,3 +135,15 @@ class PWR(Device):
         self._CR1.DBP = 1
         while self._CR1.DBP == 0:
             time.sleep(0.01)
+
+    def set_voltage_scaling(self, vos):
+        '''
+        Set the voltage range, which is 1-based:
+
+            Range 1: 1.2 V, up to 64 MHz
+            Range 2: 1.0 V, up to 16 MHz
+        '''
+        assert vos in (1, 2)
+        self._CR1.VOS = vos
+        while self._SR2.VOSF:
+            time.sleep(0.01)
