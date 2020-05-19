@@ -54,6 +54,59 @@ class STM32WB55(Target):
     def __repr__(self):
         return 'STM32WB55 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
+    def configure_rf_clocks(self):
+        '''
+        Configures all clock subsystems as required for the BLE firmware to be
+        able to boot up and start handling commands.
+        '''
+        rcc = self.devs['RCC']
+        pwr = self.devs['PWR']
+
+        # Tune the 32 MHz oscillator.
+        rcc.apply_hse_tuning()
+
+        # Enable access to the backup domain.
+        pwr.enable_backup_domain()
+
+        # Reset the backup domain.
+        rcc.reset_backup_domain()
+
+        # Enable the LSE drive capability.
+        rcc.set_lse_drive_capability(0)
+
+        # Set voltage range 1 (up to 64 MHz).
+        pwr.set_voltage_scaling(1)
+
+        # Enable oscillators.
+        rcc.enable_hse()
+        rcc.enable_hsi()
+        rcc.enable_lse()
+
+        # Configure all clock prescalers.
+        self.flash.set_wait_states(1)
+        rcc.set_hpre(1)
+        rcc.set_c2hpre(1)
+        rcc.set_shdhpre(1)
+        rcc.set_ppre1(1)
+        rcc.set_ppre2(1)
+
+        # Select SYSCLOCK = HSE.
+        rcc.set_sysclock_source(2)
+
+        # Select other clock sources:
+        #   RTCCLOCK      = LSE
+        #   USART1CLOCK   = PCLK
+        #   LPUARTCLOCK   = PCLK
+        #   RFWAKEUPCLOCK = LSE
+        #   SMPSCLOCK     = HSE
+        #   SMPSDIV       = RANGE1
+        rcc.set_rtcclock_source(1)
+        rcc.set_usart1clock_source(0)
+        rcc.set_lpuartclock_source(0)
+        rcc.set_rfwakeupclock_source(1)
+        rcc.set_smps_div(1)
+        rcc.set_smpsclock_source(2)
+
     @staticmethod
     def probe(db):
         # APSEL 0 and 1 should be populated and be AHB APs.
