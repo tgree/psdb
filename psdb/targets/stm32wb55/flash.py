@@ -503,3 +503,19 @@ class FLASH(Device, Flash):
         return (options['nboot0']   == 1 and
                 options['nswboot0'] == 1 and
                 options['nboot1']   == 1)
+
+    def get_st_otp_data_from_key(self, key):
+        '''
+        Searches the OTP memory for the 8-byte data identified by the specific
+        key value.  This is an ST convention and probably not compatible with
+        anything we do, but it is useful in the Nucleo boards.
+        '''
+        assert self.otp_len % 8 == 0
+
+        data = self.read_otp(0, self.otp_len)
+        while data:
+            if data[-1] == key:
+                return data[-8:]
+            data = data[:-8]
+
+        return None
