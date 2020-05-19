@@ -1,4 +1,6 @@
 # Copyright (c) 2020 by Terry Greeniaus.
+import time
+
 from ..device import Device, Reg32
 from ..flash import Flash
 
@@ -519,3 +521,21 @@ class FLASH(Device, Flash):
             data = data[:-8]
 
         return None
+
+    def set_wait_states(self, ws):
+        '''
+        Sets the number of wait states for the flash.  Should be configured as
+        follows:
+
+                |             HCLK4 (MHz)               |
+             WS |   Vcore Range 1   |   Vcore Range 2   |
+            ----+-------------------+-------------------+
+             0  |    <= 18 MHz      |    <= 6 MHz       |
+             1  |    <= 36 MHz      |    <= 12 MHz      |
+             2  |    <= 54 MHz      |    <= 16 MHz      |
+             3  |    <= 64 MHz      |       N/A         |
+            ----+-------------------+-------------------+
+        '''
+        self._ACR.LATENCY = ws
+        while self._ACR.LATENCY != ws:
+            time.sleep(0.01)
