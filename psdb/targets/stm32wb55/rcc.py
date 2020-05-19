@@ -95,7 +95,7 @@ class RCC(Device):
                                             ('STOPWUCH',        1),
                                             ('HPREF',           1),
                                             ('PPRE1F',          1),
-                                            ('PPREF2F',         1),
+                                            ('PPRE2F',          1),
                                             ('',                5),
                                             ('MCOSEL',          4),
                                             ('MCOPRE',          3),
