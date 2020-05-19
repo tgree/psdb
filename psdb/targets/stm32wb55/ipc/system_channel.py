@@ -19,6 +19,7 @@ The only safe way to process the queue is to repeatedly pop_front() under a
 while(!sys_table->sys_queue.empty()) loop.  The BLE firmware does not have this
 bug and its queue pointers are in the MM BLE Pool area instead.
 '''
+import struct
 
 
 FUS_GET_STATE               = 0xFC52
@@ -32,6 +33,8 @@ FUS_START_WS                = 0xFC5A
 FUS_LOCK_USR_KEY            = 0xFC5D
 FUS_UNLOAD_USR_KEY          = 0xFC5E
 FUS_ACTIVATE_ANTIROLLBACK   = 0xFC5F
+
+BLE_INIT                    = 0xFC66
 
 
 class SystemChannel(object):
@@ -64,6 +67,36 @@ class SystemChannel(object):
 
     def exec_start_ws(self):
         return self.exec_sys_command(FUS_START_WS)
+
+    def exec_ble_init(self, num_gatt_attributes=68, num_gatt_services=8,
+                      att_value_array_size=1344, num_link=8,
+                      data_length_extension=True,
+                      prepare_write_list_size=0x3A, mblock_count=0x79,
+                      max_att_mtu=156, slave_sca=500,
+                      master_sca=0, lse_source=0,
+                      max_conn_event_length=0xFFFFFFFF,
+                      hse_startup_time=0x148, viterbi_mode=1, ll_only=0,
+                      hw_version=0):
+        payload = struct.pack('<LLHHHBBBBHHBBLHBBB',
+                              0, 0,
+                              num_gatt_attributes,
+                              num_gatt_services,
+                              att_value_array_size,
+                              num_link,
+                              int(data_length_extension),
+                              prepare_write_list_size,
+                              mblock_count,
+                              max_att_mtu,
+                              slave_sca,
+                              master_sca,
+                              lse_source,
+                              max_conn_event_length,
+                              hse_startup_time,
+                              viterbi_mode,
+                              ll_only,
+                              hw_version)
+        assert len(payload) == 33
+        return self.exec_sys_command(BLE_INIT, payload=payload)
 
     def pop_all_events(self, dump=False):
         '''
