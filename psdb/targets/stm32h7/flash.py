@@ -93,7 +93,7 @@ class FlashBank(Device):
                         '%s.%u' % (flash.name, bank_num), FlashBank.REGS)
 
     def _clear_errors(self):
-        self._write_ccr(0x0FEF0000)
+        self._CCR = 0x0FEF0000
 
     def _check_errors(self):
         v = self._read_sr()
@@ -107,18 +107,18 @@ class FlashBank(Device):
     def _pg_unlock(self):
         v = self._read_cr()
         if v & 1:
-            self._write_keyr(0x45670123)
-            self._write_keyr(0xCDEF89AB)
             v = self._read_cr()
+            self._KEYR = 0x45670123
+            self._KEYR = 0xCDEF89AB
             assert not (v & 1)
         if not (v & 2):
-            self._write_cr(v | 2)
+            self._CR = (v | 2)
 
         return self
 
     def _pg_lock(self):
         v = self._read_cr()
-        self._write_cr((v & ~2) | 1)
+        self._CR = ((v & ~2) | 1)
 
 
 class UnlockedContextManager(object):
@@ -202,7 +202,7 @@ class FLASH(Device, Flash):
             bank._clear_errors()
             v  = bank._read_cr()
             v |= ((n % self.sectors_per_bank) << 8) | (1 << 7) | (1 << 2)
-            bank._write_cr(v)
+            bank._CR = v
             bank._wait_prg_idle()
             bank._check_errors()
 
