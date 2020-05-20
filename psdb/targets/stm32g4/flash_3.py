@@ -121,6 +121,6 @@ class FLASH_3(FLASH_Base):
         try:
             self._write_cr(1 << 27)
         except Exception:
-            return
+            pass
 
-        raise Exception('Expected disconnect exception but never got one.')
+        return self.target.wait_reset_and_reprobe()

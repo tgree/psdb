@@ -92,10 +92,9 @@ def main(rv):
         mem          = target.cpus[0].read_bulk(base, length)
         psdb.hexdump(mem, addr=base)
 
-    # If bank-swapping was requested, do it now.  This operation kills the
-    # connection to the debug probe, so there's no coming back from it.
+    # If bank-swapping was requested, do it now.
     if rv.swap_banks:
-        target.flash.swap_banks_and_reset()
+        target = target.flash.swap_banks_and_reset()
 
     # Resume if halt wasn't requested.
     if not rv.halt:
