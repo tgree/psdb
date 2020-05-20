@@ -437,7 +437,7 @@ class FLASH(Device, Flash):
             assert k in cur_options
             cur_options[k] = v
 
-        optr  = 0x10708000
+        optr  = (self._OPTR.read() & 0x10708000)
         optr |= (cur_options['agc_trim']   << 29)
         optr |= (cur_options['nboot0']     << 27)
         optr |= (cur_options['nswboot0']   << 26)
