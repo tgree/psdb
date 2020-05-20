@@ -20,6 +20,7 @@ class UnlockedContextManager(object):
         if self.flash._CR.LOCK:
             self.flash._KEYR = 0x45670123
             self.flash._KEYR = 0xCDEF89AB
+            assert not self.flash._CR.LOCK
 
     def __exit__(self, type, value, traceback):
         self.flash._CR.LOCK = 1
