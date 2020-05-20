@@ -49,6 +49,8 @@ WS_BINARIES = [
              0x080CB000, 0x08057000, 0x08017000),
 
     # 1.6.0 series.
+    # 1.7.0 series - identical to 1.6.0 but they changed th load addresses for
+    #                the stm32wb5x_Thread_FTD_fw.bin binary.
     STBinary('stm32wb5x_BLE_HCILayer_fw.bin', 0x01060000,
              '2ebc328dc5c54b553578951a5ace5c8d',
              0x080DC000, 0x08068000, 0x08028000),
@@ -69,7 +71,7 @@ WS_BINARIES = [
              0x080E4000, 0x08070000, 0x08030000),
     STBinary('stm32wb5x_Thread_FTD_fw.bin', 0x01060000,
              'a247ffad7858571e464a217b083e7f8f',
-             0x0809F000, 0x0802B000, None),
+             0x0809E000, 0x0802A000, None),
     STBinary('stm32wb5x_Thread_MTD_fw.bin', 0x01060000,
              '68afe9bd5bf9a84fef096f3933d0ebe1',
              0x080B4000, 0x08040000, None),
