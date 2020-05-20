@@ -80,6 +80,12 @@ class RDCapture(object):
         width, shift = self.reg.fields_map[name]
         self.dev._set_field(v, width, shift, self.reg.offset)
 
+    def __bool__(self):
+        raise Exception("Don't test an RDCapture!")
+
+    def __equals__(self, other):
+        raise Exception("Don't compare an RDCapture!")
+
     def read(self):
         return self.reg.read(self.dev)
 
@@ -89,6 +95,10 @@ class RDCapture(object):
 
 class Device(object):
     def __init__(self, target, ap, dev_base, name, regs):
+        super(Device, self).__setattr__(
+                'reg_map', {'_' + r.name.upper() : RDCapture(r, self)
+                            for r in regs})
+
         self.target   = target
         self.ap       = ap
         self.dev_base = dev_base
@@ -103,10 +113,22 @@ class Device(object):
                 m = types.MethodType(lambda s, v, o=r.offset: s._write_32(v, o),
                                      self)
                 self.__dict__['_write_' + n] = m
-            self.__dict__['_' + n.upper()] = RDCapture(r, self)
 
         assert self.name not in self.target.devs
         self.target.devs[self.name] = self
+
+    def __getattr__(self, name):
+        return self.reg_map[name]
+
+    def __setattr__(self, name, value):
+        rd = self.reg_map.get(name, None)
+        if rd is not None:
+            if isinstance(value, RDCapture):
+                rd.write(value.read())
+            else:
+                rd.write(value)
+        else:
+            super(Device, self).__setattr__(name, value)
 
     def _read_32(self, offset):
         return self.ap.read_32(self.dev_base + offset)
