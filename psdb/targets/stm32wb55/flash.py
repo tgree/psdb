@@ -357,7 +357,7 @@ class FLASH(Device, Flash):
         flash this value is stored as a double-word offset in SRAM2; here, we
         convert it to a full 32-bit address.
         '''
-        offset = (self._read_ipccbr() & 0x00003FFF) * 8
+        offset = self._IPCCBR.IPCCDBA * 8
         return self.target.devs['SRAM2a'].dev_base + offset
 
     def _flash_optr(self, new_optr, verbose=True):
