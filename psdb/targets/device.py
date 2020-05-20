@@ -61,22 +61,14 @@ class Reg32W(Reg):
 
 class RDCapture(object):
     def __init__(self, reg, dev):
-        assert 'val' not in reg.fields_map
         object.__setattr__(self, 'reg', reg)
         object.__setattr__(self, 'dev', dev)
 
     def __getattr__(self, name):
-        if name == 'val':
-            return self.read()
-
         width, shift = self.reg.fields_map[name]
         return self.dev._get_field(width, shift, self.reg.offset)
 
     def __setattr__(self, name, v):
-        if name == 'val':
-            self.write(v)
-            return
-
         width, shift = self.reg.fields_map[name]
         self.dev._set_field(v, width, shift, self.reg.offset)
 
