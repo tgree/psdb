@@ -38,10 +38,6 @@ class FLASH_Base(Device, Flash):
         self.otp_base       = otp_base
         self.otp_len        = otp_len
 
-        if self._read_optr() == 0:
-            raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
-                            'try using --srst')
-
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
 
