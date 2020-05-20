@@ -83,10 +83,6 @@ def main(rv):
         print('Flash completed successfully.')
         target.reset_halt()
 
-    # Resume if halt wasn't requested.
-    if not rv.halt:
-        target.resume()
-
     # Dump some memory.
     if rv.mem_dump:
         print('Memory dump:')
@@ -100,6 +96,10 @@ def main(rv):
     # connection to the debug probe, so there's no coming back from it.
     if rv.swap_banks:
         target.flash.swap_banks_and_reset()
+
+    # Resume if halt wasn't requested.
+    if not rv.halt:
+        target.resume()
 
 
 if __name__ == '__main__':
