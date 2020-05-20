@@ -104,7 +104,7 @@ class IPCC(Device):
         Returns True if the CPU1 TX-free flag is set for the specified channel.
         The channel number is 1-based.
         '''
-        return (self._read_c1toc2sr() & (1 << (channel - 1))) == 0
+        return (self._C1TOC2SR.read() & (1 << (channel - 1))) == 0
 
     def clear_rx_flag(self, channel):
         '''
@@ -113,14 +113,14 @@ class IPCC(Device):
         based.
         '''
         assert channel and channel <= 6
-        self._write_c1scr(1 << (channel - 1))
+        self._C1SCR = (1 << (channel - 1))
 
     def get_rx_flag(self, channel):
         '''
         Returns True if the CPU1 RX-occupied flag is set for the specified
         channel.  The channel number is 1-based.
         '''
-        return (self._read_c2toc1sr() & (1 << (channel - 1))) != 0
+        return (self._C2TOC1SR.read() & (1 << (channel - 1))) != 0
 
     def wait_tx_free(self, channel, timeout=None):
         '''
