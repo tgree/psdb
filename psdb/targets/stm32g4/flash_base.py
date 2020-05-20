@@ -17,14 +17,12 @@ class UnlockedContextManager(object):
         self.flash = flash
 
     def __enter__(self):
-        v = self.flash._read_cr()
-        if v & (1<<31):
-            self.flash._write_keyr(0x45670123)
-            self.flash._write_keyr(0xCDEF89AB)
+        if self.flash._CR.LOCK:
+            self.flash._KEYR = 0x45670123
+            self.flash._KEYR = 0xCDEF89AB
 
     def __exit__(self, type, value, traceback):
-        v = self.flash._read_cr()
-        self.flash._write_cr(v | (1<<31))
+        self.flash._CR.LOCK = 1
 
 
 class FLASH_Base(Device, Flash):
@@ -48,10 +46,10 @@ class FLASH_Base(Device, Flash):
         return UnlockedContextManager(self)
 
     def _clear_errors(self):
-        self._write_sr(self._read_sr())
+        self._SR = self._SR
 
     def _check_errors(self):
-        v = self._read_sr()
+        v = self._SR.read()
         if v & 0x0000C3F8:
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
@@ -82,11 +80,11 @@ class FLASH_Base(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1))
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1))
+            self._CR = ((n << 3) | (1 << 1))
+            self._CR = ((1 << 16) | (n << 3) | (1 << 1))
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def read(self, addr, length):
         '''
@@ -116,11 +114,11 @@ class FLASH_Base(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr(1 << 0)
+            self._CR = (1 << 0)
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def read_otp(self, offset, size):
         '''
