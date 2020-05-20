@@ -20,8 +20,8 @@ class UnlockedContextManager(object):
 
     def __enter__(self):
         if self.flash._CR.LOCK:
-            self.flash._KEYR.val = 0x45670123
-            self.flash._KEYR.val = 0xCDEF89AB
+            self.flash._KEYR = 0x45670123
+            self.flash._KEYR = 0xCDEF89AB
             assert not self.flash._CR.LOCK
 
     def __exit__(self, type, value, traceback):
@@ -35,8 +35,8 @@ class UnlockedOptionsContextManager(object):
     def __enter__(self):
         if self.flash._CR.OPTLOCK:
             assert not self.flash._CR.LOCK
-            self.flash._OPTKEYR.val = 0x08192A3B
-            self.flash._OPTKEYR.val = 0x4C5D6E7F
+            self.flash._OPTKEYR = 0x08192A3B
+            self.flash._OPTKEYR = 0x4C5D6E7F
             assert not self.flash._CR.OPTLOCK
 
     def __exit__(self, type, value, traceback):
@@ -236,7 +236,7 @@ class FLASH(Device, Flash):
         return UnlockedOptionsContextManager(self)
 
     def _clear_errors(self):
-        self._write_sr(self._read_sr())
+        self._SR = self._SR
 
     def _check_errors(self):
         v = self._read_sr()
@@ -271,11 +271,11 @@ class FLASH(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1))
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1))
+            self._CR = ((n << 3) | (1 << 1))
+            self._CR = ((1 << 16) | (n << 3) | (1 << 1))
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def erase_all(self, verbose=True):
         '''
@@ -317,11 +317,11 @@ class FLASH(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr(1 << 0)
+            self._CR = (1 << 0)
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def read_otp(self, offset, size):
         '''
@@ -373,9 +373,9 @@ class FLASH(Device, Flash):
                   % (old_optr, new_optr))
         with self._flash_unlocked():
             with self._options_unlocked():
-                self._write_optr(new_optr)
+                self._OPTR = new_optr
                 self._clear_errors()
-                self._write_cr(1 << 17)
+                self._CR = (1 << 17)
                 self._wait_bsy_clear()
                 self._check_errors()
 
@@ -390,7 +390,7 @@ class FLASH(Device, Flash):
         '''
         UnlockedContextManager(self).__enter__()
         UnlockedOptionsContextManager(self).__enter__()
-        self._write_cr(1 << 27)
+        self._CR = (1 << 27)
         return self.target.wait_reset_and_reprobe(**kwargs)
 
     def get_options(self):
