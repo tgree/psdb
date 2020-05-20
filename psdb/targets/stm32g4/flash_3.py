@@ -116,7 +116,7 @@ class FLASH_3(FLASH_Base):
         # In dual-bank mode, do the right thing.
         if self.sector_size == 2048:
             syscfg  = self.target.devs['SYSCFG']
-            fb_mode = bool(syscfg._read_memrmp() & (1 << 8))
+            fb_mode = bool(syscfg._MEMRMP.FB_MODE)
             if not fb_mode and n >= 128:
                 bker = (1 << 11)
             elif fb_mode and n < 128:
@@ -127,11 +127,11 @@ class FLASH_3(FLASH_Base):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1) | bker)
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1) | bker)
+            self._CR = ((n << 3) | (1 << 1) | bker)
+            self._CR = ((1 << 16) | (n << 3) | (1 << 1) | bker)
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def swap_banks_and_reset(self):
         '''
@@ -143,17 +143,17 @@ class FLASH_3(FLASH_Base):
         probe it.
         '''
         UnlockedContextManager(self).__enter__()
-        self._write_optkeyr(0x08192A3B)
-        self._write_optkeyr(0x4C5D6E7F)
-        self._write_optr(self._read_optr() ^ (1 << 20))
-        self._write_cr(1 << 17)
+        self._OPTKEYR    = 0x08192A3B
+        self._OPTKEYR    = 0x4C5D6E7F
+        self._OPTR.BFB2 ^= 1
+        self._CR         = (1 << 17)
         self._wait_bsy_clear()
 
         # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
         # causes an exception with the XDS110 (and possibly the ST-Link), so
         # catch it and exit cleanly.
         try:
-            self._write_cr(1 << 27)
+            self._CR = (1 << 27)
         except Exception:
             pass
 
