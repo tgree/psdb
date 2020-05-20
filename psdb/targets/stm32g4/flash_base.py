@@ -26,6 +26,21 @@ class UnlockedContextManager(object):
         self.flash._CR.LOCK = 1
 
 
+class UnlockedOptionsContextManager(object):
+    def __init__(self, flash):
+        self.flash = flash
+
+    def __enter__(self):
+        if self.flash._CR.OPTLOCK:
+            assert not self.flash._CR.LOCK
+            self.flash._OPTKEYR = 0x08192A3B
+            self.flash._OPTKEYR = 0x4C5D6E7F
+            assert not self.flash._CR.OPTLOCK
+
+    def __exit__(self, type, value, traceback):
+        self.flash._CR.OPTLOCK = 1
+
+
 class FLASH_Base(Device, Flash):
     '''
     Common base class for STM32G4 flash devices.
@@ -41,6 +56,9 @@ class FLASH_Base(Device, Flash):
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
+
+    def _options_unlocked(self):
+        return UnlockedOptionsContextManager(self)
 
     def _clear_errors(self):
         self._SR = self._SR
@@ -144,3 +162,44 @@ class FLASH_Base(Device, Flash):
         '''
         assert self.is_otp_writeable(offset, len(data))
         self.write(self.otp_base + offset, data)
+
+    def _flash_optr(self, new_optr, verbose=True):
+        '''
+        Records the current option values in flash, but doesn't reset the MCU
+        so they won't yet take effect or even read back from the flash
+        registers.
+        '''
+        assert self.target.is_halted()
+        old_optr = self._OPTR.read()
+        if verbose:
+            print('Flashing options (Old OPTR=0x%08X, New OPTR=0x%08X)'
+                  % (old_optr, new_optr))
+        with self._flash_unlocked():
+            with self._options_unlocked():
+                self._OPTR = new_optr
+                self._clear_errors()
+                self._CR = (1 << 17)
+                self._wait_bsy_clear()
+                self._check_errors()
+
+    def _trigger_obl_launch(self, **kwargs):
+        '''
+        Set OBL_LAUNCH to trigger a reset of the device using the new options.
+        This reset triggers a disconnect of the debug probe, so a full
+        target.reprobe() sequence is required.  The correct idiom for use of
+        _trigger_obl_launch() is:
+
+            target = target.flash._trigger_obl_launch()
+        '''
+        UnlockedContextManager(self).__enter__()
+        UnlockedOptionsContextManager(self).__enter__()
+
+        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
+        # causes an exception with the XDS110 (and possibly the ST-Link), so
+        # catch it and exit cleanly.
+        try:
+            self._CR = (1 << 27)
+        except Exception:
+            pass
+
+        return self.target.wait_reset_and_reprobe(**kwargs)
