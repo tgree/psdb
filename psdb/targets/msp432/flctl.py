@@ -35,12 +35,12 @@ class UnlockedContextManager(object):
     def __enter__(self):
         mask = [0xFFFFFFFF & ~(self.mask >>  0),
                 0xFFFFFFFF & ~(self.mask >> 32)]
-        self.flash._write_bank0_main_weprot(mask[0])
-        self.flash._write_bank1_main_weprot(mask[1])
+        self.flash._BANK0_MAIN_WEPROT = mask[0]
+        self.flash._BANK1_MAIN_WEPROT = mask[1]
 
     def __exit__(self, type, value, traceback):
-        self.flash._write_bank0_main_weprot(0xFFFFFFFF)
-        self.flash._write_bank1_main_weprot(0xFFFFFFFF)
+        self.flash._BANK0_MAIN_WEPROT = 0xFFFFFFFF
+        self.flash._BANK1_MAIN_WEPROT = 0xFFFFFFFF
 
 
 class FLCTL(Device, flash.Flash):
@@ -93,18 +93,18 @@ class FLCTL(Device, flash.Flash):
     def _read_rdctl(self, addr):
         bank = addr // 0x00020000
         if bank == 0:
-            return self._read_bank0_rdctl()
+            return self._BANK0_RDCTL.read()
         elif bank == 1:
-            return self._read_bank1_rdctl()
+            return self._BANK1_RDCTL.read()
         else:
             raise Exception('Address 0x%08X not in flash!' % addr)
 
     def _write_rdctl(self, v, addr):
         bank = addr // 0x00020000
         if bank == 0:
-            self._write_bank0_rdctl(v)
+            self._BANK0_RDCTL = v
         elif bank == 1:
-            self._write_bank1_rdctl(v)
+            self._BANK1_RDCTL = v
         else:
             raise Exception('Address 0x%08X not in flash!' % addr)
 
@@ -121,42 +121,42 @@ class FLCTL(Device, flash.Flash):
             pass
 
     def _set_rdbrst_idle(self):
-        while self._read_rdbrst_ctlstat() & 0x00030000:
-            self._write_rdbrst_ctlstat(1 << 23)
+        while self._RDBRST_CTLSTAT.read() & 0x00030000:
+            self._RDBRST_CTLSTAT = (1 << 23)
 
     def _wait_rdbrst_complete(self):
         while True:
-            ctlstat = self._read_rdbrst_ctlstat()
+            ctlstat = self._RDBRST_CTLSTAT.read()
             if (ctlstat & 0x00030000) != 0x00030000:
                 continue
 
-            self._write_rdbrst_ctlstat(1 << 23)
+            self._RDBRST_CTLSTAT = (1 << 23)
             return ctlstat
 
     def _set_erase_idle(self):
-        while self._read_erase_ctlstat() & 0x00030000:
-            self._write_erase_ctlstat(1 << 19)
+        while self._ERASE_CTLSTAT.read() & 0x00030000:
+            self._ERASE_CTLSTAT = (1 << 19)
 
     def _wait_erase_complete(self):
         while True:
-            ctlstat = self._read_erase_ctlstat()
+            ctlstat = self._ERASE_CTLSTAT.read()
             if (ctlstat & 0x00030000) != 0x00030000:
                 continue
 
-            self._write_erase_ctlstat(1 << 19)
+            self._ERASE_CTLSTAT = (1 << 19)
             return ctlstat
 
     def _set_prgbrst_idle(self):
-        while self._read_prgbrst_ctlstat() & 0x00070000:
-            self._write_prgbrst_ctlstat(1 << 23)
+        while self._PRGBRST_CTLSTAT.read() & 0x00070000:
+            self._PRGBRST_CTLSTAT = (1 << 23)
 
     def _wait_prgbrst_complete(self):
         while True:
-            ctlstat = self._read_prgbrst_ctlstat()
+            ctlstat = self._PRGBRST_CTLSTAT.read()
             if (ctlstat & 0x00070000) != 0x00070000:
                 continue
 
-            self._write_prgbrst_ctlstat(1 << 23)
+            self._PRGBRST_CTLSTAT = (1 << 23)
             return ctlstat
 
     def _write_burst_unlocked(self, addr, data_bytes):
@@ -172,8 +172,8 @@ class FLCTL(Device, flash.Flash):
         verify_bits = (1 << 7) | (1 << 6)
         for _ in range(self.max_programming_pulses):
             self.ap.write_bulk(data_bytes, self.dev_base + 0x60)
-            self._write_prgbrst_startaddr(addr)
-            self._write_prgbrst_ctlstat(verify_bits | (4 << 3) | 1)
+            self._PRGBRST_STARTADDR = (addr)
+            self._PRGBRST_CTLSTAT   = (verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
             assert not (ctlstat & (1 << 21))
 
@@ -278,13 +278,13 @@ class FLCTL(Device, flash.Flash):
                     addr, addr + len(data) - 1))
 
         with self._flash_mask_unlocked(self._mask_for_alp(addr, len(data))):
-            self._write_clrifg(0x0000033F)
-            self._write_prg_ctlstat(0x0000000B)
+            self._CLRIFG      = 0x0000033F
+            self._PRG_CTLSTAT = 0x0000000B
             self.ap.write_bulk(data, addr)
-            while self._read_prg_ctlstat() & 0x00030000:
+            while self._PRG_CTLSTAT.read() & 0x00030000:
                 pass
 
-            v = self._read_ifg()
+            v = self._IFG.read()
             if v & 0x00000206:
                 # TODO: If we see post-program verify errors, we need to switch
                 #       to Program-Verify mode, re-read everything and find the
@@ -310,10 +310,10 @@ class FLCTL(Device, flash.Flash):
 
         self._set_rdbrst_idle()
         self._set_rdmode(addr, 4)
-        self._write_rdbrst_ctlstat((1 << 4) | (1 << 3))
-        self._write_rdbrst_startaddr(addr)
-        self._write_rdbrst_len(length)
-        self._write_rdbrst_ctlstat((1 << 4) | (1 << 3) | (1 << 0))
+        self._RDBRST_CTLSTAT   = ((1 << 4) | (1 << 3))
+        self._RDBRST_STARTADDR = addr
+        self._RDBRST_LEN       = length
+        self._RDBRST_CTLSTAT   = ((1 << 4) | (1 << 3) | (1 << 0))
         ctlstat = self._wait_rdbrst_complete()
         self._set_rdmode(addr, 0)
         assert (ctlstat & (1 << 19)) == 0
@@ -345,7 +345,7 @@ class FLCTL(Device, flash.Flash):
         for pulse in range(self.max_erase_pulses):
             with self._flash_mask_unlocked(mask):
                 self._set_erase_idle()
-                self._write_erase_ctlstat((1 << 1) | (1 << 0))
+                self._ERASE_CTLSTAT = ((1 << 1) | (1 << 0))
                 ctlstat = self._wait_erase_complete()
                 assert not (ctlstat & (1 << 18))
 
