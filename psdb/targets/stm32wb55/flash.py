@@ -201,11 +201,11 @@ class FLASH(Device, Flash):
         self.otp_base       = otp_base
         self.otp_len        = otp_len
 
-        optr = self._read_optr()
+        optr = self._OPTR.read()
         if optr == 0:
             raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
                             'try using --srst')
-        sfr = self._read_sfr()
+        sfr = self._SFR.read()
 
         if (optr & (1 << 8)) and not (sfr & (1 << 8)):
             self.secure_flash_base = mem_base + ((sfr & 0x000000FF) * 4096)
@@ -214,7 +214,7 @@ class FLASH(Device, Flash):
         self.user_flash_size = self.secure_flash_base - mem_base
         Flash.__init__(self, mem_base, 4096, target.flash_size // 4096)
 
-        srrvr = self._read_srrvr()
+        srrvr = self._SRRVR.read()
         if not (srrvr & (1 << 23)):
             self.user_sram2a_size = ((srrvr >> 18) & 0x1F)*1024
         else:
@@ -239,7 +239,7 @@ class FLASH(Device, Flash):
         self._SR = self._SR
 
     def _check_errors(self):
-        v = self._read_sr()
+        v = self._SR.read()
         if v & 0x0000C3F8:
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
@@ -367,7 +367,7 @@ class FLASH(Device, Flash):
         registers.
         '''
         assert self.target.is_halted()
-        old_optr = self._read_optr()
+        old_optr = self._OPTR.read()
         if verbose:
             print('Flashing options (Old OPTR=0x%08X, New OPTR=0x%08X)'
                   % (old_optr, new_optr))
@@ -395,7 +395,7 @@ class FLASH(Device, Flash):
 
     def get_options(self):
         options = {}
-        optr = self._read_optr()
+        optr = self._OPTR.read()
         options['agc_trim']   = ((optr >> 29) & 0x07)
         options['nboot0']     = ((optr >> 27) & 0x01)
         options['nswboot0']   = ((optr >> 26) & 0x01)
