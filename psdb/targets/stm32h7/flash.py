@@ -96,20 +96,20 @@ class FlashBank(Device):
         self._CCR = 0x0FEF0000
 
     def _check_errors(self):
-        v = self._read_sr()
+        v = self._SR.read()
         if v & 0x0FEE0000:
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
     def _wait_prg_idle(self):
-        while self._read_sr() & 7:
+        while self._SR.read() & 7:
             pass
 
     def _pg_unlock(self):
-        v = self._read_cr()
+        v = self._CR.read()
         if v & 1:
-            v = self._read_cr()
             self._KEYR = 0x45670123
             self._KEYR = 0xCDEF89AB
+            v = self._CR.read()
             assert not (v & 1)
         if not (v & 2):
             self._CR = (v | 2)
@@ -117,7 +117,7 @@ class FlashBank(Device):
         return self
 
     def _pg_lock(self):
-        v = self._read_cr()
+        v = self._CR.read()
         self._CR = ((v & ~2) | 1)
 
 
@@ -200,7 +200,7 @@ class FLASH(Device, Flash):
         bank = self.banks[n // self.sectors_per_bank]
         with self._flash_bank_unlocked(bank):
             bank._clear_errors()
-            v  = bank._read_cr()
+            v  = bank._CR.read()
             v |= ((n % self.sectors_per_bank) << 8) | (1 << 7) | (1 << 2)
             bank._CR = v
             bank._wait_prg_idle()
