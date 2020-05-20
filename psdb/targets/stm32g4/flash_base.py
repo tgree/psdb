@@ -203,3 +203,42 @@ class FLASH_Base(Device, Flash):
             pass
 
         return self.target.wait_reset_and_reprobe(**kwargs)
+
+    def get_options(self):
+        '''
+        Returns the set of options currently visible in the OPTR register.  The
+        OPTR register is a shadow of the configured options; when you read this
+        register it returns the currently-active set of options and NOT the set
+        of options that an OBL reboot would make active.
+        '''
+        optr = self._OPTR.read()
+        return {name.lower() : ((optr >> shift) & ((1 << width) - 1))
+                for name, (width, shift) in self._OPTR.reg.fields_map.items()}
+
+    def set_options(self, options, verbose=True, connect_under_reset=False):
+        '''
+        This sets the specified option bits in the OPTR register and then
+        triggers an option-byte load reset of the MCU.  When the MCU comes back
+        up, the new options will be in effect.  This reset invalidates the
+        probe's connection to the target, so the correct idiom for use is:
+
+            target = target.flash.set_options({...})
+        '''
+        optr = self._OPTR.read()
+        for name, (width, shift) in self._OPTR.reg.fields_map.items():
+            value = options.get(name.lower(), None)
+            if value is None:
+                continue
+
+            assert value <= ((1 << width) - 1)
+            optr &= ~(((1 << width) - 1) << shift)
+            optr |= (value << shift)
+            del options[name.lower()]
+
+        if options:
+            raise Exception('Invalid options: %s' % options)
+
+        self._flash_optr(optr, verbose=verbose)
+        return self._trigger_obl_launch(verbose=verbose,
+                                        connect_under_reset=connect_under_reset)
+
