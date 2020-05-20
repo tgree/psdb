@@ -96,15 +96,6 @@ class Device(object):
         self.dev_base = dev_base
         self.name     = name
         self.regs     = regs
-        for r in regs:
-            n = r.name.lower()
-            if r.flags & Reg.READABLE:
-                m = types.MethodType(lambda s, o=r.offset: s._read_32(o), self)
-                self.__dict__['_read_' + n] = m
-            if r.flags & Reg.WRITEABLE:
-                m = types.MethodType(lambda s, v, o=r.offset: s._write_32(v, o),
-                                     self)
-                self.__dict__['_write_' + n] = m
 
         assert self.name not in self.target.devs
         self.target.devs[self.name] = self
