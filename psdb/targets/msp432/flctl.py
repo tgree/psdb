@@ -157,7 +157,7 @@ class FLCTL(Device, flash.Flash):
             pass
 
     def _set_rdbrst_idle(self):
-        while self._RDBRST_CTLSTAT.read() & 0x00030000:
+        while self._RDBRST_CTLSTAT.BRST_STAT:
             self._RDBRST_CTLSTAT = (1 << 23)
 
     def _wait_rdbrst_complete(self):
@@ -170,7 +170,7 @@ class FLCTL(Device, flash.Flash):
             return ctlstat
 
     def _set_erase_idle(self):
-        while self._ERASE_CTLSTAT.read() & 0x00030000:
+        while self._ERASE_CTLSTAT.STATUS:
             self._ERASE_CTLSTAT = (1 << 19)
 
     def _wait_erase_complete(self):
@@ -183,7 +183,7 @@ class FLCTL(Device, flash.Flash):
             return ctlstat
 
     def _set_prgbrst_idle(self):
-        while self._PRGBRST_CTLSTAT.read() & 0x00070000:
+        while self._PRGBRST_CTLSTAT.BURST_STATUS:
             self._PRGBRST_CTLSTAT = (1 << 23)
 
     def _wait_prgbrst_complete(self):
@@ -208,7 +208,7 @@ class FLCTL(Device, flash.Flash):
         verify_bits = (1 << 7) | (1 << 6)
         for _ in range(self.max_programming_pulses):
             self.ap.write_bulk(data_bytes, self.dev_base + 0x60)
-            self._PRGBRST_STARTADDR = (addr)
+            self._PRGBRST_STARTADDR = addr
             self._PRGBRST_CTLSTAT   = (verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
             assert not (ctlstat & (1 << 21))
@@ -317,7 +317,7 @@ class FLCTL(Device, flash.Flash):
             self._CLRIFG      = 0x0000033F
             self._PRG_CTLSTAT = 0x0000000B
             self.ap.write_bulk(data, addr)
-            while self._PRG_CTLSTAT.read() & 0x00030000:
+            while self._PRG_CTLSTAT.STATUS:
                 pass
 
             v = self._IFG.read()
