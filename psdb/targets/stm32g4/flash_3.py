@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 from ..device import Reg32, Reg32W
-from .flash_base import FLASH_Base
+from .flash_base import FLASH_Base, UnlockedContextManager
 
 
 class FLASH_3(FLASH_Base):
