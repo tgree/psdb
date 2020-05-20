@@ -390,7 +390,15 @@ class FLASH(Device, Flash):
         '''
         UnlockedContextManager(self).__enter__()
         UnlockedOptionsContextManager(self).__enter__()
-        self._CR = (1 << 27)
+
+        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
+        # causes an exception with the XDS110 (and possibly the ST-Link), so
+        # catch it and exit cleanly.
+        try:
+            self._CR = (1 << 27)
+        except Exception:
+            pass
+
         return self.target.wait_reset_and_reprobe(**kwargs)
 
     def get_options(self):
