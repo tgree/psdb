@@ -54,7 +54,7 @@ class FLASH_Base(Device, Flash):
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
     def _wait_bsy_clear(self):
-        while self._read_sr() & (1 << 16):
+        while self._SR.BSY:
             pass
 
     def set_swd_freq_write(self, verbose=True):
