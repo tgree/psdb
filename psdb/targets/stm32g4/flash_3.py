@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 from ..device import Reg32, Reg32W
-from .flash_base import FLASH_Base, UnlockedContextManager
+from .flash_base import FLASH_Base
 
 
 class FLASH_3(FLASH_Base):
@@ -136,25 +136,10 @@ class FLASH_3(FLASH_Base):
     def swap_banks_and_reset(self):
         '''
         Swap the flash banks in dual-bank mode.  This also triggers a reset.
-        Note: After resetting the target, it will start executing but it also
-        terminates the connection to the debugger (at least, in the case of the
-        XDS110) - so this is some sort of real hard reset.  You will not be
-        able to communicate with the target beyond this call unless you re-
-        probe it.
+        Since the reset invalidates the probe's connection to the target, the
+        correct idiom for use is:
+
+            target = target.flash.swap_banks_and_reset()
         '''
-        UnlockedContextManager(self).__enter__()
-        self._OPTKEYR    = 0x08192A3B
-        self._OPTKEYR    = 0x4C5D6E7F
-        self._OPTR.BFB2 ^= 1
-        self._CR         = (1 << 17)
-        self._wait_bsy_clear()
-
-        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
-        # causes an exception with the XDS110 (and possibly the ST-Link), so
-        # catch it and exit cleanly.
-        try:
-            self._CR = (1 << 27)
-        except Exception:
-            pass
-
-        return self.target.wait_reset_and_reprobe()
+        options = self.get_options()
+        return self.set_options({'bfb2' : (options['bfb2'] ^ 1)})
