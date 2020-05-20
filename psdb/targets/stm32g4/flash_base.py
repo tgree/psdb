@@ -17,14 +17,28 @@ class UnlockedContextManager(object):
         self.flash = flash
 
     def __enter__(self):
-        v = self.flash._read_cr()
-        if v & (1<<31):
-            self.flash._write_keyr(0x45670123)
-            self.flash._write_keyr(0xCDEF89AB)
+        if self.flash._CR.LOCK:
+            self.flash._KEYR = 0x45670123
+            self.flash._KEYR = 0xCDEF89AB
+            assert not self.flash._CR.LOCK
 
     def __exit__(self, type, value, traceback):
-        v = self.flash._read_cr()
-        self.flash._write_cr(v | (1<<31))
+        self.flash._CR.LOCK = 1
+
+
+class UnlockedOptionsContextManager(object):
+    def __init__(self, flash):
+        self.flash = flash
+
+    def __enter__(self):
+        if self.flash._CR.OPTLOCK:
+            assert not self.flash._CR.LOCK
+            self.flash._OPTKEYR = 0x08192A3B
+            self.flash._OPTKEYR = 0x4C5D6E7F
+            assert not self.flash._CR.OPTLOCK
+
+    def __exit__(self, type, value, traceback):
+        self.flash._CR.OPTLOCK = 1
 
 
 class FLASH_Base(Device, Flash):
@@ -40,23 +54,22 @@ class FLASH_Base(Device, Flash):
         self.otp_base       = otp_base
         self.otp_len        = otp_len
 
-        if self._read_optr() == 0:
-            raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
-                            'try using --srst')
-
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
 
+    def _options_unlocked(self):
+        return UnlockedOptionsContextManager(self)
+
     def _clear_errors(self):
-        self._write_sr(self._read_sr())
+        self._SR = self._SR
 
     def _check_errors(self):
-        v = self._read_sr()
+        v = self._SR.read()
         if v & 0x0000C3F8:
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
     def _wait_bsy_clear(self):
-        while self._read_sr() & (1 << 16):
+        while self._SR.BSY:
             pass
 
     def set_swd_freq_write(self, verbose=True):
@@ -82,11 +95,11 @@ class FLASH_Base(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1))
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1))
+            self._CR = ((n << 3) | (1 << 1))
+            self._CR = ((1 << 16) | (n << 3) | (1 << 1))
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def read(self, addr, length):
         '''
@@ -116,11 +129,11 @@ class FLASH_Base(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr(1 << 0)
+            self._CR = (1 << 0)
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def read_otp(self, offset, size):
         '''
@@ -149,3 +162,83 @@ class FLASH_Base(Device, Flash):
         '''
         assert self.is_otp_writeable(offset, len(data))
         self.write(self.otp_base + offset, data)
+
+    def _flash_optr(self, new_optr, verbose=True):
+        '''
+        Records the current option values in flash, but doesn't reset the MCU
+        so they won't yet take effect or even read back from the flash
+        registers.
+        '''
+        assert self.target.is_halted()
+        old_optr = self._OPTR.read()
+        if verbose:
+            print('Flashing options (Old OPTR=0x%08X, New OPTR=0x%08X)'
+                  % (old_optr, new_optr))
+        with self._flash_unlocked():
+            with self._options_unlocked():
+                self._OPTR = new_optr
+                self._clear_errors()
+                self._CR = (1 << 17)
+                self._wait_bsy_clear()
+                self._check_errors()
+
+    def _trigger_obl_launch(self, **kwargs):
+        '''
+        Set OBL_LAUNCH to trigger a reset of the device using the new options.
+        This reset triggers a disconnect of the debug probe, so a full
+        target.reprobe() sequence is required.  The correct idiom for use of
+        _trigger_obl_launch() is:
+
+            target = target.flash._trigger_obl_launch()
+        '''
+        UnlockedContextManager(self).__enter__()
+        UnlockedOptionsContextManager(self).__enter__()
+
+        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
+        # causes an exception with the XDS110 (and possibly the ST-Link), so
+        # catch it and exit cleanly.
+        try:
+            self._CR = (1 << 27)
+        except Exception:
+            pass
+
+        return self.target.wait_reset_and_reprobe(**kwargs)
+
+    def get_options(self):
+        '''
+        Returns the set of options currently visible in the OPTR register.  The
+        OPTR register is a shadow of the configured options; when you read this
+        register it returns the currently-active set of options and NOT the set
+        of options that an OBL reboot would make active.
+        '''
+        optr = self._OPTR.read()
+        return {name.lower() : ((optr >> shift) & ((1 << width) - 1))
+                for name, (width, shift) in self._OPTR.reg.fields_map.items()}
+
+    def set_options(self, options, verbose=True, connect_under_reset=False):
+        '''
+        This sets the specified option bits in the OPTR register and then
+        triggers an option-byte load reset of the MCU.  When the MCU comes back
+        up, the new options will be in effect.  This reset invalidates the
+        probe's connection to the target, so the correct idiom for use is:
+
+            target = target.flash.set_options({...})
+        '''
+        optr = self._OPTR.read()
+        for name, (width, shift) in self._OPTR.reg.fields_map.items():
+            value = options.get(name.lower(), None)
+            if value is None:
+                continue
+
+            assert value <= ((1 << width) - 1)
+            optr &= ~(((1 << width) - 1) << shift)
+            optr |= (value << shift)
+            del options[name.lower()]
+
+        if options:
+            raise Exception('Invalid options: %s' % options)
+
+        self._flash_optr(optr, verbose=verbose)
+        return self._trigger_obl_launch(verbose=verbose,
+                                        connect_under_reset=connect_under_reset)
+

@@ -42,7 +42,7 @@ def main(rv):
 
     # Dump options if requested.
     if rv.get_options or rv.option:
-        print('Initial OPTR: 0x%08X' % target.flash._read_optr())
+        print('Initial OPTR: 0x%08X' % target.flash._OPTR.read())
         print(target.flash.get_options())
 
     # Option bytes if requested.
@@ -50,7 +50,7 @@ def main(rv):
         options = {k.lower() : int(v, 0) for k, v in rv.option}
         target = target.flash.set_options(options, verbose=rv.verbose,
                                           connect_under_reset=True)
-        print('Final OPTR: 0x%08X' % target.flash._read_optr())
+        print('Final OPTR: 0x%08X' % target.flash._OPTR.read())
         final_opts = target.flash.get_options()
         print(final_opts)
         for k, v in options.items():
@@ -83,10 +83,6 @@ def main(rv):
         print('Flash completed successfully.')
         target.reset_halt()
 
-    # Resume if halt wasn't requested.
-    if not rv.halt:
-        target.resume()
-
     # Dump some memory.
     if rv.mem_dump:
         print('Memory dump:')
@@ -96,10 +92,13 @@ def main(rv):
         mem          = target.cpus[0].read_bulk(base, length)
         psdb.hexdump(mem, addr=base)
 
-    # If bank-swapping was requested, do it now.  This operation kills the
-    # connection to the debug probe, so there's no coming back from it.
+    # If bank-swapping was requested, do it now.
     if rv.swap_banks:
-        target.flash.swap_banks_and_reset()
+        target = target.flash.swap_banks_and_reset()
+
+    # Resume if halt wasn't requested.
+    if not rv.halt:
+        target.resume()
 
 
 if __name__ == '__main__':

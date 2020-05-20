@@ -19,16 +19,13 @@ class UnlockedContextManager(object):
         self.flash = flash
 
     def __enter__(self):
-        v = self.flash._read_cr()
-        if v & (1<<31):
-            self.flash._write_keyr(0x45670123)
-            self.flash._write_keyr(0xCDEF89AB)
-            v = self.flash._read_cr()
-            assert not (v & (1<<31))
+        if self.flash._CR.LOCK:
+            self.flash._KEYR = 0x45670123
+            self.flash._KEYR = 0xCDEF89AB
+            assert not self.flash._CR.LOCK
 
     def __exit__(self, type, value, traceback):
-        v = self.flash._read_cr()
-        self.flash._write_cr(v | (1<<31))
+        self.flash._CR.LOCK = 1
 
 
 class UnlockedOptionsContextManager(object):
@@ -36,17 +33,14 @@ class UnlockedOptionsContextManager(object):
         self.flash = flash
 
     def __enter__(self):
-        v = self.flash._read_cr()
-        if v & (1<<30):
-            assert not (v & (1<<31))
-            self.flash._write_optkeyr(0x08192A3B)
-            self.flash._write_optkeyr(0x4C5D6E7F)
-            v = self.flash._read_cr()
-            assert not (v & (1<<30))
+        if self.flash._CR.OPTLOCK:
+            assert not self.flash._CR.LOCK
+            self.flash._OPTKEYR = 0x08192A3B
+            self.flash._OPTKEYR = 0x4C5D6E7F
+            assert not self.flash._CR.OPTLOCK
 
     def __exit__(self, type, value, traceback):
-        v = self.flash._read_cr()
-        self.flash._write_cr(v | (1<<30))
+        self.flash._CR.OPTLOCK = 1
 
 
 class FLASH(Device, Flash):
@@ -207,11 +201,11 @@ class FLASH(Device, Flash):
         self.otp_base       = otp_base
         self.otp_len        = otp_len
 
-        optr = self._read_optr()
+        optr = self._OPTR.read()
         if optr == 0:
             raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
                             'try using --srst')
-        sfr = self._read_sfr()
+        sfr = self._SFR.read()
 
         if (optr & (1 << 8)) and not (sfr & (1 << 8)):
             self.secure_flash_base = mem_base + ((sfr & 0x000000FF) * 4096)
@@ -220,7 +214,7 @@ class FLASH(Device, Flash):
         self.user_flash_size = self.secure_flash_base - mem_base
         Flash.__init__(self, mem_base, 4096, target.flash_size // 4096)
 
-        srrvr = self._read_srrvr()
+        srrvr = self._SRRVR.read()
         if not (srrvr & (1 << 23)):
             self.user_sram2a_size = ((srrvr >> 18) & 0x1F)*1024
         else:
@@ -232,8 +226,8 @@ class FLASH(Device, Flash):
 
         # Clear OPTVERR if set; the MCU startup is buggy and some revisions
         # always set this bit even though there are no options problems.
-        if self._read_sr() & (1 << 15):
-            self._write_sr(1 << 15)
+        if self._SR.OPTVERR:
+            self._SR.OPTVERR = 1
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
@@ -242,15 +236,15 @@ class FLASH(Device, Flash):
         return UnlockedOptionsContextManager(self)
 
     def _clear_errors(self):
-        self._write_sr(self._read_sr())
+        self._SR = self._SR
 
     def _check_errors(self):
-        v = self._read_sr()
+        v = self._SR.read()
         if v & 0x0000C3F8:
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
     def _wait_bsy_clear(self):
-        while self._read_sr() & (1 << 16):
+        while self._SR.BSY:
             pass
 
     def set_swd_freq_write(self, verbose=True):
@@ -277,11 +271,11 @@ class FLASH(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1))
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1))
+            self._CR = ((n << 3) | (1 << 1))
+            self._CR = ((1 << 16) | (n << 3) | (1 << 1))
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def erase_all(self, verbose=True):
         '''
@@ -323,11 +317,11 @@ class FLASH(Device, Flash):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr(1 << 0)
+            self._CR = (1 << 0)
             self.ap.write_bulk(data, addr)
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def read_otp(self, offset, size):
         '''
@@ -363,7 +357,7 @@ class FLASH(Device, Flash):
         flash this value is stored as a double-word offset in SRAM2; here, we
         convert it to a full 32-bit address.
         '''
-        offset = (self._read_ipccbr() & 0x00003FFF) * 8
+        offset = self._IPCCBR.IPCCDBA * 8
         return self.target.devs['SRAM2a'].dev_base + offset
 
     def _flash_optr(self, new_optr, verbose=True):
@@ -373,15 +367,15 @@ class FLASH(Device, Flash):
         registers.
         '''
         assert self.target.is_halted()
-        old_optr = self._read_optr()
+        old_optr = self._OPTR.read()
         if verbose:
             print('Flashing options (Old OPTR=0x%08X, New OPTR=0x%08X)'
                   % (old_optr, new_optr))
         with self._flash_unlocked():
             with self._options_unlocked():
-                self._write_optr(new_optr)
+                self._OPTR = new_optr
                 self._clear_errors()
-                self._write_cr(1 << 17)
+                self._CR = (1 << 17)
                 self._wait_bsy_clear()
                 self._check_errors()
 
@@ -396,12 +390,20 @@ class FLASH(Device, Flash):
         '''
         UnlockedContextManager(self).__enter__()
         UnlockedOptionsContextManager(self).__enter__()
-        self._write_cr(1 << 27)
+
+        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
+        # causes an exception with the XDS110 (and possibly the ST-Link), so
+        # catch it and exit cleanly.
+        try:
+            self._CR = (1 << 27)
+        except Exception:
+            pass
+
         return self.target.wait_reset_and_reprobe(**kwargs)
 
     def get_options(self):
         options = {}
-        optr = self._read_optr()
+        optr = self._OPTR.read()
         options['agc_trim']   = ((optr >> 29) & 0x07)
         options['nboot0']     = ((optr >> 27) & 0x01)
         options['nswboot0']   = ((optr >> 26) & 0x01)
@@ -443,7 +445,7 @@ class FLASH(Device, Flash):
             assert k in cur_options
             cur_options[k] = v
 
-        optr  = 0x10708000
+        optr  = (self._OPTR.read() & 0x10708000)
         optr |= (cur_options['agc_trim']   << 29)
         optr |= (cur_options['nboot0']     << 27)
         optr |= (cur_options['nswboot0']   << 26)

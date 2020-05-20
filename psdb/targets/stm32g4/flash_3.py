@@ -16,8 +16,42 @@ class FLASH_3(FLASH_Base):
             Reg32 ('PDKEYR',        0x004),
             Reg32W('KEYR',          0x008),
             Reg32W('OPTKEYR',       0x00C),
-            Reg32 ('SR',            0x010),
-            Reg32 ('CR',            0x014),
+            Reg32 ('SR',            0x010, [('EOP',         1),
+                                            ('OPERR',       1),
+                                            ('',            1),
+                                            ('PROGERR',     1),
+                                            ('WRPERR',      1),
+                                            ('PGAERR',      1),
+                                            ('SIZERR',      1),
+                                            ('PGSERR',      1),
+                                            ('MISSERR',     1),
+                                            ('FASTERR',     1),
+                                            ('',            4),
+                                            ('RDERR',       1),
+                                            ('OPTVERR',     1),
+                                            ('BSY',         1),
+                                            ]),
+            Reg32 ('CR',            0x014, [('PG',          1),
+                                            ('PER',         1),
+                                            ('MER1',        1),
+                                            ('PNB',         7),
+                                            ('',            1),
+                                            ('BKER',        1),
+                                            ('',            3),
+                                            ('MER2',        1),
+                                            ('STRT',        1),
+                                            ('OPTSTR',      1),
+                                            ('FSTPG',       1),
+                                            ('',            5),
+                                            ('EOPIE',       1),
+                                            ('ERRIE',       1),
+                                            ('RDERRIE',     1),
+                                            ('OBL_LAUNCH',  1),
+                                            ('SEC_PROT1',   1),
+                                            ('SEC_PROT2',   1),
+                                            ('OPTLOCK',     1),
+                                            ('LOCK',        1),
+                                            ]),
             Reg32 ('ECCR',          0x018),
             Reg32 ('OPTR',          0x020, [('RDP',         8),
                                             ('BOR_LEV',     3),
@@ -82,7 +116,7 @@ class FLASH_3(FLASH_Base):
         # In dual-bank mode, do the right thing.
         if self.sector_size == 2048:
             syscfg  = self.target.devs['SYSCFG']
-            fb_mode = bool(syscfg._read_memrmp() & (1 << 8))
+            fb_mode = bool(syscfg._MEMRMP.FB_MODE)
             if not fb_mode and n >= 128:
                 bker = (1 << 11)
             elif fb_mode and n < 128:
@@ -93,34 +127,19 @@ class FLASH_3(FLASH_Base):
 
         with self._flash_unlocked():
             self._clear_errors()
-            self._write_cr((n << 3) | (1 << 1) | bker)
-            self._write_cr((1 << 16) | (n << 3) | (1 << 1) | bker)
+            self._CR = ((n << 3) | (1 << 1) | bker)
+            self._CR = ((1 << 16) | (n << 3) | (1 << 1) | bker)
             self._wait_bsy_clear()
             self._check_errors()
-            self._write_cr(0)
+            self._CR = 0
 
     def swap_banks_and_reset(self):
         '''
         Swap the flash banks in dual-bank mode.  This also triggers a reset.
-        Note: After resetting the target, it will start executing but it also
-        terminates the connection to the debugger (at least, in the case of the
-        XDS110) - so this is some sort of real hard reset.  You will not be
-        able to communicate with the target beyond this call unless you re-
-        probe it.
+        Since the reset invalidates the probe's connection to the target, the
+        correct idiom for use is:
+
+            target = target.flash.swap_banks_and_reset()
         '''
-        UnlockedContextManager(self).__enter__()
-        self._write_optkeyr(0x08192A3B)
-        self._write_optkeyr(0x4C5D6E7F)
-        self._write_optr(self._read_optr() ^ (1 << 20))
-        self._write_cr(1 << 17)
-        self._wait_bsy_clear()
-
-        # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
-        # causes an exception with the XDS110 (and possibly the ST-Link), so
-        # catch it and exit cleanly.
-        try:
-            self._write_cr(1 << 27)
-        except Exception:
-            return
-
-        raise Exception('Expected disconnect exception but never got one.')
+        options = self.get_options()
+        return self.set_options({'bfb2' : (options['bfb2'] ^ 1)})

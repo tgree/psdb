@@ -615,7 +615,7 @@ class RCC(Device):
 
         hse_tuning = id0_data[6]
         print('hse_tuning 0x%02X' % hse_tuning)
-        self._HSECR.val     = 0xCAFECAFE
+        self._HSECR         = 0xCAFECAFE
         self._HSECR.HSETUNE = hse_tuning
 
     def set_lse_drive_capability(self, val):

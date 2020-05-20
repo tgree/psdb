@@ -40,7 +40,9 @@ def main(rv):
 
     # Start the existing CPU2 firmware and get a client object to interact with
     # it.
-    target, client = target.ipc.start_firmware()
+    if (rv.fus_enter or rv.fus_upgrade or rv.fw_delete or rv.fw_upgrade or
+            rv.fw_enter):
+        target, client = target.ipc.start_firmware()
 
     # Attempt an entry into FUS.
     if rv.fus_enter or rv.fus_upgrade or rv.fw_delete or rv.fw_upgrade:
