@@ -97,7 +97,7 @@ class IPCC(Device):
         based.
         '''
         assert channel and channel <= 6
-        self._write_c1scr(1 << (16 + channel - 1))
+        self._C1SCR = (1 << (16 + channel - 1))
 
     def get_tx_free_flag(self, channel):
         '''
