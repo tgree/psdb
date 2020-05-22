@@ -112,25 +112,21 @@ class STM32WB55(Target):
         # APSEL 0 and 1 should be populated and be AHB APs.
         for i in range(2):
             if i not in db.aps:
-                print('%u not in db.aps' % i)
                 return None
 
             ap = db.aps[i]
             if not isinstance(ap, psdb.access_port.AHBAP):
-                print('%u not an AHBAP' % i)
                 return None
         
         # Identify the STM32WB55 through the base component's CIDR/PIDR
         # registers.
         c = db.aps[0].base_component
         if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0495:
-            print('Bad component')
             return None
 
         # While the STM32WB55 has two CPUs, the second one is inaccessible due
         # to ST security.
         if len(db.cpus) != 1:
-            print('%u cpus' % len(db.cpus))
             return None
 
         return STM32WB55(db)

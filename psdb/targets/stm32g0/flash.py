@@ -1,5 +1,5 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from ..device import Device
+from ..device import Device, Reg32, Reg32W
 from ..flash import Flash
 
 
@@ -41,19 +41,87 @@ class UnlockedOptionsContextManager(object):
         self.flash._CR.OPTLOCK = 1
 
 
-class FLASH_Base(Device, Flash):
+class FLASH(Device, Flash):
     '''
-    Common base class for STM32G4 flash devices.
+    Driver for the FLASH device on the STM32G0 series of MCUs:
     '''
-    def __init__(self, regs, sector_size, target, ap, name, dev_base, mem_base,
-                 max_write_freq, otp_base, otp_len):
-        Device.__init__(self, target, ap, dev_base, name, regs)
-        Flash.__init__(self, mem_base, sector_size,
-                       target.flash_size // sector_size)
+    REGS = [Reg32 ('ACR',           0x000),
+            Reg32W('KEYR',          0x008),
+            Reg32W('OPTKEYR',       0x00C),
+            Reg32 ('SR',            0x010, [('EOP',                 1),
+                                            ('OPERR',               1),
+                                            ('',                    1),
+                                            ('PROGERR',             1),
+                                            ('WRPERR',              1),
+                                            ('PGAERR',              1),
+                                            ('SIZERR',              1),
+                                            ('PGSERR',              1),
+                                            ('MISSERR',             1),
+                                            ('FASTERR',             1),
+                                            ('',                    4),
+                                            ('RDERR',               1),
+                                            ('OPTVERR',             1),
+                                            ('BSY1',                1),
+                                            ('',                    1),
+                                            ('CFGBSY',              1),
+                                            ]),
+            Reg32 ('CR',            0x014, [('PG',                  1),
+                                            ('PER',                 1),
+                                            ('MER1',                1),
+                                            ('PNB',                 6),
+                                            ('',                    7),
+                                            ('STRT',                1),
+                                            ('OPTSTR',              1),
+                                            ('FSTPG',               1),
+                                            ('',                    5),
+                                            ('EOPIE',               1),
+                                            ('ERRIE',               1),
+                                            ('RDERRIE',             1),
+                                            ('OBL_LAUNCH',          1),
+                                            ('SEC_PROT',            1),
+                                            ('',                    1),
+                                            ('OPTLOCK',             1),
+                                            ('LOCK',                1),
+                                            ]),
+            Reg32 ('ECCR',          0x018),
+            Reg32 ('OPTR',          0x020, [('RDP',                 8),
+                                            ('BOR_EN',              1),
+                                            ('BORF_LEV',            2),
+                                            ('BORR_LEV',            2),
+                                            ('nRST_STOP',           1),
+                                            ('nRST_STDBY',          1),
+                                            ('nRST_SHDW',           1),
+                                            ('IWDG_SW',             1),
+                                            ('IWDG_STOP',           1),
+                                            ('IWDG_STDBY',          1),
+                                            ('WWDG_SW',             1),
+                                            ('',                    2),
+                                            ('RAM_PARITY_CHECK',    1),
+                                            ('',                    1),
+                                            ('nBOOT_SEL',           1),
+                                            ('nBOOT1',              1),
+                                            ('nBOOT0',              1),
+                                            ('NRST_MODE',           2),
+                                            ('IRHEN',               1),
+                                            ]),
+            Reg32 ('PCROP1ASR',     0x024),
+            Reg32 ('PCROP1AER',     0x028),
+            Reg32 ('WRP1AR',        0x02C),
+            Reg32 ('WRP1BR',        0x030),
+            Reg32 ('PCROP1BSR',     0x034),
+            Reg32 ('PCROP1BER',     0x038),
+            Reg32 ('SECR',          0x080),
+            ]
+
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
+                 otp_base, otp_len):
+        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
+        Flash.__init__(self, mem_base, 2048, target.flash_size // 2048)
 
         self.max_write_freq = max_write_freq
         self.otp_base       = otp_base
         self.otp_len        = otp_len
+
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
@@ -70,7 +138,7 @@ class FLASH_Base(Device, Flash):
             raise Exception('Flash operation failed, FLASH_SR=0x%08X' % v)
 
     def _wait_bsy_clear(self):
-        while self._SR.BSY:
+        while self._SR.BSY1:
             pass
 
     def set_swd_freq_write(self, verbose=True):

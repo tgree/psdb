@@ -22,6 +22,7 @@ setuptools.setup(
               'psdb.targets',
               'psdb.targets.msp432',
               'psdb.targets.stm32h7',
+              'psdb.targets.stm32g0',
               'psdb.targets.stm32g4',
               'psdb.targets.stm32wb55',
               'psdb.targets.stm32wb55.ipc',

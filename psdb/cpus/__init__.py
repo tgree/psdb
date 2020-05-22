@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb.component
 from . import cortex
+from . import cortex_m0p
 from . import cortex_m4
 from . import cortex_m7
 
@@ -15,6 +16,8 @@ psdb.component.Matcher(cortex_m7.CortexM7, 0xB105100D, 0x00000004000BB4C8,
 psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
                              0x000000000B1979AF,
                              subtype='MSP432P401R Cortex-M4')
+psdb.component.StaticMatcher(cortex_m0p.CortexM0P, 0, 0xF0000000, 0xB105100D,
+                             0x00000000000A0460, subtype='STM32G0 Cortex-M0+')
 psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
                              0x00000000000A0468, subtype='STM32G4 Cortex-M4')
 psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
@@ -32,6 +35,8 @@ psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
 # enable DEMCR.TRCENA so that child tables can be probed properly.  It's also
 # used to do things like halt the CPU and access its registers.
 psdb.component.Matcher(cortex.SystemControlBlock, 0xB105E00D,
-                       0x00000004000BB000, subtype='SCB (No FPU)')
+                       0x00000004000BB000, subtype='SCB V7-M (No FPU)')
 psdb.component.Matcher(cortex.SystemControlBlock, 0xB105E00D,
-                       0x00000004000BB00C, subtype='SCB (With FPU)')
+                       0x00000004000BB00C, subtype='SCB V7-M (With FPU)')
+psdb.component.Matcher(cortex.SystemControlBlock, 0xB105E00D,
+                       0x00000004000BB008, subtype='SCB V6-M (No FPU)')
