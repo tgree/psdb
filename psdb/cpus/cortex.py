@@ -60,8 +60,9 @@ class Cortex(psdb.component.Component):
     def __init__(self, component, subtype):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
-        self._scb  = None
-        self.flags = 0
+        self._scb      = None
+        self.flags     = 0
+        self.cpu_index = len(self.ap.db.cpus)
         self.ap.db.cpus.append(self)
 
     @property
