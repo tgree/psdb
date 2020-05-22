@@ -4,7 +4,7 @@ from .device import Device, Reg32, Reg32R, Reg32W
 
 class SCS(Device):
     '''
-    Driver for Cortex System Control Space.
+    Driver for Cortex V7-M (M4, M7) System Control Space.
     '''
     REGS = [Reg32 ('MCR',    0x000),
             Reg32R('ICTR',   0x004, [('INTLINESNUM', 4)]),
