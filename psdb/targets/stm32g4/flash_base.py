@@ -48,7 +48,8 @@ class FLASH_Base(Device, Flash):
     def __init__(self, regs, sector_size, target, ap, name, dev_base, mem_base,
                  max_write_freq, otp_base, otp_len):
         Device.__init__(self, target, ap, dev_base, name, regs)
-        Flash.__init__(self, mem_base, 2048, target.flash_size // 2048)
+        Flash.__init__(self, mem_base, sector_size,
+                       target.flash_size // sector_size)
 
         self.max_write_freq = max_write_freq
         self.otp_base       = otp_base
