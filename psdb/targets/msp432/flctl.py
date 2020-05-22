@@ -49,11 +49,40 @@ class FLCTL(Device, flash.Flash):
     '''
     REGS = [Reg32('BANK0_RDCTL',       0x10),
             Reg32('BANK1_RDCTL',       0x14),
-            Reg32('RDBRST_CTLSTAT',    0x20),
+            Reg32('RDBRST_CTLSTAT',    0x20,   [('START',           1),
+                                                ('MEM_TYPE',        2),
+                                                ('STOP_FAIL',       1),
+                                                ('DATA_CMP',        1),
+                                                ('',                11),
+                                                ('BRST_STAT',       2),
+                                                ('CMP_ERR',         1),
+                                                ('ADDR_ERR',        1),
+                                                ('',                3),
+                                                ('CLR_STAT',        1),
+                                                ]),
             Reg32('RDBRST_STARTADDR',  0x24),
             Reg32('RDBRST_LEN',        0x28),
-            Reg32('PRG_CTLSTAT',       0x50),
-            Reg32('PRGBRST_CTLSTAT',   0x54),
+            Reg32('PRG_CTLSTAT',       0x50,   [('ENABLE',          1),
+                                                ('MODE',            1),
+                                                ('VER_PRE',         1),
+                                                ('VER_PST',         1),
+                                                ('',                12),
+                                                ('STATUS',          2),
+                                                ('BNK_ACT',         1),
+                                                ]),
+            Reg32('PRGBRST_CTLSTAT',   0x54,   [('START',           1),
+                                                ('TYPE',            2),
+                                                ('LEN',             3),
+                                                ('AUTO_PRE',        1),
+                                                ('AUTO_PST',        1),
+                                                ('',                8),
+                                                ('BURST_STATUS',    3),
+                                                ('PRE_ERR',         1),
+                                                ('PST_ERR',         1),
+                                                ('ADDR_ERR',        1),
+                                                ('',                1),
+                                                ('CLR_STAT',        1),
+                                                ]),
             Reg32('PRGBRST_STARTADDR', 0x58),
             Reg32('PRGBRST_DATA0_0',   0x60),
             Reg32('PRGBRST_DATA0_1',   0x64),
@@ -71,7 +100,14 @@ class FLCTL(Device, flash.Flash):
             Reg32('PRGBRST_DATA3_1',   0x94),
             Reg32('PRGBRST_DATA3_2',   0x98),
             Reg32('PRGBRST_DATA3_3',   0x9C),
-            Reg32('ERASE_CTLSTAT',     0xA0),
+            Reg32('ERASE_CTLSTAT',     0xA0,   [('START',           1),
+                                                ('MODE',            1),
+                                                ('TYPE',            1),
+                                                ('',                13),
+                                                ('STATUS',          2),
+                                                ('ADDR_ERR',        1),
+                                                ('CLR_STAT',        1),
+                                                ]),
             Reg32('ERASE_SECTADDR',    0xA4),
             Reg32('BANK0_MAIN_WEPROT', 0xB4),
             Reg32('BANK1_MAIN_WEPROT', 0xC4),
@@ -121,7 +157,7 @@ class FLCTL(Device, flash.Flash):
             pass
 
     def _set_rdbrst_idle(self):
-        while self._RDBRST_CTLSTAT.read() & 0x00030000:
+        while self._RDBRST_CTLSTAT.BRST_STAT:
             self._RDBRST_CTLSTAT = (1 << 23)
 
     def _wait_rdbrst_complete(self):
@@ -134,7 +170,7 @@ class FLCTL(Device, flash.Flash):
             return ctlstat
 
     def _set_erase_idle(self):
-        while self._ERASE_CTLSTAT.read() & 0x00030000:
+        while self._ERASE_CTLSTAT.STATUS:
             self._ERASE_CTLSTAT = (1 << 19)
 
     def _wait_erase_complete(self):
@@ -147,7 +183,7 @@ class FLCTL(Device, flash.Flash):
             return ctlstat
 
     def _set_prgbrst_idle(self):
-        while self._PRGBRST_CTLSTAT.read() & 0x00070000:
+        while self._PRGBRST_CTLSTAT.BURST_STATUS:
             self._PRGBRST_CTLSTAT = (1 << 23)
 
     def _wait_prgbrst_complete(self):
@@ -172,7 +208,7 @@ class FLCTL(Device, flash.Flash):
         verify_bits = (1 << 7) | (1 << 6)
         for _ in range(self.max_programming_pulses):
             self.ap.write_bulk(data_bytes, self.dev_base + 0x60)
-            self._PRGBRST_STARTADDR = (addr)
+            self._PRGBRST_STARTADDR = addr
             self._PRGBRST_CTLSTAT   = (verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
             assert not (ctlstat & (1 << 21))
@@ -281,7 +317,7 @@ class FLCTL(Device, flash.Flash):
             self._CLRIFG      = 0x0000033F
             self._PRG_CTLSTAT = 0x0000000B
             self.ap.write_bulk(data, addr)
-            while self._PRG_CTLSTAT.read() & 0x00030000:
+            while self._PRG_CTLSTAT.STATUS:
                 pass
 
             v = self._IFG.read()
