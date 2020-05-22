@@ -132,5 +132,5 @@ class SCS(Device):
                                      ]),
             ]
 
-    def __init__(self, target, ap, name, addr):
-        super(SCS, self).__init__(target, ap, addr, name, SCS.REGS)
+    def __init__(self, ap, name, addr, **kwargs):
+        super(SCS, self).__init__(ap, addr, name, SCS.REGS, **kwargs)

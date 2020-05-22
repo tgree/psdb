@@ -9,9 +9,10 @@ class MSP432P401(Target):
     def __init__(self, db):
         super(MSP432P401, self).__init__(db, 3300000)
         self.ahb_ap = self.db.aps[0]
-        self.flash  = FLCTL(self, self.ahb_ap, 'FLCTL', 0x40011000, 0x00201108)
-        MemDevice(self, self.ahb_ap, 'FBANK0', 0x00000000,
-                  self.flash.flash_size)
+        self.flash  = FLCTL(self.ahb_ap, 'FLCTL', 0x40011000, 0x00201108,
+                            target=self)
+        MemDevice(self.ahb_ap, 'FBANK0', 0x00000000,
+                  self.flash.flash_size, target=self)
 
     def __repr__(self):
         return 'MSP432P401'

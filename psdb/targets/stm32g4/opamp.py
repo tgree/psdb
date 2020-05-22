@@ -20,5 +20,5 @@ class OPAMP(Device):
             Reg32('TCMR6', 0x2C),
             ]
 
-    def __init__(self, target, ap, name, addr):
-        super(OPAMP, self).__init__(target, ap, addr, name, OPAMP.REGS)
+    def __init__(self, ap, name, addr, **kwargs):
+        super(OPAMP, self).__init__(ap, addr, name, OPAMP.REGS, **kwargs)

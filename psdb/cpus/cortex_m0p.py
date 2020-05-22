@@ -8,4 +8,5 @@ class CortexM0P(cortex.Cortex):
         super(CortexM0P, self).__init__(component, subtype)
 
     def make_scs(self, target, index):
-        return scs_v6_m.SCS(target, self.scb.ap, 'SCS%u' % index, self.scb.addr)
+        return scs_v6_m.SCS(self.scb.ap, 'SCS%u' % index, self.scb.addr,
+                            target=target)

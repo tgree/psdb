@@ -122,8 +122,8 @@ class PWR(Device):
                                          ]),
             ]
 
-    def __init__(self, target, ap, name, addr):
-        super(PWR, self).__init__(target, ap, addr, name, PWR.REGS)
+    def __init__(self, ap, name, addr, **kwargs):
+        super(PWR, self).__init__(ap, addr, name, PWR.REGS, **kwargs)
 
     def enable_cpu2_boot(self):
         self._CR4.C2BOOT = 1

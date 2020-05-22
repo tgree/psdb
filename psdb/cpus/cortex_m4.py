@@ -8,4 +8,5 @@ class CortexM4(cortex.Cortex):
         super(CortexM4, self).__init__(component, subtype)
 
     def make_scs(self, target, index):
-        return scs_v7_m.SCS(target, self.scb.ap, 'SCS%u' % index, self.scb.addr)
+        return scs_v7_m.SCS(self.scb.ap, 'SCS%u' % index, self.scb.addr,
+                            target=target)

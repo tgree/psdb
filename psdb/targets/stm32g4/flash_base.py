@@ -45,11 +45,11 @@ class FLASH_Base(Device, Flash):
     '''
     Common base class for STM32G4 flash devices.
     '''
-    def __init__(self, regs, sector_size, target, ap, name, dev_base, mem_base,
-                 max_write_freq, otp_base, otp_len):
-        Device.__init__(self, target, ap, dev_base, name, regs)
+    def __init__(self, regs, sector_size, ap, name, dev_base, mem_base,
+                 max_write_freq, otp_base, otp_len, **kwargs):
+        Device.__init__(self, ap, dev_base, name, regs, **kwargs)
         Flash.__init__(self, mem_base, sector_size,
-                       target.flash_size // sector_size)
+                       self.target.flash_size // sector_size)
 
         self.max_write_freq = max_write_freq
         self.otp_base       = otp_base

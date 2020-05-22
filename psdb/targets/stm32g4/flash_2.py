@@ -74,8 +74,8 @@ class FLASH_2(FLASH_Base):
             Reg32 ('SEC1R',         0x070),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 otp_base, otp_len):
-        FLASH_Base.__init__(self, FLASH_2.REGS, 2048, target, ap, name,
+    def __init__(self, ap, name, dev_base, mem_base, max_write_freq,
+                 otp_base, otp_len, **kwargs):
+        FLASH_Base.__init__(self, FLASH_2.REGS, 2048, ap, name,
                             dev_base, mem_base, max_write_freq, otp_base,
-                            otp_len)
+                            otp_len, **kwargs)
