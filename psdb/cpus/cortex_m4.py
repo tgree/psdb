@@ -1,6 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from . import cortex
-from ..targets import scs_v7_m
+from . import cortex, scs_v7_m
 
 
 class CortexM4(cortex.Cortex):
