@@ -20,6 +20,13 @@ class Target(object):
         for c in self.cpus:
             c.make_scs(self)
 
+    def add_devices(self, devs):
+        for d in devs:
+            assert d.target is None
+            assert d.name not in self.devs
+            d.target          = self
+            self.devs[d.name] = d
+
     def set_max_tck_freq(self):
         '''
         Sets the debug probe to the target's maximum supported SWD frequency.
