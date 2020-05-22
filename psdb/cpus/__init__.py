@@ -35,3 +35,5 @@ psdb.component.Matcher(cortex.SystemControlBlock, 0xB105E00D,
                        0x00000004000BB000, subtype='SCB V7-M (No FPU)')
 psdb.component.Matcher(cortex.SystemControlBlock, 0xB105E00D,
                        0x00000004000BB00C, subtype='SCB V7-M (With FPU)')
+psdb.component.Matcher(cortex.SystemControlBlock, 0xB105E00D,
+                       0x00000004000BB008, subtype='SCB V6-M (No FPU)')
