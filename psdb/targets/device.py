@@ -141,9 +141,6 @@ class Device(object):
             if r.flags & Reg.READABLE:
                 print('%*s = 0x%0*X' % (width, r.name, 2*r.size, r.read(self)))
 
-    def enable_device(self):
-        self.target._enable_device(self)
-
 
 class MemDevice(Device):
     '''
