@@ -89,7 +89,7 @@ class SCS(Device, Component):
                                      ('',          11),
                                      ('REGWnR',    1),
                                      ]),
-            #Reg32 ('DCRDR',  0xDF8),
+            Reg32 ('DCRDR',  0xDF8),
             Reg32 ('DEMCR',  0xDFC, [('VC_CORERESET', 1),
                                      ('',             9),
                                      ('VC_HARDERR',   1),
