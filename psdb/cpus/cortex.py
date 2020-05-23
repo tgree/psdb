@@ -61,26 +61,14 @@ class Cortex(psdb.component.Component):
     def read_bulk(self, addr, size):
         return self.ap.read_bulk(addr, size)
 
-    def read_aircr(self):
-        return self.ap.read_32(self.scb.addr + 0xD0C)
-
-    def read_dhcsr(self):
-        return self.ap.read_32(self.scb.addr + 0xDF0)
-
-    def read_dcrdr(self):
-        return self.ap.read_32(self.scb.addr + 0xDF8)
-
-    def read_demcr(self):
-        return self.ap.read_32(self.scb.addr + 0xDFC)
-
     def _read_core_register(self, sel):
         assert self.flags & FLAG_HALTED
         assert sel < 128
 
-        self.write_dcrsr(sel)
-        while not (self.read_dhcsr() & (1<<16)):
+        self.scb._DCRSR = sel
+        while not self.scb._DHCSR.S_REGRDY:
             time.sleep(0.001)
-        return self.read_dcrdr()
+        return self.scb._DCRDR.read()
 
     def read_core_register(self, name):
         '''Reads a single core register.'''
@@ -105,18 +93,6 @@ class Cortex(psdb.component.Component):
     def write_bulk(self, data, addr):
         self.ap.write_bulk(data, addr)
 
-    def write_aircr(self, v):
-        return self.ap.write_32(v, self.scb.addr + 0xD0C)
-
-    def write_dhcsr(self, v):
-        return self.ap.write_32(v, self.scb.addr + 0xDF0)
-
-    def write_dcrsr(self, v):
-        return self.ap.write_32(v, self.scb.addr + 0xDF4)
-
-    def write_dcrdr(self, v):
-        return self.ap.write_32(v, self.scb.addr + 0xDF8)
-
     def write_demcr(self, v):
         return self.ap.write_32(v, self.scb.addr + 0xDFC)
 
@@ -125,9 +101,9 @@ class Cortex(psdb.component.Component):
         assert self.flags & FLAG_HALTED
         assert sel < 128
 
-        self.write_dcrdr(v)
-        self.write_dcrsr((1<<16) | sel)
-        while not (self.read_dhcsr() & (1<<16)):
+        self.scb._DCRDR = v
+        self.scb._DCRSR = ((1<<16) | sel)
+        while not self.scb._DHCSR.S_REGRDY:
             time.sleep(0.001)
 
     def halt(self):
@@ -135,8 +111,8 @@ class Cortex(psdb.component.Component):
         if self.flags & FLAG_HALTED:
             return
 
-        self.write_dhcsr(0xA05F0000 | (1<<1) | (1<<0))
-        while not (self.read_dhcsr() & (1<<17)):
+        self.scb._DHCSR = (0xA05F0000 | (1<<1) | (1<<0))
+        while not self.scb._DHCSR.S_HALT:
             time.sleep(0.001)
         self.flags |= FLAG_HALTED
 
@@ -146,16 +122,15 @@ class Cortex(psdb.component.Component):
         self.halt()
 
         # Set DEMCR.VC_CORERESET to enable reset vector catch.
-        self.write_demcr(0x01000001)
+        self.scb._DEMCR.VC_CORERESET = 1
 
         # Set AIRCR.SYSRESETREQ and then wait for it to clear.  Accesses after
         # the AIRCR write can cause a DP fault on the ST-Link; catch and ignore
         # them.
-        self.write_aircr((self.read_aircr() & 0x0000FFF8) | 0x05FA0004)
+        self.scb._AIRCR((self.scb._AIRCR.read() & 0x0000FFF8) | 0x05FA0004)
         while True:
             try:
-                v = self.read_aircr()
-                if not (v & 4):
+                if not self.scb._AIRCR.SYSRESETREQ:
                     break
                 time.sleep(0.001)
             except Exception:
@@ -169,7 +144,7 @@ class Cortex(psdb.component.Component):
         if not (self.flags & FLAG_HALTED):
             return
 
-        self.write_dhcsr(0xA05F0000)
-        while self.read_dhcsr() & (1<<17):
+        self.scb._DHCSR = 0xA05F0000
+        while self.scb._DHCSR.S_HALT:
             time.sleep(0.001)
         self.flags &= ~FLAG_HALTED
