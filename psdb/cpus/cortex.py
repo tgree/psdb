@@ -41,11 +41,17 @@ class Cortex(psdb.component.Component):
     def __init__(self, component, subtype):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
-        self.scs       = None
+        self._scs      = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
         self.devs      = {}
         self.ap.db.cpus.append(self)
+
+    @property
+    def scs(self):
+        if self._scs is None:
+            self._scs = self.devs['SCS']
+        return self._scs
 
     def is_halted(self):
         return self.flags & FLAG_HALTED
