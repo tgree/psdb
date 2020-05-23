@@ -1,12 +1,16 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
-from .device import Device, Reg32, Reg32R, Reg32W
+from ..targets.device import Device, Reg32, Reg32R, Reg32W
+from ..component import Component
+from .cortex import Cortex
 
 
-class SCS(Device):
+class SCS(Device, Component):
     '''
-    Driver for Cortex V6-M (M0+) System Control Space.
+    Driver for Cortex V7-M (M4, M7) System Control Space.
     '''
-    REGS = [Reg32 ('ACTLR',  0x008),
+    REGS = [Reg32 ('MCR',    0x000),
+            Reg32R('ICTR',   0x004, [('INTLINESNUM', 4)]),
+            Reg32 ('ACTLR',  0x008),
             Reg32R('CPUID',  0xD00, [('REVISION',    4),
                                      ('PARTNO',     12),
                                      ('ONES',        4),
@@ -59,6 +63,11 @@ class SCS(Device):
                                      ('IC',             1),
                                      ('BP',             1),
                                      ]),
+            Reg32 ('SHPR1',  0xD18, [('PRI_4', 8),
+                                     ('PRI_5', 8),
+                                     ('PRI_6', 8),
+                                     ('PRI_7', 8),
+                                     ]),
             Reg32 ('SHPR2',  0xD1C, [('PRI_8',  8),
                                      ('PRI_9',  8),
                                      ('PRI_10', 8),
@@ -87,11 +96,57 @@ class SCS(Device):
                                      ('BUSFAULTENA',    1),
                                      ('USGFAULTENA',    1),
                                      ]),
+            Reg32 ('CFSR',   0xD28, [('IACCVIOL',    1),
+                                     ('DACCVIOL',    1),
+                                     ('',            1),
+                                     ('MUNSTKERR',   1),
+                                     ('MSTKERR',     1),
+                                     ('MLSPERR',     1),
+                                     ('',            1),
+                                     ('MMARVALID',   1),
+                                     ('IBUSERR',     1),
+                                     ('PRECISERR',   1),
+                                     ('IMPRECISERR', 1),
+                                     ('UNSTKERR',    1),
+                                     ('STKERR',      1),
+                                     ('LSPERR',      1),
+                                     ('',            1),
+                                     ('BFARVALID',   1),
+                                     ('UNDERINSTR',  1),
+                                     ('INVSTATE',    1),
+                                     ('INVPC',       1),
+                                     ('NOCP',        1),
+                                     ('',            4),
+                                     ('UNALIGNED',   1),
+                                     ('DIVBYZERO',   1),
+                                     ('',            6),
+                                     ]),
+            Reg32 ('HFSR',   0xD2C, [('',            1),
+                                     ('VECTTBL',     1),
+                                     ('',           28),
+                                     ('FORCED',      1),
+                                     ('DEBUGEVT',    1),
+                                     ]),
             Reg32 ('DFSR',   0xD30, [('HALTED',      1),
                                      ('BKPT',        1),
                                      ('DWTTRAP',     1),
                                      ('VCATCH',      1),
                                      ('EXTERNAL',    1),
+                                     ]),
+            Reg32 ('MMFAR',  0xD34, [('ADDRESS', 32)]),
+            Reg32 ('BFAR',   0xD38, [('ADDRESS', 32)]),
+            Reg32 ('AFSR',   0xD3C),
+            Reg32 ('CPACR',  0xD88, [('CP0',  2),
+                                     ('CP1',  2),
+                                     ('CP2',  2),
+                                     ('CP3',  2),
+                                     ('CP4',  2),
+                                     ('CP5',  2),
+                                     ('CP6',  2),
+                                     ('CP7',  2),
+                                     ('',     4),
+                                     ('CP10', 2),
+                                     ('CP11', 2),
                                      ]),
             Reg32 ('DHCSR',  0xDF0, [('C_DEBUGEN',     1),
                                      ('C_HALT',        1),
@@ -112,7 +167,7 @@ class SCS(Device):
                                      ('',          9),
                                      ('REGWnR',    1),
                                      ]),
-            #Reg32 ('DCRDR',  0xDF8),
+            Reg32 ('DCRDR',  0xDF8),
             Reg32 ('DEMCR',  0xDFC, [('VC_CORERESET', 1),
                                      ('',             3),
                                      ('VC_MMERR',     1),
@@ -132,5 +187,17 @@ class SCS(Device):
                                      ]),
             ]
 
-    def __init__(self, target, ap, name, addr):
-        super(SCS, self).__init__(target, ap, addr, name, SCS.REGS)
+    def __init__(self, component, subtype):
+        cortex_cpu, = component.find_by_type_towards_root(Cortex)
+
+        Device.__init__(self, component.ap, component.addr,
+                        'SCS%u' % cortex_cpu.cpu_index, SCS.REGS)
+        Component.__init__(self, component.parent, component.ap, component.addr,
+                           subtype)
+
+        # Enable DEMCR.TRCENA so we can probe further.
+        self._DEMCR.TRCENA = 1
+        cortex_cpu.scs     = self
+
+    def read_cpuid(self):
+        return self._CPUID.read()

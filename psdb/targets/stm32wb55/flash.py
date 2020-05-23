@@ -194,9 +194,9 @@ class FLASH(Device, Flash):
                                          ]),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 otp_base, otp_len):
-        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
+    def __init__(self, ap, name, dev_base, mem_base, max_write_freq,
+                 otp_base, otp_len, **kwargs):
+        Device.__init__(self, ap, dev_base, name, FLASH.REGS, **kwargs)
         self.max_write_freq = max_write_freq
         self.otp_base       = otp_base
         self.otp_len        = otp_len
@@ -210,19 +210,19 @@ class FLASH(Device, Flash):
         if (optr & (1 << 8)) and not (sfr & (1 << 8)):
             self.secure_flash_base = mem_base + ((sfr & 0x000000FF) * 4096)
         else:
-            self.secure_flash_base = mem_base + target.flash_size
+            self.secure_flash_base = mem_base + self.target.flash_size
         self.user_flash_size = self.secure_flash_base - mem_base
-        Flash.__init__(self, mem_base, 4096, target.flash_size // 4096)
+        Flash.__init__(self, mem_base, 4096, self.target.flash_size // 4096)
 
         srrvr = self._SRRVR.read()
         if not (srrvr & (1 << 23)):
             self.user_sram2a_size = ((srrvr >> 18) & 0x1F)*1024
         else:
-            self.user_sram2a_size = target.devs['SRAM2a'].size
+            self.user_sram2a_size = self.target.devs['SRAM2a'].size
         if not (srrvr & (1 << 31)):
             self.user_sram2b_size = ((srrvr >> 25) & 0x1F)*1024
         else:
-            self.user_sram2b_size = target.devs['SRAM2b'].size
+            self.user_sram2b_size = self.target.devs['SRAM2b'].size
 
         # Clear OPTVERR if set; the MCU startup is buggy and some revisions
         # always set this bit even though there are no options problems.

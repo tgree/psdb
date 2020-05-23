@@ -86,19 +86,20 @@ class RDCapture(object):
 
 
 class Device(object):
-    def __init__(self, target, ap, dev_base, name, regs):
+    def __init__(self, ap, dev_base, name, regs, target=None):
         super(Device, self).__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self)
                             for r in regs})
 
-        self.target   = target
         self.ap       = ap
         self.dev_base = dev_base
         self.name     = name
         self.regs     = regs
+        self.target   = target
 
-        assert self.name not in self.target.devs
-        self.target.devs[self.name] = self
+        if self.target:
+            assert self.name not in self.target.devs
+            self.target.devs[self.name] = self
 
     def __getattr__(self, name):
         return self.reg_map[name]
@@ -141,16 +142,13 @@ class Device(object):
             if r.flags & Reg.READABLE:
                 print('%*s = 0x%0*X' % (width, r.name, 2*r.size, r.read(self)))
 
-    def enable_device(self):
-        self.target._enable_device(self)
-
 
 class MemDevice(Device):
     '''
     Base class for memory-type devices (SRAM, Flash, etc.).
     '''
-    def __init__(self, target, ap, name, addr, size):
-        super(MemDevice, self).__init__(target, ap, addr, name, [])
+    def __init__(self, ap, name, addr, size, **kwargs):
+        super(MemDevice, self).__init__(ap, addr, name, [], **kwargs)
         self.size = size
 
     def read_mem_block(self, addr, size):

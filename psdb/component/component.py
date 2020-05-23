@@ -11,13 +11,11 @@ class Component(object):
         self.cidr     = self.read_id_block(self.addr + 0xFF0)
         self.pidr     = ((self.read_id_block(self.addr + 0xFD0) << 32) |
                          (self.read_id_block(self.addr + 0xFE0) <<  0))
-        self.memtype  = self.ap.read_32(self.addr + 0xFCC)
         self.children = []
 
     def __repr__(self):
-        return "Component '%s':0x%08X:0x%08X:0x%016X MT 0x%08X %s" % (
-                self.ap, self.addr, self.cidr, self.pidr, self.memtype,
-                self.subtype)
+        return "Component '%s':0x%08X:0x%08X:0x%016X %s" % (
+                self.ap, self.addr, self.cidr, self.pidr, self.subtype)
 
     @staticmethod
     def probe(ap, entry, base=0, parent=None):
@@ -110,8 +108,30 @@ class Component(object):
             c._find_components_by_type(typ, results)
 
     def find_components_by_type(self, typ):
+        '''
+        Searchs towards the leaves of the tree for components of the specified
+        type.  The initial node is included for consideration in the list of
+        searched components.
+        '''
         results = []
         self._find_components_by_type(typ, results)
+        return results
+
+    def _find_by_type_towards_root(self, typ, results):
+        if isinstance(self, typ):
+            results.append(self)
+
+        if self.parent:
+            self.parent._find_by_type_towards_root(typ, results)
+
+    def find_by_type_towards_root(self, typ):
+        '''
+        Searches towards the root of the tree for components of the specified
+        type.  The initial node is included for consideration in the list of
+        searched components.
+        '''
+        results = []
+        self._find_by_type_towards_root(typ, results)
         return results
 
     def dump(self, prefix=''):

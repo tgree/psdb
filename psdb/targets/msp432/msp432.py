@@ -5,13 +5,25 @@ from ..device import MemDevice
 from psdb.targets import Target
 
 
+DEVICES = [(FLCTL,  'FLCTL',    0x40011000, 0x00201108),
+           ]
+
+
 class MSP432P401(Target):
     def __init__(self, db):
         super(MSP432P401, self).__init__(db, 3300000)
         self.ahb_ap = self.db.aps[0]
-        self.flash  = FLCTL(self, self.ahb_ap, 'FLCTL', 0x40011000, 0x00201108)
-        MemDevice(self, self.ahb_ap, 'FBANK0', 0x00000000,
-                  self.flash.flash_size)
+
+        for d in DEVICES:
+            cls  = d[0]
+            name = d[1]
+            addr = d[2]
+            args = d[3:]
+            cls(self.ahb_ap, name, addr, *args, target=self)
+
+        self.flash = self.devs['FLCTL']
+        MemDevice(self.ahb_ap, 'FBANK0', self.flash.mem_base,
+                  self.flash.flash_size, target=self)
 
     def __repr__(self):
         return 'MSP432P401'

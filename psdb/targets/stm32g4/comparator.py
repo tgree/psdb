@@ -15,5 +15,5 @@ class COMP(Device):
             Reg32('CSR7', 0x18),
             ]
 
-    def __init__(self, target, ap, name, addr):
-        super(COMP, self).__init__(target, ap, addr, name, COMP.REGS)
+    def __init__(self, ap, name, addr, **kwargs):
+        super(COMP, self).__init__(ap, addr, name, COMP.REGS, **kwargs)

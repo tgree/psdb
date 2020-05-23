@@ -172,13 +172,13 @@ class STM32G4(Target):
             name = d[1]
             addr = d[2]
             args = d[3:]
-            cls(self, self.ahb_ap, name, addr, *args)
+            cls(self.ahb_ap, name, addr, *args, target=self)
 
         self.flash = self.devs['FLASH']
-        MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
-                  self.flash.flash_size)
-        MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
-                  self.flash.otp_len)
+        MemDevice(self.ahb_ap, 'FBANKS', self.flash.mem_base,
+                  self.flash.flash_size, target=self)
+        MemDevice(self.ahb_ap, 'OTP', self.flash.otp_base,
+                  self.flash.otp_len, target=self)
 
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode

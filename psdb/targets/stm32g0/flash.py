@@ -113,10 +113,10 @@ class FLASH(Device, Flash):
             Reg32 ('SECR',          0x080),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 otp_base, otp_len):
-        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS)
-        Flash.__init__(self, mem_base, 2048, target.flash_size // 2048)
+    def __init__(self, ap, name, dev_base, mem_base, max_write_freq,
+                 otp_base, otp_len, **kwargs):
+        Device.__init__(self, ap, dev_base, name, FLASH.REGS, **kwargs)
+        Flash.__init__(self, mem_base, 2048, self.target.flash_size // 2048)
 
         self.max_write_freq = max_write_freq
         self.otp_base       = otp_base

@@ -14,10 +14,10 @@ class STM32H7_DP(Target):
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
-        self.flash      = FLASH_DP(self, self.ahb_ap, 'FLASH', 0x52002000,
-                                   0x08000000, 3300000)
-        MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
-                  self.flash.flash_size)
+        self.flash      = FLASH_DP(self.ahb_ap, 'FLASH', 0x52002000,
+                                   0x08000000, 3300000, target=self)
+        MemDevice(self.ahb_ap, 'FBANKS', self.flash.mem_base,
+                  self.flash.flash_size, target=self)
 
     def __repr__(self):
         return 'STM32H7xx DP MCU_IDCODE 0x%08X' % self.mcu_idcode
