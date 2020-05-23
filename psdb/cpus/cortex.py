@@ -41,13 +41,35 @@ class Cortex(psdb.component.Component):
     def __init__(self, component, subtype):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
-        self.scs       = None
+        self._scs      = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
+        self.devs      = {}
         self.ap.db.cpus.append(self)
 
+    @property
+    def scs(self):
+        if self._scs is None:
+            self._scs = self.devs['SCS']
+        return self._scs
+
     def is_halted(self):
-        return self.flags & FLAG_HALTED
+        '''
+        Returns True if the CPU is halted, False otherwise.
+        '''
+        # If we haven't started it since the last time it was halted, then it's
+        # still halted.
+        if self.flags & FLAG_HALTED:
+            return True
+        
+        # Okay, it was running last time we checked.  Check again since it may
+        # have halted.
+        if self.scs._DHCSR.S_HALT:
+            self.flags |= FLAG_HALTED
+            return True
+
+        # It hasn't halted, so it's still running.
+        return False
 
     def read_8(self, addr):
         return self.ap.read_8(addr)
@@ -115,6 +137,14 @@ class Cortex(psdb.component.Component):
         while not self.scs._DHCSR.S_HALT:
             time.sleep(0.001)
         self.flags |= FLAG_HALTED
+
+    def single_step(self):
+        '''Steps the CPU for a single instruction.'''
+        assert self.flags & FLAG_HALTED
+
+        self.scs._DHCSR = (0xA05F0000 | (1 << 3) | (1 << 2) | (1 << 0))
+        while not self.scs._DHCSR.S_HALT:
+            time.sleep(0.001)
 
     def reset_halt(self):
         '''Resets the CPU and halts on the Reset exception.'''

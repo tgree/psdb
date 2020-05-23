@@ -65,12 +65,23 @@ class RDCapture(object):
         object.__setattr__(self, 'dev', dev)
 
     def __getattr__(self, name):
-        width, shift = self.reg.fields_map[name]
-        return self.dev._get_field(width, shift, self.reg.offset)
+        try:
+            width, shift = self.reg.fields_map[name]
+            return self.dev._get_field(width, shift, self.reg.offset)
+        except KeyError:
+            pass
+
+        raise AttributeError
 
     def __setattr__(self, name, v):
-        width, shift = self.reg.fields_map[name]
-        self.dev._set_field(v, width, shift, self.reg.offset)
+        try:
+            width, shift = self.reg.fields_map[name]
+            self.dev._set_field(v, width, shift, self.reg.offset)
+            return
+        except KeyError:
+            pass
+
+        raise AttributeError
 
     def __bool__(self):
         raise Exception("Don't test an RDCapture!")
@@ -86,7 +97,7 @@ class RDCapture(object):
 
 
 class Device(object):
-    def __init__(self, ap, dev_base, name, regs, target=None):
+    def __init__(self, ap, dev_base, name, regs, target=None, path=None):
         super(Device, self).__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self)
                             for r in regs})
@@ -94,6 +105,7 @@ class Device(object):
         self.ap       = ap
         self.dev_base = dev_base
         self.name     = name
+        self.path     = path or name
         self.regs     = regs
         self.target   = target
 
@@ -102,7 +114,12 @@ class Device(object):
             self.target.devs[self.name] = self
 
     def __getattr__(self, name):
-        return self.reg_map[name]
+        try:
+            return self.reg_map[name]
+        except KeyError:
+            pass
+
+        raise AttributeError
 
     def __setattr__(self, name, value):
         rd = self.reg_map.get(name, None)
