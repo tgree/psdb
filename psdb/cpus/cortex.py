@@ -44,6 +44,7 @@ class Cortex(psdb.component.Component):
         self.scs       = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
+        self.devs      = {}
         self.ap.db.cpus.append(self)
 
     def is_halted(self):
