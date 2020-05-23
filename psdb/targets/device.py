@@ -74,8 +74,14 @@ class RDCapture(object):
         raise AttributeError
 
     def __setattr__(self, name, v):
-        width, shift = self.reg.fields_map[name]
-        self.dev._set_field(v, width, shift, self.reg.offset)
+        try:
+            width, shift = self.reg.fields_map[name]
+            self.dev._set_field(v, width, shift, self.reg.offset)
+            return
+        except KeyError:
+            pass
+
+        raise AttributeError
 
     def __bool__(self):
         raise Exception("Don't test an RDCapture!")
