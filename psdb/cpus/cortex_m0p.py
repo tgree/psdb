@@ -1,11 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from . import cortex, scs_v6_m
+from . import cortex
 
 
 class CortexM0P(cortex.Cortex):
     def __init__(self, component, subtype):
         super(CortexM0P, self).__init__(component, subtype)
-
-    def make_scs(self):
-        return scs_v6_m.SCS(self.scb.ap, 'SCS%u' % self.cpu_index,
-                            self.scb.addr)
