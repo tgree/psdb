@@ -197,7 +197,7 @@ class SCS(Device, Component):
 
         # Enable DEMCR.TRCENA so we can probe further.
         self._DEMCR.TRCENA = 1
-        cortex_cpu.scb     = self
+        cortex_cpu.scs     = self
 
     def read_cpuid(self):
         return self._CPUID.read()

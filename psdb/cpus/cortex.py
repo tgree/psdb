@@ -41,7 +41,7 @@ class Cortex(psdb.component.Component):
     def __init__(self, component, subtype):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
-        self.scb       = None
+        self.scs       = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
         self.ap.db.cpus.append(self)
@@ -65,10 +65,10 @@ class Cortex(psdb.component.Component):
         assert self.flags & FLAG_HALTED
         assert sel < 128
 
-        self.scb._DCRSR = sel
-        while not self.scb._DHCSR.S_REGRDY:
+        self.scs._DCRSR = sel
+        while not self.scs._DHCSR.S_REGRDY:
             time.sleep(0.001)
-        return self.scb._DCRDR.read()
+        return self.scs._DCRDR.read()
 
     def read_core_register(self, name):
         '''Reads a single core register.'''
@@ -94,16 +94,16 @@ class Cortex(psdb.component.Component):
         self.ap.write_bulk(data, addr)
 
     def write_demcr(self, v):
-        return self.ap.write_32(v, self.scb.addr + 0xDFC)
+        return self.ap.write_32(v, self.scs.addr + 0xDFC)
 
     def write_core_register(self, v, sel):
         '''Writes a single core register.'''
         assert self.flags & FLAG_HALTED
         assert sel < 128
 
-        self.scb._DCRDR = v
-        self.scb._DCRSR = ((1<<16) | sel)
-        while not self.scb._DHCSR.S_REGRDY:
+        self.scs._DCRDR = v
+        self.scs._DCRSR = ((1<<16) | sel)
+        while not self.scs._DHCSR.S_REGRDY:
             time.sleep(0.001)
 
     def halt(self):
@@ -111,8 +111,8 @@ class Cortex(psdb.component.Component):
         if self.flags & FLAG_HALTED:
             return
 
-        self.scb._DHCSR = (0xA05F0000 | (1<<1) | (1<<0))
-        while not self.scb._DHCSR.S_HALT:
+        self.scs._DHCSR = (0xA05F0000 | (1<<1) | (1<<0))
+        while not self.scs._DHCSR.S_HALT:
             time.sleep(0.001)
         self.flags |= FLAG_HALTED
 
@@ -122,15 +122,15 @@ class Cortex(psdb.component.Component):
         self.halt()
 
         # Set DEMCR.VC_CORERESET to enable reset vector catch.
-        self.scb._DEMCR.VC_CORERESET = 1
+        self.scs._DEMCR.VC_CORERESET = 1
 
         # Set AIRCR.SYSRESETREQ and then wait for it to clear.  Accesses after
         # the AIRCR write can cause a DP fault on the ST-Link; catch and ignore
         # them.
-        self.scb._AIRCR((self.scb._AIRCR.read() & 0x0000FFF8) | 0x05FA0004)
+        self.scs._AIRCR((self.scs._AIRCR.read() & 0x0000FFF8) | 0x05FA0004)
         while True:
             try:
-                if not self.scb._AIRCR.SYSRESETREQ:
+                if not self.scs._AIRCR.SYSRESETREQ:
                     break
                 time.sleep(0.001)
             except Exception:
@@ -144,7 +144,7 @@ class Cortex(psdb.component.Component):
         if not (self.flags & FLAG_HALTED):
             return
 
-        self.scb._DHCSR = 0xA05F0000
-        while self.scb._DHCSR.S_HALT:
+        self.scs._DHCSR = 0xA05F0000
+        while self.scs._DHCSR.S_HALT:
             time.sleep(0.001)
         self.flags &= ~FLAG_HALTED

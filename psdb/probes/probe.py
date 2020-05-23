@@ -144,10 +144,10 @@ class Probe(object):
         if connect_under_reset:
             for c in self.cpus:
                 # Set DHSCR.C_DEBUGEN to enable Halting debug.
-                c.scb._DHCSR = (0xA05F0000 | (1<<0))
+                c.scs._DHCSR = (0xA05F0000 | (1<<0))
 
                 # Set DEMCR.VC_CORERESET to enable reset vector catch.
-                c.scb._DEMCR.VC_CORERESET = 1
+                c.scs._DEMCR.VC_CORERESET = 1
 
             # Deassert SRST.
             self.deassert_srst()
