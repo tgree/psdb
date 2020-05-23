@@ -1,10 +1,9 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
-from ..targets.device import Device, Reg32, Reg32R, Reg32W
-from ..component import Component
-from .cortex import Cortex
+from ..targets.device import Reg32, Reg32R, Reg32W
+from .cortex_subdevice import CortexSubDevice
 
 
-class SCS(Device, Component):
+class SCS(CortexSubDevice):
     '''
     Driver for Cortex V6-M (M0+) System Control Space.
 
@@ -99,12 +98,7 @@ class SCS(Device, Component):
             ]
 
     def __init__(self, component, subtype):
-        cortex_cpu, = component.find_by_type_towards_root(Cortex)
-
-        Device.__init__(self, component.ap, component.addr,
-                        'SCS%u' % cortex_cpu.cpu_index, SCS.REGS)
-        Component.__init__(self, component.parent, component.ap, component.addr,
-                           subtype)
+        super(SCS, self).__init__('SCS', SCS.REGS, component, subtype)
 
         # Enable DEMCR.DWTENA so we can probe further.
         self._DEMCR.DWTENA = 1
