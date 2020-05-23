@@ -1,10 +1,16 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
 from ..targets.device import Device, Reg32, Reg32R, Reg32W
+from ..component import Component
+from .cortex import Cortex
 
 
-class SCS(Device):
+class SCS(Device, Component):
     '''
     Driver for Cortex V6-M (M0+) System Control Space.
+
+    The SCS has registers that can be used to enable the DWT and ITM units; we
+    need to enable them before allowing component probing to advance otherwise
+    we will attempt to probe components that aren't enabled yet.
     '''
     REGS = [Reg32 ('ACTLR',  0x008),
             Reg32R('CPUID',  0xD00, [('REVISION',    4),
@@ -92,5 +98,17 @@ class SCS(Device):
                                      ]),
             ]
 
-    def __init__(self, ap, name, addr, **kwargs):
-        super(SCS, self).__init__(ap, addr, name, SCS.REGS, **kwargs)
+    def __init__(self, component, subtype):
+        cortex_cpu, = component.find_by_type_towards_root(Cortex)
+
+        Device.__init__(self, component.ap, component.addr,
+                        'SCS%u' % cortex_cpu.cpu_index, SCS.REGS)
+        Component.__init__(self, component.parent, component.ap, component.addr,
+                           subtype)
+
+        # Enable DEMCR.DWTENA so we can probe further.
+        self._DEMCR.DWTENA = 1
+        cortex_cpu.scb     = self
+
+    def read_cpuid(self):
+        return self._CPUID.read()

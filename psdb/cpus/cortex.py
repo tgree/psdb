@@ -32,25 +32,6 @@ CORE_REGISTERS = collections.OrderedDict([
 ])
 
 
-class SystemControlBlock(psdb.component.Component):
-    '''
-    Component matcher for the Cortex SCB.  The SCB has registers that can be
-    used to enable the DWT and ITM units; we need to enable them before
-    allowing component probing to advance otherwise we will attempt to probe
-    components that aren't enabled yet.
-    '''
-    def __init__(self, component, subtype):
-        super(SystemControlBlock, self).__init__(component.parent, component.ap,
-                                                 component.addr, subtype)
-        self.write_demcr(0x01000000)
-
-    def write_demcr(self, v):
-        return self.ap.write_32(v, self.addr + 0xDFC)
-
-    def read_cpuid(self):
-        return self.ap.read_32(self.addr + 0xD00)
-
-
 class Cortex(psdb.component.Component):
     '''
     Base class component matcher for Cortex CPUs.  This is where we have common
@@ -60,20 +41,10 @@ class Cortex(psdb.component.Component):
     def __init__(self, component, subtype):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
-        self._scb      = None
+        self.scb       = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
         self.ap.db.cpus.append(self)
-
-    @property
-    def scb(self):
-        if not self._scb:
-            results = self.find_components_by_type(SystemControlBlock)
-            assert results
-            assert len(results) == 1
-            self._scb = results[0]
-
-        return self._scb
 
     def is_halted(self):
         return self.flags & FLAG_HALTED
