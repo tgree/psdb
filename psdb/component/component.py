@@ -11,13 +11,11 @@ class Component(object):
         self.cidr     = self.read_id_block(self.addr + 0xFF0)
         self.pidr     = ((self.read_id_block(self.addr + 0xFD0) << 32) |
                          (self.read_id_block(self.addr + 0xFE0) <<  0))
-        self.memtype  = self.ap.read_32(self.addr + 0xFCC)
         self.children = []
 
     def __repr__(self):
-        return "Component '%s':0x%08X:0x%08X:0x%016X MT 0x%08X %s" % (
-                self.ap, self.addr, self.cidr, self.pidr, self.memtype,
-                self.subtype)
+        return "Component '%s':0x%08X:0x%08X:0x%016X %s" % (
+                self.ap, self.addr, self.cidr, self.pidr, self.subtype)
 
     @staticmethod
     def probe(ap, entry, base=0, parent=None):
