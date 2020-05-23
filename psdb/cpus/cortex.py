@@ -138,6 +138,14 @@ class Cortex(psdb.component.Component):
             time.sleep(0.001)
         self.flags |= FLAG_HALTED
 
+    def single_step(self):
+        '''Steps the CPU for a single instruction.'''
+        assert self.flags & FLAG_HALTED
+
+        self.scs._DHCSR = (0xA05F0000 | (1 << 3) | (1 << 2) | (1 << 0))
+        while not self.scs._DHCSR.S_HALT:
+            time.sleep(0.001)
+
     def reset_halt(self):
         '''Resets the CPU and halts on the Reset exception.'''
         # Set DHCSR.C_DEBUGEN to enable Halting debug.
