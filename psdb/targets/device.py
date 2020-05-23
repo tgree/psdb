@@ -65,8 +65,13 @@ class RDCapture(object):
         object.__setattr__(self, 'dev', dev)
 
     def __getattr__(self, name):
-        width, shift = self.reg.fields_map[name]
-        return self.dev._get_field(width, shift, self.reg.offset)
+        try:
+            width, shift = self.reg.fields_map[name]
+            return self.dev._get_field(width, shift, self.reg.offset)
+        except KeyError:
+            pass
+
+        raise AttributeError
 
     def __setattr__(self, name, v):
         width, shift = self.reg.fields_map[name]
@@ -102,7 +107,12 @@ class Device(object):
             self.target.devs[self.name] = self
 
     def __getattr__(self, name):
-        return self.reg_map[name]
+        try:
+            return self.reg_map[name]
+        except KeyError:
+            pass
+
+        raise AttributeError
 
     def __setattr__(self, name, value):
         rd = self.reg_map.get(name, None)
