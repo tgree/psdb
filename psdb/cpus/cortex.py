@@ -54,7 +54,22 @@ class Cortex(psdb.component.Component):
         return self._scs
 
     def is_halted(self):
-        return self.flags & FLAG_HALTED
+        '''
+        Returns True if the CPU is halted, False otherwise.
+        '''
+        # If we haven't started it since the last time it was halted, then it's
+        # still halted.
+        if self.flags & FLAG_HALTED:
+            return True
+        
+        # Okay, it was running last time we checked.  Check again since it may
+        # have halted.
+        if self.scs._DHCSR.S_HALT:
+            self.flags |= FLAG_HALTED
+            return True
+
+        # It hasn't halted, so it's still running.
+        return False
 
     def read_8(self, addr):
         return self.ap.read_8(addr)
