@@ -117,6 +117,23 @@ class Component(object):
         self._find_components_by_type(typ, results)
         return results
 
+    def _find_by_type_towards_root(self, typ, results):
+        if isinstance(self, typ):
+            results.append(self)
+
+        if self.parent:
+            self.parent._find_by_type_towards_root(typ, results)
+
+    def find_by_type_towards_root(self, typ):
+        '''
+        Searches towards the root of the tree for components of the specified
+        type.  The initial node is included for consideration in the list of
+        searched components.
+        '''
+        results = []
+        self._find_by_type_towards_root(typ, results)
+        return results
+
     def dump(self, prefix=''):
         print('%s%s' % (prefix, self))
         for c in self.children:
