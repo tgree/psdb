@@ -17,14 +17,6 @@ class Target(object):
         self.max_tck_freq = max_tck_freq
         self.cpus         = self.db.cpus
         self.devs         = collections.OrderedDict()
-        self.add_devices([c.scs for c in self.cpus])
-
-    def add_devices(self, devs):
-        for d in devs:
-            assert d.target is None
-            assert d.name not in self.devs
-            d.target          = self
-            self.devs[d.name] = d
 
     def set_max_tck_freq(self):
         '''
