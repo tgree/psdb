@@ -6,6 +6,7 @@ from . import cortex_m4
 from . import cortex_m7
 from . import scs_v6_m
 from . import scs_v7_m
+from . import bpu
 from . import fpb
 
 
@@ -45,6 +46,8 @@ psdb.component.Matcher(scs_v7_m.SCS, 0xB105E00D, 0x00000004000BB00C,
                        subtype='SCB V7-M (With FPU)')
 
 # Matcher for the Flash Patch and Breakpoint unit.
+psdb.component.Matcher(bpu.BPU, 0xB105E00D, 0x00000004000BB00B,
+                       subtype='BPU (M0+)')
 psdb.component.Matcher(fpb.FPB, 0xB105E00D, 0x00000004002BB003,
                        subtype='FPB (M4)')
 psdb.component.Matcher(fpb.FPB, 0xB105E00D, 0x00000004000BB00E,
