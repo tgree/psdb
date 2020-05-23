@@ -108,6 +108,11 @@ class Component(object):
             c._find_components_by_type(typ, results)
 
     def find_components_by_type(self, typ):
+        '''
+        Searchs towards the leaves of the tree for components of the specified
+        type.  The initial node is included for consideration in the list of
+        searched components.
+        '''
         results = []
         self._find_components_by_type(typ, results)
         return results
