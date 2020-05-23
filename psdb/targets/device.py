@@ -97,7 +97,7 @@ class RDCapture(object):
 
 
 class Device(object):
-    def __init__(self, ap, dev_base, name, regs, target=None):
+    def __init__(self, ap, dev_base, name, regs, target=None, path=None):
         super(Device, self).__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self)
                             for r in regs})
@@ -105,6 +105,7 @@ class Device(object):
         self.ap       = ap
         self.dev_base = dev_base
         self.name     = name
+        self.path     = path or name
         self.regs     = regs
         self.target   = target
 
