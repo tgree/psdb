@@ -157,7 +157,7 @@ class Cortex(psdb.component.Component):
         # Set AIRCR.SYSRESETREQ and then wait for it to clear.  Accesses after
         # the AIRCR write can cause a DP fault on the ST-Link; catch and ignore
         # them.
-        self.scs._AIRCR((self.scs._AIRCR.read() & 0x0000FFF8) | 0x05FA0004)
+        self.scs._AIRCR = ((self.scs._AIRCR.read() & 0x0000FFF8) | 0x05FA0004)
         while True:
             try:
                 if not self.scs._AIRCR.SYSRESETREQ:
