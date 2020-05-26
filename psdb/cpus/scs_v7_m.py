@@ -1,9 +1,69 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
 from ..targets.device import Reg32, Reg32R, Reg32W
-from .cortex_subdevice import CortexSubDevice
+from . import scs_base
+
+import collections
 
 
-class SCS(CortexSubDevice):
+# The core registers and the selector value they map to in the DCRSR.
+CORE_REGISTERS = collections.OrderedDict([
+    ('r0',      0),
+    ('r1',      1),
+    ('r2',      2),
+    ('r3',      3),
+    ('r4',      4),
+    ('r5',      5),
+    ('r6',      6),
+    ('r7',      7),
+    ('r8',      8),
+    ('r9',      9),
+    ('r10',     10),
+    ('r11',     11),
+    ('r12',     12),
+    ('sp',      13),
+    ('lr',      14),
+    ('pc',      15),
+    ('xpsr',    16),
+    ('msp',     17),
+    ('psp',     18),
+    ('cfbp',    20),   # CONTROL, FAULTMASK, BASEPRI, PRIMASK
+    ('fpscr',   33),
+    ('s0',      64),
+    ('s1',      65),
+    ('s2',      66),
+    ('s3',      67),
+    ('s4',      68),
+    ('s5',      69),
+    ('s6',      70),
+    ('s7',      71),
+    ('s8',      72),
+    ('s9',      73),
+    ('s10',     74),
+    ('s11',     75),
+    ('s12',     76),
+    ('s13',     77),
+    ('s14',     78),
+    ('s15',     79),
+    ('s16',     80),
+    ('s17',     81),
+    ('s18',     82),
+    ('s19',     83),
+    ('s20',     84),
+    ('s21',     85),
+    ('s22',     86),
+    ('s23',     87),
+    ('s24',     88),
+    ('s25',     89),
+    ('s26',     90),
+    ('s27',     91),
+    ('s28',     92),
+    ('s29',     93),
+    ('s30',     94),
+    ('s31',     95),
+])
+
+
+class SCS(scs_base.SCS):
     '''
     Driver for Cortex V7-M (M4, M7) System Control Space.
     '''
@@ -187,10 +247,7 @@ class SCS(CortexSubDevice):
             ]
 
     def __init__(self, component, subtype):
-        super(SCS, self).__init__('SCS', SCS.REGS, component, subtype)
+        super(SCS, self).__init__(component, subtype, SCS.REGS, CORE_REGISTERS)
 
         # Enable DEMCR.TRCENA so we can probe further.
         self._DEMCR.TRCENA = 1
-
-    def read_cpuid(self):
-        return self._CPUID.read()
