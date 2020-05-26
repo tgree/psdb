@@ -1,36 +1,8 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb
 
-import time
-import collections
-
 
 FLAG_HALTED   = (1<<0)
-
-# The core registers and the selector value they map to in the DCRSR.
-CORE_REGISTERS = collections.OrderedDict([
-    ('r0',   0),
-    ('r1',   1),
-    ('r2',   2),
-    ('r3',   3),
-    ('r4',   4),
-    ('r5',   5),
-    ('r6',   6),
-    ('r7',   7),
-    ('r8',   8),
-    ('r9',   9),
-    ('r10',  10),
-    ('r11',  11),
-    ('r12',  12),
-    ('sp',   13),
-    ('lr',   14),
-    ('pc',   15),
-    ('xpsr', 16),
-    ('msp',  17),
-    ('psp',  18),
-    ('cfbp', 20),
-])
-
 
 class Cortex(psdb.component.Component):
     '''
@@ -38,9 +10,10 @@ class Cortex(psdb.component.Component):
     code for Cortex-M4 and Cortex-M7; there's no guarantee that this will work
     for any other Cortex model.
     '''
-    def __init__(self, component, subtype):
+    def __init__(self, component, subtype, model):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
+        self.model     = model
         self._scs      = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
@@ -64,12 +37,15 @@ class Cortex(psdb.component.Component):
         
         # Okay, it was running last time we checked.  Check again since it may
         # have halted.
-        if self.scs._DHCSR.S_HALT:
+        if self.scs.is_halted():
             self.flags |= FLAG_HALTED
             return True
 
         # It hasn't halted, so it's still running.
         return False
+
+    def inval_halted_state(self):
+        self.flags &= ~FLAG_HALTED
 
     def read_8(self, addr):
         return self.ap.read_8(addr)
@@ -83,25 +59,14 @@ class Cortex(psdb.component.Component):
     def read_bulk(self, addr, size):
         return self.ap.read_bulk(addr, size)
 
-    def _read_core_register(self, sel):
-        assert self.flags & FLAG_HALTED
-        assert sel < 128
-
-        self.scs._DCRSR = sel
-        while not self.scs._DHCSR.S_REGRDY:
-            time.sleep(0.001)
-        return self.scs._DCRDR.read()
-
     def read_core_register(self, name):
         '''Reads a single core register.'''
-        return self._read_core_register(CORE_REGISTERS[name])
+        assert self.flags & FLAG_HALTED
+        return self.scs.read_core_register(name)
 
     def read_core_registers(self):
         '''Read all of the core registers.'''
-        regs = collections.OrderedDict()
-        for r in CORE_REGISTERS:
-            regs[r] = self.read_core_register(r)
-        return regs
+        return self.scs.read_core_registers()
 
     def write_8(self, v, addr):
         self.ap.write_8(v, addr)
@@ -118,63 +83,41 @@ class Cortex(psdb.component.Component):
     def write_demcr(self, v):
         return self.ap.write_32(v, self.scs.addr + 0xDFC)
 
-    def write_core_register(self, v, sel):
+    def write_core_register(self, v, name):
         '''Writes a single core register.'''
-        assert self.flags & FLAG_HALTED
-        assert sel < 128
-
-        self.scs._DCRDR = v
-        self.scs._DCRSR = ((1<<16) | sel)
-        while not self.scs._DHCSR.S_REGRDY:
-            time.sleep(0.001)
+        self.scs.write_core_register(v, name)
 
     def halt(self):
         '''Halts the CPU.'''
         if self.flags & FLAG_HALTED:
             return
 
-        self.scs._DHCSR = (0xA05F0000 | (1<<1) | (1<<0))
-        while not self.scs._DHCSR.S_HALT:
-            time.sleep(0.001)
+        self.scs.halt()
         self.flags |= FLAG_HALTED
 
     def single_step(self):
         '''Steps the CPU for a single instruction.'''
         assert self.flags & FLAG_HALTED
-
-        self.scs._DHCSR = (0xA05F0000 | (1 << 3) | (1 << 2) | (1 << 0))
-        while not self.scs._DHCSR.S_HALT:
-            time.sleep(0.001)
-
-    def reset_halt(self):
-        '''Resets the CPU and halts on the Reset exception.'''
-        # Set DHCSR.C_DEBUGEN to enable Halting debug.
-        self.halt()
-
-        # Set DEMCR.VC_CORERESET to enable reset vector catch.
-        self.scs._DEMCR.VC_CORERESET = 1
-
-        # Set AIRCR.SYSRESETREQ and then wait for it to clear.  Accesses after
-        # the AIRCR write can cause a DP fault on the ST-Link; catch and ignore
-        # them.
-        self.scs._AIRCR((self.scs._AIRCR.read() & 0x0000FFF8) | 0x05FA0004)
-        while True:
-            try:
-                if not self.scs._AIRCR.SYSRESETREQ:
-                    break
-                time.sleep(0.001)
-            except Exception:
-                pass
-
-        # Clear DEMCR.VC_CORESET so that future resets don't catch.
-        self.write_demcr(0x01000000)
+        self.scs.single_step()
 
     def resume(self):
         '''Resumes execution of a halted CPU.'''
         if not (self.flags & FLAG_HALTED):
             return
 
-        self.scs._DHCSR = 0xA05F0000
-        while self.scs._DHCSR.S_HALT:
-            time.sleep(0.001)
+        self.scs.resume()
+        self.flags &= ~FLAG_HALTED
+
+    def enable_reset_vector_catch(self):
+        self.scs.enable_reset_vector_catch()
+
+    def disable_reset_vector_catch(self):
+        self.scs.disable_reset_vector_catch()
+
+    def trigger_local_reset(self):
+        self.scs.trigger_aircr_local_reset()
+        self.wait_local_reset_complete()
+
+    def wait_local_reset_complete(self):
+        self.scs.wait_aircr_local_reset_complete()
         self.flags &= ~FLAG_HALTED

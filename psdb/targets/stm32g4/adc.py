@@ -246,7 +246,7 @@ class ADC(Device):
                                                ]),
                     ]
 
-    def __init__(self, ap, name, addr, first_adc, nadcs, **kwargs):
+    def __init__(self, target, ap, name, addr, first_adc, nadcs, **kwargs):
         regs = []
         for i in range(nadcs):
             base = 0x100*i
@@ -255,4 +255,4 @@ class ADC(Device):
                      for cls, _name, offset, fields in ADC.PER_ADC_REGS]
         regs += ADC.COM_ADC_REGS
 
-        super(ADC, self).__init__(ap, addr, name, regs, **kwargs)
+        super(ADC, self).__init__(target, ap, addr, name, regs, **kwargs)

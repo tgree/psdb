@@ -30,5 +30,5 @@ class PWR(Device):
             Reg32('CR5',       0x080),
             ]
 
-    def __init__(self, ap, name, addr, **kwargs):
-        super(PWR, self).__init__(ap, addr, name, PWR.REGS, **kwargs)
+    def __init__(self, target, ap, name, addr, **kwargs):
+        super(PWR, self).__init__(target, ap, addr, name, PWR.REGS, **kwargs)

@@ -265,10 +265,11 @@ def main(screen, args):
     cpu_wins = []
     for i, c in enumerate(t.cpus):
         if i == 0:
-            cpu_wins.append(ws.make_edge_window('CPU%u' % i, w=17))
+            cpu_wins.append(ws.make_edge_window('CPU%u (%s)' % (i, c.model),
+                                                w=18))
         else:
             cpu_wins.append(ws.make_anchored_window(
-                'CPU%u' % i, w=17,
+                'CPU%u (%s)' % (i, c.model), w=18,
                 left_anchor=cpu_wins[-1].frame.right_anchor(),
                 top_anchor=ws.canvas.frame.top_anchor(),
                 bottom_anchor=ws.canvas.frame.bottom_anchor(),

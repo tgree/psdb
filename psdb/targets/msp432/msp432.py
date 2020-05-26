@@ -19,11 +19,11 @@ class MSP432P401(Target):
             name = d[1]
             addr = d[2]
             args = d[3:]
-            cls(self.ahb_ap, name, addr, *args, target=self)
+            cls(self, self.ahb_ap, name, addr, *args)
 
         self.flash = self.devs['FLCTL']
-        MemDevice(self.ahb_ap, 'FBANK0', self.flash.mem_base,
-                  self.flash.flash_size, target=self)
+        MemDevice(self, self.ahb_ap, 'FBANK0', self.flash.mem_base,
+                  self.flash.flash_size)
 
     def __repr__(self):
         return 'MSP432P401'

@@ -115,9 +115,10 @@ class FLCTL(Device, flash.Flash):
             Reg32('CLRIFG',            0xF8),
             ]
 
-    def __init__(self, ap, name, addr, flash_tlv_addr, **kwargs):
-        Device.__init__(self, ap, addr, name, FLCTL.REGS, **kwargs)
+    def __init__(self, target, ap, name, addr, flash_tlv_addr, **kwargs):
+        Device.__init__(self, target, ap, addr, name, FLCTL.REGS, **kwargs)
         flash.Flash.__init__(self, 0x00000000, 4096, 64)
+        self.target    = target
         self.flash_tlv = [self.ap.read_32(flash_tlv_addr + i*4)
                           for i in range(4)]
         assert self.flash_tlv[0] == 4

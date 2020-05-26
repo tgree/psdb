@@ -1,9 +1,36 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
 from ..targets.device import Reg32, Reg32R, Reg32W
-from .cortex_subdevice import CortexSubDevice
+from . import scs_base
+
+import collections
 
 
-class SCS(CortexSubDevice):
+# The core registers and the selector value they map to in the DCRSR.
+CORE_REGISTERS = collections.OrderedDict([
+    ('r0',      0),
+    ('r1',      1),
+    ('r2',      2),
+    ('r3',      3),
+    ('r4',      4),
+    ('r5',      5),
+    ('r6',      6),
+    ('r7',      7),
+    ('r8',      8),
+    ('r9',      9),
+    ('r10',     10),
+    ('r11',     11),
+    ('r12',     12),
+    ('sp',      13),
+    ('lr',      14),
+    ('pc',      15),
+    ('xpsr',    16),
+    ('msp',     17),
+    ('psp',     18),
+    ('cp',      20),   # CONTROL, PRIMASK
+])
+
+
+class SCS(scs_base.SCS):
     '''
     Driver for Cortex V6-M (M0+) System Control Space.
 
@@ -98,10 +125,7 @@ class SCS(CortexSubDevice):
             ]
 
     def __init__(self, component, subtype):
-        super(SCS, self).__init__('SCS', SCS.REGS, component, subtype)
+        super(SCS, self).__init__(component, subtype, SCS.REGS, CORE_REGISTERS)
 
         # Enable DEMCR.DWTENA so we can probe further.
         self._DEMCR.DWTENA = 1
-
-    def read_cpuid(self):
-        return self._CPUID.read()

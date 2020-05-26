@@ -92,5 +92,6 @@ class SYSCFG(Device):
                                      ]),
             ]
 
-    def __init__(self, ap, name, addr, **kwargs):
-        super(SYSCFG, self).__init__(ap, addr, name, SYSCFG.REGS, **kwargs)
+    def __init__(self, target, ap, name, addr, **kwargs):
+        super(SYSCFG, self).__init__(target, ap, addr, name, SYSCFG.REGS,
+                                     **kwargs)

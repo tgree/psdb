@@ -38,10 +38,45 @@ class Target(object):
         for c in cpus:
             c.halt()
 
-    def reset_halt(self, cpus=None):
-        cpus = cpus or self.cpus
-        for c in cpus:
-            c.reset_halt()
+    def reset_halt(self):
+        '''
+        This resets and then halts all of the CPUs in the system.  The way the
+        STM32H7 dual-processor system works is that the AIRCR.SYSRESETREQ will
+        trigger an external reset that resets all CPUs in the system rather
+        than just the single CPU that requested the reset - so there is no way
+        to individually reset a single CPU (unless... maybe VECTRESET can do
+        this?).  It isn't clear if this is an ARM specification or if it is an
+        ST implementation choice.
+
+        To be extra rigorous, we follow this procedure:
+
+            1. Halt all CPUs and enable reset vector catches.
+            2. For each CPU, we then trigger a local reset and then wait for
+               all CPUs to return to the halted state before proceeding to the
+               next CPU.
+            3. Disable reset vector catches.
+
+        This should handle both cases (where SYSRESETREQ is local or global).
+        '''
+        # Enable reset vector catch and halt all CPUs.
+        for c in self.cpus:
+            c.halt()
+            c.enable_reset_vector_catch()
+
+        # Trigger a reset on all CPUs, waiting for all CPUs to halt before
+        # continuing on to the next one.  This ensures that we don't trigger
+        # resets while other CPUs are still handling the previous reset.
+        for c in self.cpus:
+            c.trigger_local_reset()
+            c.wait_local_reset_complete()
+            for c2 in self.cpus:
+                c2.inval_halted_state()
+                while not c2.is_halted():
+                    pass
+
+        # Disable reset vector catch.
+        for c in self.cpus:
+            c.disable_reset_vector_catch()
 
     def resume(self, cpus=None):
         cpus = cpus or self.cpus
