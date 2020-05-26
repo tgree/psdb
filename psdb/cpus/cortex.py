@@ -38,9 +38,10 @@ class Cortex(psdb.component.Component):
     code for Cortex-M4 and Cortex-M7; there's no guarantee that this will work
     for any other Cortex model.
     '''
-    def __init__(self, component, subtype):
+    def __init__(self, component, subtype, model):
         super(Cortex, self).__init__(component.parent, component.ap,
                                      component.addr, subtype)
+        self.model     = model
         self._scs      = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
