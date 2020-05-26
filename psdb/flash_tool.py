@@ -5,6 +5,7 @@ import psdb.elf
 
 import argparse
 import hashlib
+import time
 import sys
 
 
@@ -37,8 +38,13 @@ def main(rv):
 
     # Read a backup of flash if requested.
     if rv.read_flash:
+        t0 = time.time()
         with open(rv.read_flash, 'wb') as f:
-            f.write(target.flash.read_all())
+            data = target.flash.read_all()
+            f.write(data)
+        dt = time.time() - t0
+        print('Read %u bytes in %.2f seconds (%.2f K/s).'
+              % (len(data), dt, len(data) / (1024*dt)))
 
     # Dump options if requested.
     if rv.get_options or rv.option:
