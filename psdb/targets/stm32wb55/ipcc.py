@@ -87,8 +87,8 @@ class IPCC(Device):
                                         ]),
             ]
 
-    def __init__(self, ap, name, addr, **kwargs):
-        super(IPCC, self).__init__(ap, addr, name, IPCC.REGS, **kwargs)
+    def __init__(self, target, ap, name, addr, **kwargs):
+        super(IPCC, self).__init__(target, ap, addr, name, IPCC.REGS, **kwargs)
 
     def set_tx_flag(self, channel):
         '''

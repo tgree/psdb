@@ -35,13 +35,13 @@ class STM32WB55(Target):
             name = d[1]
             addr = d[2]
             args = d[3:]
-            cls(self.ahb_ap, name, addr, *args, target=self)
+            cls(self, self.ahb_ap, name, addr, *args)
 
         self.flash = self.devs['FLASH']
-        MemDevice(self.ahb_ap, 'FBANKS', self.flash.mem_base,
-                  self.flash.user_flash_size, target=self)
-        MemDevice(self.ahb_ap, 'OTP', self.flash.otp_base,
-                  self.flash.otp_len, target=self)
+        MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
+                  self.flash.user_flash_size)
+        MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
+                  self.flash.otp_len)
         self.devs['SRAM2a'].size = self.flash.user_sram2a_size
         self.devs['SRAM2b'].size = self.flash.user_sram2b_size
 

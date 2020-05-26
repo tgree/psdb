@@ -194,9 +194,12 @@ class FLASH(Device, Flash):
                                          ]),
             ]
 
-    def __init__(self, ap, name, dev_base, mem_base, max_write_freq,
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
                  otp_base, otp_len, **kwargs):
-        Device.__init__(self, ap, dev_base, name, FLASH.REGS, **kwargs)
+        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS, **kwargs)
+        Flash.__init__(self, mem_base, 4096, target.flash_size // 4096)
+
+        self.target         = target
         self.max_write_freq = max_write_freq
         self.otp_base       = otp_base
         self.otp_len        = otp_len
@@ -212,7 +215,6 @@ class FLASH(Device, Flash):
         else:
             self.secure_flash_base = mem_base + self.target.flash_size
         self.user_flash_size = self.secure_flash_base - mem_base
-        Flash.__init__(self, mem_base, 4096, self.target.flash_size // 4096)
 
         srrvr = self._SRRVR.read()
         if not (srrvr & (1 << 23)):

@@ -87,7 +87,7 @@ class FLASH_3(FLASH_Base):
             Reg32 ('SEC2R',         0x074),
             ]
 
-    def __init__(self, ap, name, dev_base, mem_base, max_write_freq,
+    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
                  otp_base, otp_len, **kwargs):
         optr = ap.read_32(dev_base + 0x20)
         print('OPTR: 0x%08X' % optr)
@@ -96,9 +96,9 @@ class FLASH_3(FLASH_Base):
                             'try using --srst')
         sector_size = 2048 if optr & (1<<22) else 4096
 
-        FLASH_Base.__init__(self, FLASH_3.REGS, sector_size, ap, name,
-                            dev_base, mem_base, max_write_freq, otp_base,
-                            otp_len, **kwargs)
+        super(FLASH_3, self).__init__(target, FLASH_3.REGS, sector_size, ap,
+                                      name, dev_base, mem_base, max_write_freq,
+                                      otp_base, otp_len, **kwargs)
 
     def erase_sector(self, n, verbose=True):
         '''
