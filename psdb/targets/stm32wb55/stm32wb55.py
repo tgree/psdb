@@ -5,6 +5,7 @@ from .sram import SRAM
 from .pwr import PWR
 from .rcc import RCC
 from .ipcc import IPCC
+from ..stm32g4.general_purpose_timer_32 import GPT32
 from ..device import MemDevice
 from .ipc import IPC
 from psdb.targets import Target
@@ -13,6 +14,7 @@ from psdb.targets import Target
 DEVICES = [(SRAM,   'SRAM1',    0x20000000, 0x00030000),
            (SRAM,   'SRAM2a',   0x20030000, 0x00008000),
            (SRAM,   'SRAM2b',   0x20038000, 0x00008000),
+           (GPT32,  'TIM2',     0x40000000),
            (RCC,    'RCC',      0x58000000),
            (PWR,    'PWR',      0x58000400),
            (IPCC,   'IPCC',     0x58000C00),
