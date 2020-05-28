@@ -380,6 +380,9 @@ def main(rv):
     probe = psdb.probes.find_default(usb_path=rv.usb_path)
     probe.set_tck_freq(rv.probe_freq)
 
+    if rv.srst:
+        probe.srst_target()
+
     print('Starting server on port %s for %s' % (rv.port, probe))
     target = probe.probe(verbose=rv.verbose)
     target.set_max_tck_freq()
@@ -407,5 +410,6 @@ if __name__ == '__main__':
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--dump', action='store_true')
+    parser.add_argument('--srst', action='store_true')
     parser.add_argument('--halt', action='store_true')
     main(parser.parse_args())
