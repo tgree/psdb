@@ -15,6 +15,7 @@ class Cortex(psdb.component.Component):
                                      component.addr, subtype)
         self.model     = model
         self._scs      = None
+        self._bpu      = None
         self.flags     = 0
         self.cpu_index = len(self.ap.db.cpus)
         self.devs      = {}
@@ -25,6 +26,14 @@ class Cortex(psdb.component.Component):
         if self._scs is None:
             self._scs = self.devs['SCS']
         return self._scs
+
+    @property
+    def bpu(self):
+        if self._bpu is None:
+            self._bpu = self.devs.get('BPU', None)
+        if self._bpu is None:
+            self._bpu = self.devs.get('FPB', None)
+        return self._bpu
 
     def is_halted(self):
         '''
