@@ -49,7 +49,7 @@ class GDBConnection(object):
         self.server  = server
         self.sock    = sock
         self.verbose = verbose
-        self.data    = ''
+        self.data    = b''
 
     def sendall(self, data):
         if self.verbose:
