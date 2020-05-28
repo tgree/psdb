@@ -159,6 +159,8 @@ class GDBServer(object):
                 b'M'    : self._handle_write_memory,
                 b'c'    : self._handle_continue,
                 b's'    : self._handle_step_instruction,
+                b'Z'    : self._handle_insert_breakpoint,
+                b'z'    : self._handle_remove_breakpoint,
                 }
         self.target        = target
         self.port          = port
@@ -311,6 +313,52 @@ class GDBServer(object):
         self._single_step()
         return b'S05'
 
+    def _handle_insert_breakpoint(self, pkt):
+        if pkt[1:3] == b'0,':
+            return self._handle_insert_software_breakpoint(pkt)
+        if pkt[1:3] == b'1,':
+            return self._handle_insert_hardware_breakpoint(pkt)
+        return b'E01'
+
+    def _handle_insert_software_breakpoint(self, pkt):
+        # TODO: We should check if this is a flash or RAM address and insert
+        #       a breakpoint instruction in RAM if possible.
+        print('Delegating insert SW breakpoint to HW.')
+        return self._handle_insert_hardware_breakpoint(pkt)
+
+    def _handle_insert_hardware_breakpoint(self, pkt):
+        # TODO: Semicolon!
+        args = pkt[1:].split(b',')
+        addr = int(args[1], 16)
+        kind = int(args[2], 16)
+        print('Inserting HW breakpoint 0x%08X of kind 0x%X' % (addr, kind))
+        for c in self.target.cpus:
+            c.bpu.insert_breakpoint(addr)
+        return b'OK'
+
+    def _handle_remove_breakpoint(self, pkt):
+        if pkt[1:3] == b'0,':
+            return self._handle_remove_software_breakpoint(pkt)
+        if pkt[1:3] == b'1,':
+            return self._handle_remove_hardware_breakpoint(pkt)
+        return b'E01'
+
+    def _handle_remove_software_breakpoint(self, pkt):
+        # TODO: We should check if this is a flash or RAM address and remove
+        #       a breakpoint instruction from RAM if possible.
+        print('Delegating remove SW breakpoint to HW.')
+        return self._handle_remove_hardware_breakpoint(pkt)
+
+    def _handle_remove_hardware_breakpoint(self, pkt):
+        # TODO: Semicolon!
+        args = pkt[1:].split(b',')
+        addr = int(args[1], 16)
+        kind = int(args[2], 16)
+        print('Removing HW breakpoint 0x%08X of kind 0x%X' % (addr, kind))
+        for c in self.target.cpus:
+            c.bpu.remove_breakpoint(addr)
+        return b'OK'
+
 def main(rv):
     if rv.dump:
         for p in psdb.probes.PROBES:
@@ -323,6 +371,12 @@ def main(rv):
     print('Starting server on port %s for %s' % (rv.port, probe))
     target = probe.probe(verbose=rv.verbose)
     target.set_max_tck_freq()
+
+    for i, c in enumerate(target.cpus):
+        if c.bpu is not None:
+            c.bpu.reset()
+            print('CPU%u: %s' % (i, c.bpu))
+
     if not rv.halt:
         target.resume()
     else:
