@@ -8,6 +8,20 @@ make install3
 which will require super-user privileges.  Alternatively, you can run all
 commands from the root of the repository.
 
+If you are on a Linux machine, it is also recommended to install the udev
+rules file that will allow non-sudo access to the debug probes (otherwise you
+must run the psdb tools using sudo) to anybody that is a member of the 'usb'
+group:
+
+sudo addgroup usb
+sudo adduser YOUR_USER_NAME usb
+sudo cp -r etc/* /etc/
+
+This command is not necessary on macOS since USB devices are accessible
+without super-user privileges.  If your debug probe is connected when you
+install the udev rules, you may need to hot-plug it in order for the new rules
+to take effect.  Also, if you just added yourself to the usb group then you
+will need to start a new shell session for that permission to take effect.
 
 ===============================================================================
 python3 -m psdb.flash_tool <params>
