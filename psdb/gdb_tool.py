@@ -384,7 +384,8 @@ def main(rv):
         probe.srst_target()
 
     print('Starting server on port %s for %s' % (rv.port, probe))
-    target = probe.probe(verbose=rv.verbose)
+    target = probe.probe(verbose=rv.verbose,
+                         connect_under_reset=rv.connect_under_reset)
     target.set_max_tck_freq()
 
     for i, c in enumerate(target.cpus):
@@ -410,6 +411,7 @@ if __name__ == '__main__':
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--dump', action='store_true')
+    parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--halt', action='store_true')
     main(parser.parse_args())
