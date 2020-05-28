@@ -132,6 +132,19 @@ class GDBConnection(object):
                         print("Discarding (expected %02X): '%s'" % (csum, pkt))
                     pkt = ''
 
+    def poll_break(self, timeout):
+        assert not self.data
+        t0 = time.time()
+        data = self.recv(1, timeout=timeout)
+        if data is None:
+            print('Receive timed out after %.3f seconds' % (time.time() - t0))
+            return False
+        elif data == b'':
+            raise ConnectionClosedException()
+
+        assert data == b'\x03'
+        return True
+
 
 class GDBServer(object):
     def __init__(self, target, port, verbose):
