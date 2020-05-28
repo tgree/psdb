@@ -56,8 +56,16 @@ class GDBConnection(object):
             print("Sending: '%s'" % data)
         self.sock.sendall(data)
 
-    def recv(self, n):
-        data = self.sock.recv(n)
+    def recv(self, n, timeout=None):
+        self.sock.settimeout(timeout)
+
+        try:
+            data = self.sock.recv(n)
+        except socket.timeout:
+            return None
+        finally:
+            self.sock.settimeout(None)
+
         if self.verbose:
             print("Received: '%s'" % data)
         return data
