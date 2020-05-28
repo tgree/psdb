@@ -158,6 +158,7 @@ class GDBServer(object):
                 b'm'    : self._handle_read_memory,
                 b'M'    : self._handle_write_memory,
                 b'c'    : self._handle_continue,
+                b's'    : self._handle_step_instruction,
                 }
         self.target        = target
         self.port          = port
@@ -200,6 +201,14 @@ class GDBServer(object):
         print('CPU started.')
         self.target.resume()
         self.state = self.STATE_RUNNING
+
+    def _single_step(self):
+        assert self.state == self.STATE_HALTED
+
+        print('CPU stepping one instruction.')
+        self.target.cpus[0].single_step()
+        print('CPU halted. PC: 0x%08X'
+              % self.target.cpus[0].read_core_register('pc'))
 
     def _process_connection(self, sock):
         if self.state == self.STATE_RUNNING:
@@ -295,6 +304,12 @@ class GDBServer(object):
         '''
         self._resume()
 
+    def _handle_step_instruction(self, pkt):
+        '''
+        Resumes execution for a single instruction.
+        '''
+        self._single_step()
+        return b'S05'
 
 def main(rv):
     if rv.dump:
