@@ -249,9 +249,15 @@ class GDBServer(object):
         return b''
 
     def _handle_question(self, pkt):
+        '''
+        Returns the reason we stopped; we return signal 5 (TRAP).
+        '''
         return b'S05'
 
     def _handle_read_registers(self, pkt):
+        '''
+        Returns the concatenation of all registers defined in the REG_MAP list.
+        '''
         data = b''
         regs = self.target.cpus[0].read_core_registers()
         for r in REG_MAP:
@@ -266,6 +272,9 @@ class GDBServer(object):
         return b''
 
     def _handle_read_memory(self, pkt):
+        '''
+        Reads a block of memory.
+        '''
         args = pkt[1:].split(b',')
         addr = int(args[0], 16)
         n    = int(args[1], 16)
@@ -279,6 +288,9 @@ class GDBServer(object):
             return b''
 
     def _handle_write_memory(self, pkt):
+        '''
+        Writes a block of memory.
+        '''
         args  = pkt[1:].split(b',')
         addr  = int(args[0], 16)
         args  = args[1].split(b':')
