@@ -147,7 +147,10 @@ class GDBConnection(object):
 
 
 class GDBServer(object):
-    def __init__(self, target, port, verbose):
+    STATE_HALTED  = 1
+    STATE_RUNNING = 2
+
+    def __init__(self, target, port, verbose, halted):
         self.handlers = {
                 b'g'    : self._handle_read_registers,
                 b'?'    : self._handle_question,
@@ -155,11 +158,11 @@ class GDBServer(object):
                 b'm'    : self._handle_read_memory,
                 b'M'    : self._handle_write_memory,
                 b'c'    : self._handle_continue,
-                b'\x03' : self._handle_ctrl_c,
                 }
         self.target        = target
         self.port          = port
         self.verbose       = verbose
+        self.state         = self.STATE_HALTED if halted else self.STATE_RUNNING
         self.thread        = threading.Thread(target=self._workloop)
         self.thread.daemon = True
         self.thread.start()
@@ -183,14 +186,53 @@ class GDBServer(object):
             finally:
                 sock.close()
 
-    def _process_connection(self, sock):
+    def _halt(self):
+        assert self.state == self.STATE_RUNNING
+
         self.target.halt()
+        print('CPU halted. PC: 0x%08X'
+              % self.target.cpus[0].read_core_register('pc'))
+        self.state = self.STATE_HALTED
+
+    def _resume(self):
+        assert self.state == self.STATE_HALTED
+
+        print('CPU started.')
+        self.target.resume()
+        self.state = self.STATE_RUNNING
+
+    def _process_connection(self, sock):
+        if self.state == self.STATE_RUNNING:
+            self._halt()
+
         gc = GDBConnection(self, sock, self.verbose)
         while True:
-            pkt = gc.recv_packet()
-            rsp = self.handlers.get(pkt[0:1], self._handle_unimplemented)(pkt)
-            if rsp is not None:
-                gc.send_packet(rsp)
+            if self.state == self.STATE_HALTED:
+                self._process_connection_halted(gc)
+            elif self.state == self.STATE_RUNNING:
+                self._process_connection_running(gc)
+            else:
+                raise Exception('Weird state %u' % self.state)
+
+    def _process_connection_halted(self, gc):
+        pkt = gc.recv_packet()
+        rsp = self.handlers.get(pkt[0:1], self._handle_unimplemented)(pkt)
+        if rsp is not None:
+            gc.send_packet(rsp)
+
+    def _process_connection_running(self, gc):
+        if gc.poll_break(timeout=0.1):
+            print('Received BREAK request from gdb.')
+            self._halt()
+        elif not self.target.cpus[0].is_halted():
+            time.sleep(0.01)
+            return
+        else:
+            print('CPU halted itself. PC: 0x%08X'
+                  % self.target.cpus[0].read_core_register('pc'))
+            self.state = self.STATE_HALTED
+
+        gc.send_packet(b'S05')
 
     def _handle_unimplemented(self, pkt):
         return b''
@@ -245,12 +287,13 @@ class GDBServer(object):
         return b'E01'
 
     def _handle_continue(self, pkt):
-        # The "response" is sent when/if the target halts in the future.
-        self.target.resume()
-
-    def _handle_ctrl_c(self, pkt):
-        self.target.halt()
-        return b'S05'
+        '''
+        Resumes execution.  The response is sent when/if the target halts in
+        the future - either because the user interrupted us via Ctrl-C or we
+        hit a breakpoint.  In either case, an S05 (TRAP) response should be
+        returned to gdb.
+        '''
+        self._resume()
 
 
 def main(rv):
@@ -267,7 +310,10 @@ def main(rv):
     target.set_max_tck_freq()
     if not rv.halt:
         target.resume()
-    GDBServer(target, rv.port, rv.verbose)
+    else:
+        print('CPU halted. PC: 0x%08X'
+              % target.cpus[0].read_core_register('pc'))
+    GDBServer(target, rv.port, rv.verbose, rv.halt)
 
     while True:
         time.sleep(1)
