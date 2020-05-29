@@ -21,6 +21,7 @@ setuptools.setup(
               'psdb.probes.xds110',
               'psdb.targets',
               'psdb.targets.msp432',
+              'psdb.targets.stm32',
               'psdb.targets.stm32h7',
               'psdb.targets.stm32g0',
               'psdb.targets.stm32g4',
