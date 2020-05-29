@@ -6,6 +6,8 @@ from .pwr import PWR
 from .rcc import RCC
 from .ipcc import IPCC
 from ..stm32g4.general_purpose_timer_32 import GPT32
+from ..stm32g4.gpio import GPIO
+from ..stm32 import USB
 from ..device import MemDevice
 from .ipc import IPC
 from psdb.targets import Target
@@ -15,6 +17,13 @@ DEVICES = [(SRAM,   'SRAM1',    0x20000000, 0x00030000),
            (SRAM,   'SRAM2a',   0x20030000, 0x00008000),
            (SRAM,   'SRAM2b',   0x20038000, 0x00008000),
            (GPT32,  'TIM2',     0x40000000),
+           (USB,    'USB',      0x40006800),
+           (GPIO,   'GPIOA',    0x48000000),
+           (GPIO,   'GPIOB',    0x48000400),
+           (GPIO,   'GPIOC',    0x48000800),
+           (GPIO,   'GPIOD',    0x48000C00),
+           (GPIO,   'GPIOE',    0x48001000),
+           (GPIO,   'GPIOH',    0x48001C00),
            (RCC,    'RCC',      0x58000000),
            (PWR,    'PWR',      0x58000400),
            (IPCC,   'IPCC',     0x58000C00),
