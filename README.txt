@@ -63,11 +63,10 @@ under the path:
 
 Projects/STM32WB_Copro_Wireless_Binaries/STM32WB5x
 
-Sample invocations:
+Sample invocations for manipulating wireless firmware:
 
 python3 -m psdb.fus_tool --fw-upgrade Projects/STM32WB_Copro_Wireless_Binaries/STM32WB5x/stm32wb5x_BLE_Stack_full_fw.bin
 python3 -m psdb.fus_tool --fw-delete
-python3 -m psdb.fus_tool --bin-dir Projects/STM32WB_Copro_Wireless_Binaries/STM32WB5x --fus-upgrade
 
 Or, a compound command to remove the old WS firmware, install new WS firmware
 and then start the application back up:
@@ -82,6 +81,23 @@ in order to properly communicate with FUS, we need to prevent any user
 firmware from starting CPU2 or trying to use the IPC channels - we do that by
 switching the system to boot from SRAM1 until we are done with it.
 
+When using this to upgrade FUS itself, you use the --fus-upgrade option along
+with the --bin-dir option.  The code will find the next valid FUS binary in
+the upgrade path for your target.  For instance, a brand new Nucleo STM32WB55
+board has an ancient 0.5.3 version of FUS.  This cannot be directly upgraded
+to the latest 1.1.0 version of FUS but must instead stop at 1.0.2 first.  You
+can then reinvoke fus_tool again if you wish to then upgrade from 1.0.2 to
+1.1.0.  Note that it is not possible to downgrade FUS, so this behavior allows
+you to stop at any desired version.  When upgrading FUS, it is required to
+first delete the current wireless stack with the --fw-delete option.
+
+Sample invocation for updating FUS:
+
+python3 -m psdb.fus_tool --bin-dir Projects/STM32WB_Copro_Wireless_Binaries/STM32WB5x --fus-upgrade
+
+Note that when upgrading FUS, the target board will reboot at least 4 times.
+
+It is recommended to upgrade to FUS 1.1.0.
 
 ===============================================================================
 We also attempt to document the STLINK protocol inside the stlink package.
