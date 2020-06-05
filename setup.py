@@ -4,7 +4,7 @@ with open("README.txt", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="pypsdb",
+    name="psdb",
     version="0.9.0",
     author="Phase Advanced Sensor Sytems",
     author_email="tgreeniaus@phasesensors.com",
