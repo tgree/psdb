@@ -35,6 +35,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=['pyusb',
-                      'pyelftools'],
+                      'pyelftools',
+                      'tgcurses'],
     python_requires='>=3.0',
 )
