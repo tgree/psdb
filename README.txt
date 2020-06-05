@@ -1,12 +1,21 @@
 This package provides Python access to various ARM-compatible debug probes.
 
-All tools support the --help option.  It is recommended to use python3.  You
-may install the package locally using:
+All tools support the --help option.  It is required to use python3.  The
+easiest way to install psdb is using pip:
 
-make install3
+pip3 install psdb
+
+Note that you may wish to use sudo to install psdb for all users on your
+system:
+
+sudo pip3 install psdb
+
+You may also install the package locally using:
+
+make install
 
 which will require super-user privileges.  Alternatively, you can run all
-commands from the root of the repository.
+commands from the root of the repository without installing anything.
 
 If you are on a Linux machine, it is also recommended to install the udev
 rules file that will allow non-sudo access to the debug probes (otherwise you
@@ -43,8 +52,8 @@ python3 -m psdb.inspect_tool
 The inspect_tool script starts an interactive curses-based tool that can be
 used to view the current CPU registers, select target peripheral registers and
 select regions of target RAM or flash.  The inspect_tool script requires the
-tgcurses library to be installed (available on github/tgree).  Since tgcurses
-only supports python3, inspect_tool can only run under python3.
+tgcurses library to be installed (available on github/tgree).  pip will
+install tgcurses automatically.
 
 
 ===============================================================================
