@@ -30,12 +30,11 @@ setuptools.setup(
               'psdb.util',
               ],
     classifiers=[
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
         "Operating System :: OS Independent",
     ],
     install_requires=['pyusb',
                       'pyelftools'],
-    python_requires='>=2.7',
+    python_requires='>=3.0',
 )
