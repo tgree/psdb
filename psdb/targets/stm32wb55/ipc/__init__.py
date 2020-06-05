@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Terry Greeniaus.
+# Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
 '''
 Driver for the STM32WB55 BLE Wireless Firmware.
 

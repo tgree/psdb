@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Terry Greeniaus.
+# Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
 from .stm32wb55 import STM32WB55
 
 

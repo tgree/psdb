@@ -1,4 +1,4 @@
-# Copyright (c) 2020 by Terry Greeniaus.
+# Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 import psdb
 from .flash import FLASH
 from .sram import SRAM
