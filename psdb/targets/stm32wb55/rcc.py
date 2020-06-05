@@ -615,7 +615,6 @@ class RCC(Device):
         assert id0_data is not None
 
         hse_tuning = id0_data[6]
-        print('hse_tuning 0x%02X' % hse_tuning)
         self._HSECR         = 0xCAFECAFE
         self._HSECR.HSETUNE = hse_tuning
 
