@@ -198,7 +198,7 @@ class STM32G4(Target):
         # registers.
         c = db.aps[0].base_component
         if (not c or c.cidr != 0xB105100D or
-            c.pidr not in (0xA0468, 0xA0469, 0xA0479)):
+                c.pidr not in (0xA0468, 0xA0469, 0xA0479)):
             return None
 
         # There should be exactly one CPU.
