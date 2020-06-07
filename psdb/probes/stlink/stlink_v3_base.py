@@ -1,6 +1,7 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 from . import stlink
 from . import cdb
+import psdb
 
 
 class STLinkV3_Base(stlink.STLink):

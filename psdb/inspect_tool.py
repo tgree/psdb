@@ -88,7 +88,7 @@ def draw_decode(reg_win, decode_win, dev):
                     fv |= 1
                 else:
                     decode_win.content.addstr('0')
-                
+
                 if bit == 0:
                     pass
                 elif ((bit + 1) % 4) == 1:
@@ -195,7 +195,7 @@ def draw_device(reg_win, mem_win, decode_win, dev):
     else:
         mem_win.hide()
         reg_win.hide()
-        decode.hide()
+        decode_win.hide()
 
 
 def mem_up(reg_win, mem_win, decode_win, d, n):

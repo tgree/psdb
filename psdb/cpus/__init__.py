@@ -1,6 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb.component
-from . import cortex
 from . import cortex_m0p
 from . import cortex_m4
 from . import cortex_m7

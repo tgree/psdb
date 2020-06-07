@@ -135,7 +135,7 @@ class STM32WB55(Target):
             ap = db.aps[i]
             if not isinstance(ap, psdb.access_port.AHBAP):
                 return None
-        
+
         # Identify the STM32WB55 through the base component's CIDR/PIDR
         # registers.
         c = db.aps[0].base_component

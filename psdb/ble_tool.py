@@ -41,7 +41,7 @@ def main(rv):
     f     = probe.set_tck_freq(rv.probe_freq)
     print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
 
-    # Use the probe to detect a target platform - it should be 
+    # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose, connect_under_reset=True)
 
     # Use the best clock frequency.
@@ -56,7 +56,7 @@ def main(rv):
     # Start the existing CPU2 firmware and get a client object to interact with
     # it.
     target, client = target.ipc.start_firmware()
-    
+
     # Switch to wireless firmware if necessary.
     if client.fw_name == 'FUS':
         print('Switching to wireless firmware...')
@@ -77,8 +77,9 @@ def main(rv):
             time.sleep(10)
     except KeyboardInterrupt:
         RUNNING = False
-        thread.join()
         print()
+        print('Quitting...')
+        thread.join()
 
 
 if __name__ == '__main__':

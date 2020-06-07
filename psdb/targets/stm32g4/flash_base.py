@@ -243,4 +243,3 @@ class FLASH_Base(Device, Flash):
         self._flash_optr(optr, verbose=verbose)
         return self._trigger_obl_launch(verbose=verbose,
                                         connect_under_reset=connect_under_reset)
-

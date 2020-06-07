@@ -19,6 +19,8 @@ The only safe way to process the queue is to repeatedly pop_front() under a
 while(!sys_table->sys_queue.empty()) loop.  The BLE firmware does not have this
 bug and its queue pointers are in the MM BLE Pool area instead.
 '''
+from .. import ipcc
+
 import struct
 
 
@@ -35,6 +37,16 @@ FUS_UNLOAD_USR_KEY          = 0xFC5E
 FUS_ACTIVATE_ANTIROLLBACK   = 0xFC5F
 
 BLE_INIT                    = 0xFC66
+
+# Ready event indicating the firmware is ready to accept commands.
+SHCI_SUBEVTCODE_READY   = 0x9200
+EVT_PAYLOAD_WS_RUNNING  = b'\x00'
+EVT_PAYLOAD_FUS_RUNNING = b'\x01'
+
+
+def is_fus_ready_event(event):
+    return (event.subevtcode == SHCI_SUBEVTCODE_READY and
+            event.payload == EVT_PAYLOAD_FUS_RUNNING)
 
 
 class SystemChannel(object):
@@ -113,23 +125,26 @@ class SystemChannel(object):
             event = self.ipc.mailbox.pop_sys_event()
             if event is None:
                 self.ipc.clear_rx_flag(self.event_channel)
+                self.ipc.mm_channel.release_posted_events()
                 return events
 
             print(event)
             events.append(event)
-            self.ipc.mailbox.push_mm_free_event(event)
+
+            # The only FUS event is the initial Ready event and since FUS
+            # doesn't implement the MM channel, it shouldn't be returned.
+            if is_fus_ready_event(event):
+                continue
+
+            self.ipc.mm_channel.post_event(event)
 
     def wait_and_pop_all_events(self, timeout=None, dump=False):
         '''
-        Waits for the event flag to be set and then pops all events.
+        Waits for the event flag to be set and then pops all events.  Returns
+        an empty list if the timeout expired.
         '''
-        events = []
-        while not events:
+        try:
             self.ipc.wait_rx_occupied(self.event_channel, timeout=timeout)
-            new_events = self.pop_all_events(dump=dump)
-            if not new_events:
-                print('Empty event list?')
-
-            events += new_events
-
-        return events
+            return self.pop_all_events(dump=dump)
+        except ipcc.TimeoutError:
+            return []

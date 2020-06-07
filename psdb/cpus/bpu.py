@@ -1,5 +1,5 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-from ..targets.device import Reg32, Reg32R, Reg32W
+from ..targets.device import Reg32
 from .cortex_subdevice import CortexSubDevice
 
 

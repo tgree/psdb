@@ -1,5 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from . import probe
+import psdb
 
 
 class Probe(probe.Probe):

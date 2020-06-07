@@ -4,7 +4,12 @@ import struct
 
 import psdb
 from .mailbox import Mailbox
-from .system_channel import SystemChannel
+from .system_channel import (SystemChannel,
+                             SHCI_SUBEVTCODE_READY,
+                             EVT_PAYLOAD_WS_RUNNING,
+                             EVT_PAYLOAD_FUS_RUNNING,
+                             )
+from .mm_channel import MMChannel
 from .ble_channel import BLEChannel
 from .fus_client import FUSClient
 from . import ws_factory
@@ -14,9 +19,7 @@ BLE_CMD_CHANNEL         = 1
 BLE_EVENT_CHANNEL       = 1
 SYSTEM_CMD_RSP_CHANNEL  = 2
 SYSTEM_EVENT_CHANNEL    = 2
-
-EVT_PAYLOAD_WS_RUNNING  = b'\x00'
-EVT_PAYLOAD_FUS_RUNNING = b'\x01'
+MM_CMD_CHANNEL          = 4
 
 
 class IPC(object):
@@ -34,11 +37,15 @@ class IPC(object):
         self.mailbox        = Mailbox(ap, base_addr, ram_size)
         self.system_channel = SystemChannel(self, SYSTEM_CMD_RSP_CHANNEL,
                                             SYSTEM_EVENT_CHANNEL)
+        self.mm_channel     = MMChannel(self, MM_CMD_CHANNEL)
         self.ble_channel    = BLEChannel(self, BLE_CMD_CHANNEL,
                                          BLE_EVENT_CHANNEL)
 
     def set_tx_flag(self, channel):
         self.ipcc.set_tx_flag(channel)
+
+    def is_tx_free(self, channel):
+        return self.ipcc.get_tx_free_flag(channel)
 
     def wait_tx_free(self, channel, timeout=None):
         self.ipcc.wait_tx_free(channel, timeout=timeout)
@@ -80,7 +87,7 @@ class IPC(object):
                 t.ipc.pwr.enable_cpu2_boot()
                 events = t.ipc.system_channel.wait_and_pop_all_events()
                 assert len(events) == 1
-                assert events[0].subevtcode == 0x9200
+                assert events[0].subevtcode == SHCI_SUBEVTCODE_READY
                 if events[0].payload == EVT_PAYLOAD_FUS_RUNNING:
                     client = FUSClient(t.ipc)
                 elif events[0].payload == EVT_PAYLOAD_WS_RUNNING:

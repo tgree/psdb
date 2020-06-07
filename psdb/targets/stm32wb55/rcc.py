@@ -163,7 +163,7 @@ class RCC(Device):
                                             ('LSECSSIE',        1),
                                             ('HSI48RDYIE',      1),
                                             ('LSI2RDYIE',       1),
-                                           ]),
+                                            ]),
             Reg32('CIFR',           0x01C, [('LSI1RDYF',        1),
                                             ('LSERDYF',         1),
                                             ('MSIRDYF',         1),

@@ -1,5 +1,4 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
-import struct
 
 
 class LinkRef(object):

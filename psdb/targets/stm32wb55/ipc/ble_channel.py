@@ -16,6 +16,7 @@ command since the new command overwrites the completion buffer (not to mention
 the obvious race condition).
 '''
 from . import packet
+from .. import ipcc
 
 
 # HCI Commands
@@ -112,6 +113,7 @@ class BLEChannel(object):
             event = self.ipc.mailbox.pop_ble_event()
             if event is None:
                 self.ipc.clear_rx_flag(self.event_channel)
+                self.ipc.mm_channel.release_posted_events()
                 return events
 
             print(event)
@@ -119,19 +121,15 @@ class BLEChannel(object):
 
             if not isinstance(event, (packet.BLECommandStatus,
                                       packet.BLECommandComplete)):
-                self.ipc.mailbox.push_mm_free_event(event)
+                self.ipc.mm_channel.post_event(event)
 
     def wait_and_pop_all_events(self, timeout=None, dump=False):
         '''
-        Waits for the event flag to be set and then pops all events.
+        Waits for the event flag to be set and then pops all events.  Returns
+        an empty list if the timeout expired.
         '''
-        events = []
-        while not events:
+        try:
             self.ipc.wait_rx_occupied(self.event_channel, timeout=timeout)
-            new_events = self.pop_all_events(dump=dump)
-            if not new_events:
-                return events
-
-            events += new_events
-
-        return events
+            return self.pop_all_events(dump=dump)
+        except ipcc.TimeoutError:
+            return []

@@ -4,7 +4,6 @@ import psdb.probes
 import psdb.targets
 
 import argparse
-import time
 import sys
 
 
@@ -25,7 +24,8 @@ def main(rv):
     f     = probe.set_tck_freq(rv.probe_freq)
     print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
 
-    # Use the probe to detect a target platform - it should be 
+    # Use the probe to detect a target platform - it should be one of the
+    # supported wireless platforms.
     target = probe.probe(verbose=rv.verbose, connect_under_reset=True)
     assert isinstance(target, SUPPORTED_PLATFORMS)
 

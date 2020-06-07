@@ -2,6 +2,7 @@
 import usb
 from . import stlink
 from . import cdb
+import psdb
 
 
 # Unknown commands sniffed via debugger:

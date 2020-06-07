@@ -123,7 +123,6 @@ class FLASH(Device, Flash):
         self.otp_base       = otp_base
         self.otp_len        = otp_len
 
-
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
 
@@ -311,4 +310,3 @@ class FLASH(Device, Flash):
         self._flash_optr(optr, verbose=verbose)
         return self._trigger_obl_launch(verbose=verbose,
                                         connect_under_reset=connect_under_reset)
-
