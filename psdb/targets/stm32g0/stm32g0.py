@@ -62,7 +62,7 @@ class STM32G0(Target):
         ap = db.aps[0]
         if not isinstance(ap, psdb.access_port.AHBAP):
             return None
-        
+
         # Identify the STM32G0 through the base component's CIDR/PIDR
         # registers.
         c = db.aps[0].base_component
