@@ -3,6 +3,10 @@ from ..device import Device, Reg32
 import time
 
 
+class TimeoutError(Exception):
+    pass
+
+
 class IPCC(Device):
     '''
     Driver for the STM Inter-Processor Communication Controller (IPCC) device.
@@ -132,6 +136,8 @@ class IPCC(Device):
         t0      = time.time()
         while time.time() - t0 < timeout and not self.get_tx_free_flag(channel):
             time.sleep(0.001)
+        if not self.get_tx_free_flag(channel):
+            raise TimeoutError('Timed out waiting for TX free flag')
 
     def wait_rx_occupied(self, channel, timeout=None):
         '''
@@ -143,3 +149,5 @@ class IPCC(Device):
         t0      = time.time()
         while time.time() - t0 < timeout and not self.get_rx_flag(channel):
             time.sleep(0.001)
+        if not self.get_rx_flag(channel):
+            raise TimeoutError('Timed out waiting for RX occupied flag')
