@@ -11,6 +11,7 @@ from . import stm32wb55
 __all__ = ['Target',
            'MemRegion',
            'Reg',
+           'RegDiv',
            'MemDevice',
            ]
 

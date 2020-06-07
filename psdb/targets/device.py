@@ -1,5 +1,4 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import types
 
 
 class Reg(object):
@@ -58,6 +57,7 @@ class Reg32W(Reg):
 
     def write(self, dev, v):
         dev._write_32(v, self.offset)
+
 
 class RDCapture(object):
     def __init__(self, reg, dev):
