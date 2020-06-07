@@ -22,6 +22,7 @@ class WS_TYPE(object):
     MAC_802154_RLV        = 0x65
     BLE_ZIGBEE_FFD_STATIC = 0x70
 
+
 WS_NAME = {
     WS_TYPE.UNKNOWN               : 'Unknown',
     WS_TYPE.BLE_STANDARD          : 'BLE Standard',

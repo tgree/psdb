@@ -27,7 +27,7 @@ def write_sys_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):
         +-------------------------------------------------------------------+
         |                             PREV PTR                              |
         +----------------+---------------------------------+----------------+
-        |  TYPE = 0x10   |             OPCODE              |     PAYLEN     | 
+        |  TYPE = 0x10   |             OPCODE              |     PAYLEN     |
         +----------------+---------------------------------+----------------+
         |   PAYLOAD...
         +-----------------
@@ -122,7 +122,7 @@ class SysEvent(object):
 
     def __repr__(self):
         return ('SysEvent({subevtcode: 0x%04X, payload: %s})'
-            % (self.subevtcode, self.payload))
+                % (self.subevtcode, self.payload))
 
 
 def write_ble_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):
@@ -135,7 +135,7 @@ def write_ble_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):
         +-------------------------------------------------------------------+
         |                             PREV PTR                              |
         +----------------+---------------------------------+----------------+
-        |  TYPE = 0x01   |            CMDCODE              |     PAYLEN     | 
+        |  TYPE = 0x01   |            CMDCODE              |     PAYLEN     |
         +----------------+---------------------------------+----------------+
         |   PAYLOAD...
         +-----------------

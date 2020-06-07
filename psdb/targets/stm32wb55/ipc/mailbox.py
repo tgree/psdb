@@ -55,7 +55,7 @@ class Mailbox(object):
                            0x00000000)
 
     def write_tables(self):
-        '''
+        r'''
         Writes functional mailbox tables to the IPCC mailbox base address.  The
         different types of firmware have different minimal table requirements:
 
