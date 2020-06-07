@@ -5,6 +5,7 @@ import struct
 import psdb
 from .mailbox import Mailbox
 from .system_channel import (SystemChannel,
+                             SHCI_SUBEVTCODE_READY,
                              EVT_PAYLOAD_WS_RUNNING,
                              EVT_PAYLOAD_FUS_RUNNING,
                              )
@@ -80,7 +81,7 @@ class IPC(object):
                 t.ipc.pwr.enable_cpu2_boot()
                 events = t.ipc.system_channel.wait_and_pop_all_events()
                 assert len(events) == 1
-                assert events[0].subevtcode == 0x9200
+                assert events[0].subevtcode == SHCI_SUBEVTCODE_READY
                 if events[0].payload == EVT_PAYLOAD_FUS_RUNNING:
                     client = FUSClient(t.ipc)
                 elif events[0].payload == EVT_PAYLOAD_WS_RUNNING:
