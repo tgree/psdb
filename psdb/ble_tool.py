@@ -77,8 +77,9 @@ def main(rv):
             time.sleep(10)
     except KeyboardInterrupt:
         RUNNING = False
-        thread.join()
         print()
+        print('Quitting...')
+        thread.join()
 
 
 if __name__ == '__main__':
