@@ -41,6 +41,9 @@ class IPC(object):
     def set_tx_flag(self, channel):
         self.ipcc.set_tx_flag(channel)
 
+    def is_tx_free(self, channel):
+        return self.ipcc.get_tx_free_flag(channel)
+
     def wait_tx_free(self, channel, timeout=None):
         self.ipcc.wait_tx_free(channel, timeout=timeout)
 
