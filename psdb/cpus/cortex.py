@@ -4,6 +4,7 @@ import psdb
 
 FLAG_HALTED   = (1<<0)
 
+
 class Cortex(psdb.component.Component):
     '''
     Base class component matcher for Cortex CPUs.  This is where we have common
@@ -43,7 +44,7 @@ class Cortex(psdb.component.Component):
         # still halted.
         if self.flags & FLAG_HALTED:
             return True
-        
+
         # Okay, it was running last time we checked.  Check again since it may
         # have halted.
         if self.scs.is_halted():
