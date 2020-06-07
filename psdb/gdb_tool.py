@@ -371,6 +371,7 @@ class GDBServer(object):
             c.bpu.remove_breakpoint(addr)
         return b'OK'
 
+
 def main(rv):
     if rv.dump:
         for p in psdb.probes.PROBES:
