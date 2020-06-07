@@ -19,6 +19,8 @@ The only safe way to process the queue is to repeatedly pop_front() under a
 while(!sys_table->sys_queue.empty()) loop.  The BLE firmware does not have this
 bug and its queue pointers are in the MM BLE Pool area instead.
 '''
+from .. import ipcc
+
 import struct
 
 
@@ -137,15 +139,11 @@ class SystemChannel(object):
 
     def wait_and_pop_all_events(self, timeout=None, dump=False):
         '''
-        Waits for the event flag to be set and then pops all events.
+        Waits for the event flag to be set and then pops all events.  Returns
+        an empty list if the timeout expired.
         '''
-        events = []
-        while not events:
+        try:
             self.ipc.wait_rx_occupied(self.event_channel, timeout=timeout)
-            new_events = self.pop_all_events(dump=dump)
-            if not new_events:
-                print('Empty event list?')
-
-            events += new_events
-
-        return events
+            return self.pop_all_events(dump=dump)
+        except ipcc.TimeoutError:
+            return []
