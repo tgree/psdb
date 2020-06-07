@@ -113,6 +113,7 @@ class BLEChannel(object):
             event = self.ipc.mailbox.pop_ble_event()
             if event is None:
                 self.ipc.clear_rx_flag(self.event_channel)
+                self.ipc.mm_channel.release_posted_events()
                 return events
 
             print(event)
@@ -120,7 +121,7 @@ class BLEChannel(object):
 
             if not isinstance(event, (packet.BLECommandStatus,
                                       packet.BLECommandComplete)):
-                self.ipc.mailbox.push_mm_free_event(event)
+                self.ipc.mm_channel.post_event(event)
 
     def wait_and_pop_all_events(self, timeout=None, dump=False):
         '''

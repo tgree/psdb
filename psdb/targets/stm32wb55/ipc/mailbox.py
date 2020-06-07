@@ -233,11 +233,3 @@ class Mailbox(object):
             return None
 
         return packet.make_ble_event(self.ap, evt_addr)
-
-    def push_mm_free_event(self, evt):
-        '''
-        Pushes an event to the memory manager return event queue tail.  This
-        queue is used to return events back to the firmware that it allocated
-        out of its memory pool when posting an event.
-        '''
-        self.return_evt_queue.push(evt.addr)

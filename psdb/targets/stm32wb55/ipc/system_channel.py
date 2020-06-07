@@ -125,6 +125,7 @@ class SystemChannel(object):
             event = self.ipc.mailbox.pop_sys_event()
             if event is None:
                 self.ipc.clear_rx_flag(self.event_channel)
+                self.ipc.mm_channel.release_posted_events()
                 return events
 
             print(event)
@@ -135,7 +136,7 @@ class SystemChannel(object):
             if is_fus_ready_event(event):
                 continue
 
-            self.ipc.mailbox.push_mm_free_event(event)
+            self.ipc.mm_channel.post_event(event)
 
     def wait_and_pop_all_events(self, timeout=None, dump=False):
         '''
