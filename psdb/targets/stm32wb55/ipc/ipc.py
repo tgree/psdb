@@ -4,7 +4,10 @@ import struct
 
 import psdb
 from .mailbox import Mailbox
-from .system_channel import SystemChannel
+from .system_channel import (SystemChannel,
+                             EVT_PAYLOAD_WS_RUNNING,
+                             EVT_PAYLOAD_FUS_RUNNING,
+                             )
 from .ble_channel import BLEChannel
 from .fus_client import FUSClient
 from . import ws_factory
@@ -14,9 +17,6 @@ BLE_CMD_CHANNEL         = 1
 BLE_EVENT_CHANNEL       = 1
 SYSTEM_CMD_RSP_CHANNEL  = 2
 SYSTEM_EVENT_CHANNEL    = 2
-
-EVT_PAYLOAD_WS_RUNNING  = b'\x00'
-EVT_PAYLOAD_FUS_RUNNING = b'\x01'
 
 
 class IPC(object):

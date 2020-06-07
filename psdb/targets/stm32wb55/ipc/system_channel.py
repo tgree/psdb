@@ -36,6 +36,10 @@ FUS_ACTIVATE_ANTIROLLBACK   = 0xFC5F
 
 BLE_INIT                    = 0xFC66
 
+# Ready event indicating the firmware is ready to accept commands.
+EVT_PAYLOAD_WS_RUNNING  = b'\x00'
+EVT_PAYLOAD_FUS_RUNNING = b'\x01'
+
 
 class SystemChannel(object):
     def __init__(self, ipc, cmd_rsp_channel, event_channel):
