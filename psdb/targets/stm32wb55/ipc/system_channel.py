@@ -42,6 +42,11 @@ EVT_PAYLOAD_WS_RUNNING  = b'\x00'
 EVT_PAYLOAD_FUS_RUNNING = b'\x01'
 
 
+def is_fus_ready_event(event):
+    return (event.subevtcode == SHCI_SUBEVTCODE_READY and
+            event.payload == EVT_PAYLOAD_FUS_RUNNING)
+
+
 class SystemChannel(object):
     def __init__(self, ipc, cmd_rsp_channel, event_channel):
         super(SystemChannel, self).__init__()
@@ -122,6 +127,12 @@ class SystemChannel(object):
 
             print(event)
             events.append(event)
+
+            # The only FUS event is the initial Ready event and since FUS
+            # doesn't implement the MM channel, it shouldn't be returned.
+            if is_fus_ready_event(event):
+                continue
+
             self.ipc.mailbox.push_mm_free_event(event)
 
     def wait_and_pop_all_events(self, timeout=None, dump=False):
