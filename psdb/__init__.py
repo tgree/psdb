@@ -10,5 +10,9 @@ from .hexdump import hexdump
 __all__ = ['access_port',
            'component',
            'cpus',
+           'piter',
+           'prange',
+           'PSDBException',
+           'ProbeException',
            'hexdump',
            ]
