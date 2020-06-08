@@ -47,6 +47,12 @@ class QueueRef(object):
     def _get_tail_elem(self):
         return LinkRef(self.ap, self._read_tail())
 
+    def is_empty(self):
+        '''
+        Returns True if the queue is empty, False otherwise.
+        '''
+        return self._read_head() == self.addr
+
     def clear(self):
         '''
         Clears the queue by writing directly to the head and tail pointers.
