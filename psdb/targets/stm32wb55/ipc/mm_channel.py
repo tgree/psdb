@@ -40,4 +40,5 @@ class MMChannel(object):
         print('Releasing events: %s' % self.posted_events)
         self.ipc.set_tx_flag(self.cmd_channel)
         self.ipc.wait_tx_free(self.cmd_channel)
+        assert self.ipc.mailbox.return_evt_queue.is_empty()
         self.posted_events = []
