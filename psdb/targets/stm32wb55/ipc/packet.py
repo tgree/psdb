@@ -176,7 +176,7 @@ class BLECommandStatus(object):
         (plen,
          self.status,
          self.numcmd,
-         self.cmdcode) = struct.unpack_from('BBBH', data, 2)
+         self.cmdcode) = struct.unpack_from('<BBBH', data, 2)
         assert plen == 4
 
     def __repr__(self):
@@ -211,7 +211,7 @@ class BLECommandComplete(object):
 
         (plen,
          self.numcmd,
-         self.cmdcode) = struct.unpack_from('BBH', data, 2)
+         self.cmdcode) = struct.unpack_from('<BBH', data, 2)
         assert plen >= 3
         self.payload = ap.read_bulk(addr + 14, plen - 3)
 
@@ -243,7 +243,7 @@ class BLE_VS_Event(object):
         self.addr = addr
 
         (plen,
-         self.subevtcode) = struct.unpack_from('BH', data, 2)
+         self.subevtcode) = struct.unpack_from('<BH', data, 2)
         assert plen >= 2
         self.payload = ap.read_bulk(addr + 13, plen - 2)
 
