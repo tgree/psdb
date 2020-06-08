@@ -24,7 +24,7 @@ def poll_loop(client):
 
     print('Looping on BLE events...')
     while RUNNING:
-        client.ipc.ble_channel.wait_and_pop_all_events(dump=True, timeout=1)
+        client.ipc.ble_channel.wait_and_pop_all_events(timeout=1)
 
 
 def main(rv):
