@@ -249,7 +249,7 @@ class BLE_VS_Event(object):
 
     def __repr__(self):
         return ('BLE_VS_Event({subevtcode: 0x%04X, payload: %s})'
-                % (self.subevtcode, self.payload))
+                % (self.subevtcode, hexify(self.payload)))
 
 
 def make_ble_event(ap, addr):
