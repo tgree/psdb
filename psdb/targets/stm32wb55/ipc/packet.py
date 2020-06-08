@@ -92,15 +92,12 @@ class SysEvent(object):
        ... SUBEVTCODE    |   PAYLOAD...
         +----------------+-----------------
 
+    MM Free Required: Yes, except if we are in FUS mode.
+
     The packet payload starts immediately after the PAYLEN field (SUBEVTCODE
     is part of the packet payload).  The actual event payload starts after the
     SUBEVTCODE field and its length is PAYLEN.
 
-    This type of event must be freed back to the firmware using the MM
-    return_evt_queue.  This is done automatically by the system_channel code;
-    the object is effectively a copy of the event.  The only exception is if
-    we are in FUS mode - the only event we get is the "ready" event and FUS
-    does not implement the MM interface for it.
     '''
     def __init__(self, ap, addr):
         self.addr = addr
@@ -163,12 +160,11 @@ class BLECommandStatus(object):
         |    NUMCMD      |             CMDCODE             |
         +----------------+---------------------------------+
 
+    MM Free Required: No.
+
     The NUMCMD field, when printed by some ST dump code, is listed as "numhci".
     Elsewhere, it is noted that this field indicates the number of commands
     that the BLE is willing to accept at once; typically this value is 1.
-
-    This type of event is a Command Response and as such it should not be freed
-    back to the MM.
     '''
     def __init__(self, ap, addr, data):
         self.addr = addr
@@ -198,13 +194,11 @@ class BLECommandComplete(object):
         |             CMDCODE             |   PAYLOAD...
         +---------------------------------+-----------------
 
+    MM Free Required: No.
+
     The NUMCMD field, when printed by some ST dump code, is listed as "numhci".
     Elsewhere, it is noted that this field indicates the number of commands
     that the BLE is willing to accept at once; typically this value is 1.
-
-    This type of event is a Command Response and as such it should not be freed
-    back to the MM.  In fact, this packet occupies the BLE Command Buffer used
-    to send a command, so it would really break things to try and MM-free it.
     '''
     def __init__(self, ap, addr, data):
         self.addr = addr
@@ -236,8 +230,7 @@ class BLE_VS_Event(object):
        ... SUBEVTCODE    |   PAYLOAD...
         +----------------+-----------------
 
-    Since this type of event is not a Command Response, it does need to be
-    freed back to the MM.
+    MM Free Required: Yes.
     '''
     def __init__(self, ap, addr, data):
         self.addr = addr
