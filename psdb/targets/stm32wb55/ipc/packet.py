@@ -252,14 +252,17 @@ class BLE_VS_Event(object):
                 % (self.subevtcode, hexify(self.payload)))
 
 
+BLE_FACTORY_TABLE = {
+    0x0E : BLECommandComplete,
+    0x0F : BLECommandStatus,
+    0xFF : BLE_VS_Event,
+    }
+
+
 def make_ble_event(ap, addr):
     data = ap.read_bulk(addr + 8, 8)
     assert data[0] == 0x04
-    assert data[1] in (0x0E, 0x0F, 0xFF)
-
-    if data[1] == 0x0E:
-        return BLECommandComplete(ap, addr, data)
-    elif data[1] == 0x0F:
-        return BLECommandStatus(ap, addr, data)
-    elif data[1] == 0xFF:
-        return BLE_VS_Event(ap, addr, data)
+    if data[1] not in BLE_FACTORY_TABLE:
+        print('Unexpected BLE event: %s' % hexify(data))
+    factory = BLE_FACTORY_TABLE[data[1]]
+    return factory(ap, addr, data)
