@@ -245,9 +245,67 @@ class BLE_VS_Event(object):
                 % (self.subevtcode, hexify(self.payload)))
 
 
+class LEMetaEvent(object):
+    '''
+        +-------------------------------------------------------------------+
+        |                             NEXT PTR                              |
+        +-------------------------------------------------------------------+
+        |                             PREV PTR                              |
+        +----------------+----------------+----------------+----------------+
+        |  TYPE = 0x04   | EVTCODE = 0x3E |    PAYLEN+1    |  SUBEVTCODE    |
+        +----------------+----------------+----------------+----------------+
+        |   PAYLOAD...
+        +-----------------
+
+    MM Free Required: Yes.
+    '''
+    def __init__(self, ap, addr, data):
+        self.addr = addr
+
+        (plen,
+         self.subevtcode) = struct.unpack_from('<BB', data, 2)
+        assert plen >= 1
+        self.payload = ap.read_bulk(addr + 12, plen - 1)
+
+    def __repr__(self):
+        return ('LEMetaEvent({subevtcode: 0x%02X, payload: %s})'
+                % (self.subevtcode, hexify(self.payload)))
+
+
+class DisconnectCompleteEvent(object):
+    '''
+    Notification that a connection has terminated.
+
+        +-------------------------------------------------------------------+
+        |                             NEXT PTR                              |
+        +-------------------------------------------------------------------+
+        |                             PREV PTR                              |
+        +----------------+----------------+----------------+----------------+
+        |  TYPE = 0x04   | EVTCODE = 0x05 |     STATUS     |  CONN_HANDLE  ...
+        +----------------+----------------+----------------+----------------+
+       ...  CONN_HANDLE  |     REASON     |
+        +----------------+----------------+
+
+    MM Free Required: Yes.
+    '''
+    def __init__(self, ap, addr, data):
+        self.addr = addr
+
+        (self.status,
+         self.connection_handle,
+         self.reason) = struct.unpack_from('<BHB', data, 2)
+
+    def __repr__(self):
+        return ('DisconnectCompleteEvent({status: 0x%02X, '
+                'connection_handle: 0x%04X, reason: 0x%02X})'
+                % (self.status, self.connection_handle, self.reason))
+
+
 BLE_FACTORY_TABLE = {
+    0x05 : DisconnectCompleteEvent,
     0x0E : BLECommandComplete,
     0x0F : BLECommandStatus,
+    0x3E : LEMetaEvent,
     0xFF : BLE_VS_Event,
     }
 
