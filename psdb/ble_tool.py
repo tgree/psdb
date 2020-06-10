@@ -7,6 +7,7 @@ import argparse
 import threading
 import struct
 import time
+import uuid
 import sys
 
 from psdb.targets.stm32wb55.ipc.packet import hexify
@@ -20,6 +21,8 @@ CFG_ER = b'\xFE\xDC\xBA\x09\x87\x65\x43\x21\xFE\xDC\xBA\x09\x87\x65\x43\x21'
 DEV_NAME       = b'PSDBTest'
 DEV_APPEARANCE = struct.pack('<H', 832)
 LOCAL_NAME     = b'\x09' + DEV_NAME
+PSDB_UUID      = uuid.UUID('f4182738-aaed-11ea-9ce0-784f435eb986')
+PSDB_CHAR      = uuid.UUID('210c8390-aaf5-11ea-9ce0-784f435eb986')
 
 
 def gen_manuf_data(client, mac_addr):
@@ -109,6 +112,14 @@ def ble_hci_gap_gatt_init(client):
     print('Setting device appearance...')
     appearance_char.update_value(DEV_APPEARANCE)
 
+    # Add our service.
+    print('Adding PSDB service...')
+    psdb_service = client.ipc.ble_channel.aci_gatt_add_service(PSDB_UUID, 4)
+
+    # Add our characteristic.
+    print('Adding PSDB characteristic...')
+    psdb_char = psdb_service.add_char(PSDB_CHAR, 1, 0x02)
+
     # Initialize default phy.
     print('Setting default PHY...')
     client.ipc.ble_channel.hci_le_set_default_phy(0x00, 0x02, 0x02)
@@ -122,6 +133,8 @@ def ble_hci_gap_gatt_init(client):
     client.ipc.ble_channel.aci_gap_set_authentication_requirement(
         0, 0, 1, 0, 8, 16, 0, 111111, 0)
 
+    return psdb_char
+
 
 def adv_init(client):
     print('Starting advertising...')
@@ -133,7 +146,10 @@ def poll_loop(client):
     print('Starting BLE firmware...')
     print(client.ipc.system_channel.exec_ble_init())
 
-    ble_hci_gap_gatt_init(client)
+    psdb_value = 0
+    psdb_char  = ble_hci_gap_gatt_init(client)
+    psdb_char.update_value(struct.pack('<B', psdb_value))
+
     adv_init(client)
 
     print('Reading local version information...')
@@ -145,6 +161,8 @@ def poll_loop(client):
     print('Looping on BLE events...')
     while RUNNING:
         client.ipc.ble_channel.wait_and_pop_all_events(timeout=1)
+        psdb_value = (psdb_value + 1) & 0xFF
+        psdb_char.update_value(struct.pack('<B', psdb_value))
 
 
 def main(rv):
