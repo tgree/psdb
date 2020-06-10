@@ -217,6 +217,7 @@ class BLEChannel(object):
         self.ipc           = ipc
         self.cmd_channel   = cmd_channel
         self.event_channel = event_channel
+        self.services      = {}
 
     def _start_ble_command(self, opcode, payload=b''):
         self.ipc.mailbox.write_ble_command(opcode, payload)
@@ -369,6 +370,8 @@ class BLEChannel(object):
         dev_name_char   = gatt.Characteristic(gap_service, dev_name_char_handle)
         appearance_char = gatt.Characteristic(gap_service,
                                               appearance_char_handle)
+
+        self.services[gap_service_handle] = gap_service
         return gap_service, dev_name_char, appearance_char
 
     def aci_gap_set_io_capability(self, io_capability):
