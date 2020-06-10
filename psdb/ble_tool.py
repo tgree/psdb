@@ -97,22 +97,18 @@ def ble_hci_gap_gatt_init(client):
 
     # Initialize GAP.
     print('Initializing GAP...')
-    (service_handle,
-     dev_name_char_handle,
-     appearance_char_handle) = client.ipc.ble_channel.aci_gap_init(
-             0x01, False, DEV_NAME)
+    (gap_service,
+     dev_name_char,
+     appearance_char) = client.ipc.ble_channel.aci_gap_init(0x01, False,
+                                                            DEV_NAME)
 
     # Set device name.
     print('Setting device name "%s"...' % DEV_NAME)
-    client.ipc.ble_channel.aci_gatt_update_char_value(service_handle,
-                                                      dev_name_char_handle,
-                                                      DEV_NAME)
+    dev_name_char.update_value(DEV_NAME)
 
     # Set device appearance.
     print('Setting device appearance...')
-    client.ipc.ble_channel.aci_gatt_update_char_value(service_handle,
-                                                      appearance_char_handle,
-                                                      DEV_APPEARANCE)
+    appearance_char.update_value(DEV_APPEARANCE)
 
     # Initialize default phy.
     print('Setting default PHY...')

@@ -16,6 +16,7 @@ command since the new command overwrites the completion buffer (not to mention
 the obvious race condition).
 '''
 from . import packet
+from . import gatt
 from .. import ipcc
 
 import struct
@@ -360,10 +361,14 @@ class BLEChannel(object):
         assert len(rsp) == 1
         assert len(rsp[0].payload) == 7
         assert rsp[0].payload[0] == 0x00
-        (service_handle,
+        (gap_service_handle,
          dev_name_char_handle,
          appearance_char_handle) = struct.unpack('<xHHH', rsp[0].payload)
-        return service_handle, dev_name_char_handle, appearance_char_handle
+        gap_service     = gatt.Service(self, gap_service_handle)
+        dev_name_char   = gatt.Characteristic(gap_service, dev_name_char_handle)
+        appearance_char = gatt.Characteristic(gap_service,
+                                              appearance_char_handle)
+        return gap_service, dev_name_char, appearance_char
 
     def aci_gap_set_io_capability(self, io_capability):
         assert 0 <= io_capability and io_capability <= 4
