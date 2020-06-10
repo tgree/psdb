@@ -20,7 +20,6 @@ CFG_ER = b'\xFE\xDC\xBA\x09\x87\x65\x43\x21\xFE\xDC\xBA\x09\x87\x65\x43\x21'
 DEV_NAME       = b'PSDBTest'
 DEV_APPEARANCE = struct.pack('<H', 832)
 LOCAL_NAME     = b'\x09' + DEV_NAME
-UUID_LIST      = struct.pack('<H', 0x180D)
 
 
 def gen_manuf_data(client, mac_addr):
