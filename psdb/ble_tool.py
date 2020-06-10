@@ -126,7 +126,7 @@ def ble_hci_gap_gatt_init(client):
 def adv_init(client):
     print('Starting advertising...')
     client.ipc.ble_channel.aci_gap_set_discoverable(0x00, 0x80, 0xA0, 0, 0,
-                                                    LOCAL_NAME, b'', 0, 0)
+                                                    LOCAL_NAME, [], 0, 0)
 
 
 def poll_loop(client):

@@ -20,6 +20,7 @@ from . import gatt
 from .. import ipcc
 
 import struct
+import uuid
 
 
 # HCI Commands
@@ -417,8 +418,18 @@ class BLEChannel(object):
                                advertising_interval_max, own_address_type,
                                advertising_filter_policy, len(local_name))
         payload += local_name
-        payload += struct.pack('<B', len(service_uuid_list))
-        payload += service_uuid_list
+        uuid_bytes = b''
+        for u in service_uuid_list:
+            if isinstance(u, uuid.UUID):
+                uuid_bytes += b'\x06'
+                uuid_bytes += bytes(reversed(u.bytes))
+            elif isinstance(u, int):
+                uuid_bytes += b'\x02'
+                uuid_bytes += struct.pack('<H', u)
+            else:
+                raise Exception('Unsupported UUID type!')
+        payload += struct.pack('<B', len(uuid_bytes))
+        payload += uuid_bytes
         payload += struct.pack('<HH', slave_conn_interval_min,
                                slave_conn_interval_max)
         self._start_ble_command(ACI_GAP_SET_DISCOVERABLE, payload)
