@@ -343,6 +343,46 @@ class BLEChannel(object):
         assert len(rsp[0].payload) == 1
         assert rsp[0].payload[0] == 0x00
 
+    def aci_gatt_add_service(self, u, max_attribute_records, primary=True):
+        if isinstance(u, uuid.UUID):
+            payload = b'\x02' + bytes(reversed(u.bytes))
+        elif isinstance(u, int):
+            payload = b'\x01' + struct.pack('<H', u)
+        else:
+            raise Exception('Unsupported UUID type!')
+        payload += b'\x01' if primary else b'\x02'
+        payload += struct.pack('<B', max_attribute_records)
+        self._start_ble_command(ACI_GATT_ADD_SERVICE, payload)
+        rsp = self.wait_and_pop_all_events()
+        assert len(rsp) == 1
+        assert len(rsp[0].payload) == 3
+        assert rsp[0].payload[0] == 0x00
+        service_handle = struct.unpack_from('<H', rsp[0].payload, 1)[0]
+        service = gatt.Service(self, service_handle)
+        self.services[service_handle] = service
+        return service
+
+    def aci_gatt_add_char(self, service_handle, u, char_max_len,
+                          char_properties, security_permissions, gatt_evt_mask,
+                          enc_key_size, is_variable):
+        payload = struct.pack('<H', service_handle)
+        if isinstance(u, uuid.UUID):
+            payload += b'\x02' + bytes(reversed(u.bytes))
+        elif isinstance(u, int):
+            payload += b'\x01' + struct.pack('<H', u)
+        else:
+            raise Exception('Unsupported UUID type!')
+        payload += struct.pack('<HBBBBB', char_max_len, char_properties,
+                               security_permissions, gatt_evt_mask,
+                               enc_key_size, is_variable)
+        self._start_ble_command(ACI_GATT_ADD_CHAR, payload)
+        rsp = self.wait_and_pop_all_events()
+        assert len(rsp) == 1
+        assert len(rsp[0].payload) == 3
+        assert rsp[0].payload[0] == 0x00
+        char_handle = struct.unpack_from('<H', rsp[0].payload, 1)[0]
+        return gatt.Characteristic(self.services[service_handle], char_handle)
+
     def aci_gatt_update_char_value(self, service_handle, char_handle,
                                    char_value, val_offset=0):
         payload = struct.pack('<HHBB', service_handle, char_handle, val_offset,
