@@ -92,15 +92,12 @@ class SysEvent(object):
        ... SUBEVTCODE    |   PAYLOAD...
         +----------------+-----------------
 
+    MM Free Required: Yes, except if we are in FUS mode.
+
     The packet payload starts immediately after the PAYLEN field (SUBEVTCODE
     is part of the packet payload).  The actual event payload starts after the
     SUBEVTCODE field and its length is PAYLEN.
 
-    This type of event must be freed back to the firmware using the MM
-    return_evt_queue.  This is done automatically by the system_channel code;
-    the object is effectively a copy of the event.  The only exception is if
-    we are in FUS mode - the only event we get is the "ready" event and FUS
-    does not implement the MM interface for it.
     '''
     def __init__(self, ap, addr):
         self.addr = addr
@@ -163,12 +160,11 @@ class BLECommandStatus(object):
         |    NUMCMD      |             CMDCODE             |
         +----------------+---------------------------------+
 
+    MM Free Required: No.
+
     The NUMCMD field, when printed by some ST dump code, is listed as "numhci".
     Elsewhere, it is noted that this field indicates the number of commands
     that the BLE is willing to accept at once; typically this value is 1.
-
-    This type of event is a Command Response and as such it should not be freed
-    back to the MM.
     '''
     def __init__(self, ap, addr, data):
         self.addr = addr
@@ -176,7 +172,7 @@ class BLECommandStatus(object):
         (plen,
          self.status,
          self.numcmd,
-         self.cmdcode) = struct.unpack_from('BBBH', data, 2)
+         self.cmdcode) = struct.unpack_from('<BBBH', data, 2)
         assert plen == 4
 
     def __repr__(self):
@@ -198,20 +194,18 @@ class BLECommandComplete(object):
         |             CMDCODE             |   PAYLOAD...
         +---------------------------------+-----------------
 
+    MM Free Required: No.
+
     The NUMCMD field, when printed by some ST dump code, is listed as "numhci".
     Elsewhere, it is noted that this field indicates the number of commands
     that the BLE is willing to accept at once; typically this value is 1.
-
-    This type of event is a Command Response and as such it should not be freed
-    back to the MM.  In fact, this packet occupies the BLE Command Buffer used
-    to send a command, so it would really break things to try and MM-free it.
     '''
     def __init__(self, ap, addr, data):
         self.addr = addr
 
         (plen,
          self.numcmd,
-         self.cmdcode) = struct.unpack_from('BBH', data, 2)
+         self.cmdcode) = struct.unpack_from('<BBH', data, 2)
         assert plen >= 3
         self.payload = ap.read_bulk(addr + 14, plen - 3)
 
@@ -236,30 +230,90 @@ class BLE_VS_Event(object):
        ... SUBEVTCODE    |   PAYLOAD...
         +----------------+-----------------
 
-    Since this type of event is not a Command Response, it does need to be
-    freed back to the MM.
+    MM Free Required: Yes.
     '''
     def __init__(self, ap, addr, data):
         self.addr = addr
 
         (plen,
-         self.subevtcode) = struct.unpack_from('BH', data, 2)
+         self.subevtcode) = struct.unpack_from('<BH', data, 2)
         assert plen >= 2
         self.payload = ap.read_bulk(addr + 13, plen - 2)
 
     def __repr__(self):
         return ('BLE_VS_Event({subevtcode: 0x%04X, payload: %s})'
-                % (self.subevtcode, self.payload))
+                % (self.subevtcode, hexify(self.payload)))
+
+
+class LEMetaEvent(object):
+    '''
+        +-------------------------------------------------------------------+
+        |                             NEXT PTR                              |
+        +-------------------------------------------------------------------+
+        |                             PREV PTR                              |
+        +----------------+----------------+----------------+----------------+
+        |  TYPE = 0x04   | EVTCODE = 0x3E |    PAYLEN+1    |  SUBEVTCODE    |
+        +----------------+----------------+----------------+----------------+
+        |   PAYLOAD...
+        +-----------------
+
+    MM Free Required: Yes.
+    '''
+    def __init__(self, ap, addr, data):
+        self.addr = addr
+
+        (plen,
+         self.subevtcode) = struct.unpack_from('<BB', data, 2)
+        assert plen >= 1
+        self.payload = ap.read_bulk(addr + 12, plen - 1)
+
+    def __repr__(self):
+        return ('LEMetaEvent({subevtcode: 0x%02X, payload: %s})'
+                % (self.subevtcode, hexify(self.payload)))
+
+
+class DisconnectCompleteEvent(object):
+    '''
+    Notification that a connection has terminated.
+
+        +-------------------------------------------------------------------+
+        |                             NEXT PTR                              |
+        +-------------------------------------------------------------------+
+        |                             PREV PTR                              |
+        +----------------+----------------+----------------+----------------+
+        |  TYPE = 0x04   | EVTCODE = 0x05 |     STATUS     |  CONN_HANDLE  ...
+        +----------------+----------------+----------------+----------------+
+       ...  CONN_HANDLE  |     REASON     |
+        +----------------+----------------+
+
+    MM Free Required: Yes.
+    '''
+    def __init__(self, ap, addr, data):
+        self.addr = addr
+
+        (self.status,
+         self.connection_handle,
+         self.reason) = struct.unpack_from('<BHB', data, 2)
+
+    def __repr__(self):
+        return ('DisconnectCompleteEvent({status: 0x%02X, '
+                'connection_handle: 0x%04X, reason: 0x%02X})'
+                % (self.status, self.connection_handle, self.reason))
+
+
+BLE_FACTORY_TABLE = {
+    0x05 : DisconnectCompleteEvent,
+    0x0E : BLECommandComplete,
+    0x0F : BLECommandStatus,
+    0x3E : LEMetaEvent,
+    0xFF : BLE_VS_Event,
+    }
 
 
 def make_ble_event(ap, addr):
     data = ap.read_bulk(addr + 8, 8)
     assert data[0] == 0x04
-    assert data[1] in (0x0E, 0x0F, 0xFF)
-
-    if data[1] == 0x0E:
-        return BLECommandComplete(ap, addr, data)
-    elif data[1] == 0x0F:
-        return BLECommandStatus(ap, addr, data)
-    elif data[1] == 0xFF:
-        return BLE_VS_Event(ap, addr, data)
+    if data[1] not in BLE_FACTORY_TABLE:
+        print('Unexpected BLE event: %s' % hexify(data))
+    factory = BLE_FACTORY_TABLE[data[1]]
+    return factory(ap, addr, data)

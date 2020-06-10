@@ -27,7 +27,7 @@ class BPU(CortexSubDevice):
         self.active_breakpoints = {}
 
     def __repr__(self):
-        return 'BPU (%u breakpoints)' % self.ncode
+        return super(BPU, self).__repr__() + (' (%u breakpoints)' % self.ncode)
 
     def _write_comp(self, v, index):
         self._write_32(v, 0x08 + 4*index)

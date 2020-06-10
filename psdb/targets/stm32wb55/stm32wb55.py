@@ -15,6 +15,8 @@ from ..device import MemDevice
 from .ipc import IPC
 from psdb.targets import Target
 
+import struct
+
 
 DEVICES = [(SRAM,   'SRAM1',    0x20000000, 0x00030000),
            (SRAM,   'SRAM2a',   0x20030000, 0x00008000),
@@ -48,6 +50,8 @@ class STM32WB55(Target):
         self.package    = self.ahb_ap.read_32(0x1FFF7500) & 0x0000001F
         self.mcu_idcode = self.ahb_ap.read_32(0xE0042000)
 
+        self._gen_ble_mac_addr()
+
         for d in DEVICES:
             cls  = d[0]
             name = d[1]
@@ -71,6 +75,37 @@ class STM32WB55(Target):
 
     def __repr__(self):
         return 'STM32WB55 MCU_IDCODE 0x%08X' % self.mcu_idcode
+
+    def _gen_ble_mac_addr(self):
+        '''
+        This is the same algorithm that ST uses to generate a Bluetooth address.
+        There's some really weird stuff going on here; more research is
+        required.  The 24-bit "ST ID" field is 00:80:E1 which is the ST MAC OUI
+        and nothing to do with the ST 16-bit Bluetooth company ID (which is
+        0x0030).  It looks like this is supposed to generate an EUI-48 address,
+        however they are only using 16-bits of their 24-bit OUI and then
+        stuffing 8-bits of a "device ID" (0x26 on the STM32WB55xx) into the
+        rest of the OUI field and then only using 24-bits of their 32-bit
+        unique device number field.
+
+        Essentially, this whole algorithm seems to be crap.  (Or, possibly I
+        need to learn more about this stuff).  We'll revisit this in the
+        future.
+        '''
+        self.uid64_raw    = self.ahb_ap.read_bulk(0x1FFF7580, 8)
+        self.uid64        = struct.unpack('<Q', self.uid64_raw)[0]
+        self.uid64_udn    = ((self.uid64 >>  0) & 0xFFFFFFFF)
+        self.uid64_dev_id = ((self.uid64 >> 32) & 0x000000FF)
+        self.uid64_st_id  = ((self.uid64 >> 40) & 0x00FFFFFF)
+        assert self.uid64_udn != 0xFFFFFFFF
+        self.ble_mac_addr = bytes([
+            (self.uid64_st_id  >>  8) & 0xFF,
+            (self.uid64_st_id  >>  0) & 0xFF,
+            (self.uid64_dev_id >>  0) & 0xFF,
+            (self.uid64_udn    >> 16) & 0xFF,
+            (self.uid64_udn    >>  8) & 0xFF,
+            (self.uid64_udn    >>  0) & 0xFF,
+            ])
 
     def configure_rf_clocks(self):
         '''

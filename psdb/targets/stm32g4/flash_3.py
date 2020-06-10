@@ -90,7 +90,6 @@ class FLASH_3(FLASH_Base):
     def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
                  otp_base, otp_len, **kwargs):
         optr = ap.read_32(dev_base + 0x20)
-        print('OPTR: 0x%08X' % optr)
         if optr == 0:
             raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
                             'try using --srst')
