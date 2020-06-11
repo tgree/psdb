@@ -8,7 +8,7 @@ from psdb.targets import Target
 
 DEVICES = [
            (FLASH,  'FLASH',    0x40022000, 0x08000000, 3300000, 0x1FFF7000,
-                                1024),
+                                1024),  # noqa: E127
            ]
 
 
