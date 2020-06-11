@@ -8,11 +8,11 @@ from . import stm32g4
 from . import stm32wb55
 
 
-__all__ = ['Target',
+__all__ = ['MemDevice',
            'MemRegion',
            'Reg',
            'RegDiv',
-           'MemDevice',
+           'Target',
            ]
 
 TARGETS = [msp432.MSP432P401,
