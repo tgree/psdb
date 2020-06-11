@@ -26,6 +26,7 @@ all: psdb
 clean:
 	rm -rf dist psdb.egg-info
 	find . -name "*.pyc" | xargs rm
+	find . -name __pycache__ | xargs rm -r
 
 .PHONY: test
 test:
