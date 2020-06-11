@@ -1,22 +1,22 @@
 PSDB_VERS := 0.9.0
 PSDB_DEPS := \
-		setup.py						\
-		psdb/*.py						\
-		psdb/block/*.py					\
-		psdb/component/*.py				\
-		psdb/cpus/*.py 					\
-		psdb/elf/*.py					\
-		psdb/probes/*.py				\
-		psdb/probes/stlink/*.py			\
-		psdb/probes/xds110/*.py			\
-		psdb/targets/*.py				\
-		psdb/targets/msp432/*.py		\
-		psdb/targets/stm32/*.py			\
-		psdb/targets/stm32h7/*.py		\
-		psdb/targets/stm32g0/*.py   	\
-		psdb/targets/stm32g4/*.py   	\
-		psdb/targets/stm32wb55/*.py		\
-		psdb/targets/stm32wb55/ipc/*.py \
+		setup.py							\
+		psdb/*.py							\
+		psdb/block/*.py						\
+		psdb/component/*.py					\
+		psdb/cpus/*.py 						\
+		psdb/elf/*.py						\
+		psdb/probes/*.py					\
+		psdb/probes/stlink/*.py				\
+		psdb/probes/xds110/*.py				\
+		psdb/targets/*.py					\
+		psdb/targets/msp432/*.py			\
+		psdb/targets/stm32/*.py				\
+		psdb/targets/stm32h7/*.py			\
+		psdb/targets/stm32g0/*.py   		\
+		psdb/targets/stm32g4/*.py   		\
+		psdb/targets/stm32wb55/*.py			\
+		psdb/targets/stm32wb55/ipc/*.py 	\
 		psdb/util/*.py
 
 .PHONY: all
