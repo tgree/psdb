@@ -5,6 +5,8 @@ PSDB_DEPS := \
 		psdb/block/*.py						\
 		psdb/component/*.py					\
 		psdb/cpus/*.py 						\
+		psdb/devices/*.py                   \
+		psdb/devices/stm32/*.py             \
 		psdb/elf/*.py						\
 		psdb/probes/*.py					\
 		psdb/probes/stlink/*.py				\

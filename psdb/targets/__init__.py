@@ -1,6 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .target import (Target, MemRegion)
-from .device import Device, Reg, Reg32, RegDiv, MemDevice
 from . import msp432
 from . import stm32h7
 from . import stm32g0
@@ -8,13 +7,8 @@ from . import stm32g4
 from . import stm32wb55
 
 
-__all__ = ['Device',
-           'MemDevice',
+__all__ = ['Target',
            'MemRegion',
-           'Reg',
-           'Reg32',
-           'RegDiv',
-           'Target',
            ]
 
 TARGETS = [msp432.MSP432P401,
