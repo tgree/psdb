@@ -12,6 +12,7 @@ PSDB_DEPS := \
 		psdb/targets/*.py					\
 		psdb/targets/msp432/*.py			\
 		psdb/targets/stm32/*.py				\
+		psdb/targets/stm32/peripherals/*.py	\
 		psdb/targets/stm32h7/*.py			\
 		psdb/targets/stm32g0/*.py   		\
 		psdb/targets/stm32g4/*.py   		\

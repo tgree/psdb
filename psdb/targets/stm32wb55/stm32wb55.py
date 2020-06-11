@@ -10,7 +10,7 @@ from ..stm32g4.gpio import GPIO
 from ..stm32g4.adc import ADC
 from ..stm32g4.dma import DMA
 from ..stm32g4.dma_mux import DMAMUX
-from ..stm32 import USB
+from ..stm32.peripherals import USB
 from ..device import MemDevice
 from .ipc import IPC
 from psdb.targets import Target
