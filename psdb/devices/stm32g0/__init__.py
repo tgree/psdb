@@ -1,6 +1,6 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from .usb import USB
+from .flash import FLASH
 
 
-__all__ = ['USB',
+__all__ = ['FLASH',
            ]

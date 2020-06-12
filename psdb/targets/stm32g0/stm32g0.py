@@ -1,14 +1,12 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 import psdb
-from .flash import FLASH
-from .sram import SRAM
-from ..device import MemDevice
+from psdb.devices import MemDevice, stm32g0
 from psdb.targets import Target
 
 
 DEVICES = [
-           (FLASH,  'FLASH',    0x40022000, 0x08000000, 3300000, 0x1FFF7000,
-                                1024),
+           (stm32g0.FLASH,  'FLASH',    0x40022000, 0x08000000, 3300000,
+                                        0x1FFF7000, 1024),  # noqa: E127
            ]
 
 
@@ -43,7 +41,7 @@ class STM32G0(Target):
             # STM32G031xx and STM32G041xx
             sram_len = 8 * 1024
 
-        SRAM(self, self.ahb_ap, 'SRAM', 0x20000000, sram_len)
+        MemDevice(self, self.ahb_ap, 'SRAM', 0x20000000, sram_len)
         MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
                   self.flash.flash_size)
         MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,

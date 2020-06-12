@@ -7,7 +7,7 @@ import math
 import sys
 
 import psdb.probes
-from psdb.targets import Reg, RegDiv
+from psdb.devices import Reg, RegDiv
 import tgcurses
 import tgcurses.ui
 
@@ -51,7 +51,7 @@ def draw_dev_registers(reg_win, dev):
         reg_win.hide()
 
 
-def draw_decode(reg_win, decode_win, dev):
+def draw_decode(reg_win, decode_win, dev):  # noqa: C901
     if not dev.regs:
         decode_win.hide()
         return
@@ -237,7 +237,7 @@ def handle_pagedown(reg_win, mem_win, decode_win, d):
         mem_down(reg_win, mem_win, decode_win, d, nrows*32)
 
 
-def main(screen, args):
+def main(screen, args):  # noqa: C901
     # Extract args.
     t = args.target
 

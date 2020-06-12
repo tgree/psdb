@@ -9,11 +9,9 @@ event pointer is straight to the TL_EvtSerial_t payload.
 In all cases, the maximum payload length is 255 bytes - the presence or absence
 of the linked-list pointers doesn't limit the size of the rest of the packet.
 '''
+from psdb.util import hexify
+
 import struct
-
-
-def hexify(data):
-    return ' '.join('%02X' % v for v in data)
 
 
 def write_sys_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):

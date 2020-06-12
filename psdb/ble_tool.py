@@ -2,6 +2,7 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
 import psdb.probes
 import psdb.targets
+from psdb.util import hexify
 
 import argparse
 import threading
@@ -9,8 +10,6 @@ import struct
 import time
 import uuid
 import sys
-
-from psdb.targets.stm32wb55.ipc.packet import hexify
 
 
 RUNNING = True

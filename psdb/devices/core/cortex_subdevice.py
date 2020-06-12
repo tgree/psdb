@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-from ..targets.device import Device
-from ..component import Component
-from .cortex import Cortex
+from psdb.devices import Device
+from psdb.component import Component
+from psdb.cpus.cortex import Cortex
 
 
 class CortexSubDevice(Device, Component):

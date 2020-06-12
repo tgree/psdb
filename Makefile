@@ -1,22 +1,29 @@
 PSDB_VERS := 0.9.0
 PSDB_DEPS := \
-		setup.py						\
-		psdb/*.py						\
-		psdb/block/*.py					\
-		psdb/component/*.py				\
-		psdb/cpus/*.py 					\
-		psdb/elf/*.py					\
-		psdb/probes/*.py				\
-		psdb/probes/stlink/*.py			\
-		psdb/probes/xds110/*.py			\
-		psdb/targets/*.py				\
-		psdb/targets/msp432/*.py		\
-		psdb/targets/stm32/*.py			\
-		psdb/targets/stm32h7/*.py		\
-		psdb/targets/stm32g0/*.py   	\
-		psdb/targets/stm32g4/*.py   	\
-		psdb/targets/stm32wb55/*.py		\
-		psdb/targets/stm32wb55/ipc/*.py \
+		setup.py							\
+		psdb/*.py							\
+		psdb/block/*.py						\
+		psdb/component/*.py					\
+		psdb/cpus/*.py 						\
+		psdb/devices/*.py                   \
+		psdb/devices/core/*.py				\
+		psdb/devices/msp432/*.py            \
+		psdb/devices/stm32/*.py             \
+		psdb/devices/stm32g0/*.py   		\
+		psdb/devices/stm32g4/*.py   		\
+		psdb/devices/stm32h7/*.py			\
+		psdb/devices/stm32wb55/*.py			\
+		psdb/devices/stm32wb55/ipc/*.py 	\
+		psdb/elf/*.py						\
+		psdb/probes/*.py					\
+		psdb/probes/stlink/*.py				\
+		psdb/probes/xds110/*.py				\
+		psdb/targets/*.py					\
+		psdb/targets/msp432/*.py			\
+		psdb/targets/stm32g0/*.py   		\
+		psdb/targets/stm32g4/*.py   		\
+		psdb/targets/stm32h7/*.py			\
+		psdb/targets/stm32wb55/*.py			\
 		psdb/util/*.py
 
 .PHONY: all
@@ -26,6 +33,7 @@ all: psdb
 clean:
 	rm -rf dist psdb.egg-info
 	find . -name "*.pyc" | xargs rm
+	find . -name __pycache__ | xargs rm -r
 
 .PHONY: test
 test:
@@ -43,5 +51,6 @@ install: psdb
 uninstall:
 	sudo pip3 uninstall psdb
 
-dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS)
-	python3 setup.py sdist bdist_wheel
+dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS) Makefile
+	python3 setup.py --quiet sdist bdist_wheel
+	python3 -m twine check $@
