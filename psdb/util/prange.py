@@ -16,6 +16,9 @@ FRAC_LUT = [
 
 
 class piter(object):
+    '''
+    Iterator class that also displays a progress bar.
+    '''
     def __init__(self, seq, width=40, verbose=True):
         self.seq     = seq
         self.width   = width
