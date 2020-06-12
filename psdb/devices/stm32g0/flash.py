@@ -43,7 +43,7 @@ class UnlockedOptionsContextManager(object):
 
 class FLASH(Device, Flash):
     '''
-    Driver for the FLASH device on the STM32G0 series of MCUs:
+    Driver for the FLASH device on the STM32G0 series of MCUs.
     '''
     REGS = [Reg32 ('ACR',           0x000),
             Reg32W('KEYR',          0x008),
