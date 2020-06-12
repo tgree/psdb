@@ -6,6 +6,7 @@ PSDB_DEPS := \
 		psdb/component/*.py					\
 		psdb/cpus/*.py 						\
 		psdb/devices/*.py                   \
+		psdb/devices/core/*.py				\
 		psdb/devices/msp432/*.py            \
 		psdb/devices/stm32/*.py             \
 		psdb/devices/stm32g0/*.py   		\
