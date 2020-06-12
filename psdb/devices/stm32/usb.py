@@ -1,5 +1,5 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-from ..device import Device, Reg32
+from psdb.devices import Device, Reg32
 
 
 class USB(Device):

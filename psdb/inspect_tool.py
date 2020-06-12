@@ -7,7 +7,7 @@ import math
 import sys
 
 import psdb.probes
-from psdb.targets import Reg, RegDiv
+from psdb.devices import Reg, RegDiv
 import tgcurses
 import tgcurses.ui
 

@@ -1,5 +1,5 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-from ..targets.device import Device
+from psdb.devices import Device
 from ..component import Component
 from .cortex import Cortex
 

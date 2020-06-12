@@ -5,18 +5,24 @@ PSDB_DEPS := \
 		psdb/block/*.py						\
 		psdb/component/*.py					\
 		psdb/cpus/*.py 						\
+		psdb/devices/*.py                   \
+		psdb/devices/msp432/*.py            \
+		psdb/devices/stm32/*.py             \
+		psdb/devices/stm32g0/*.py   		\
+		psdb/devices/stm32g4/*.py   		\
+		psdb/devices/stm32h7/*.py			\
+		psdb/devices/stm32wb55/*.py			\
+		psdb/devices/stm32wb55/ipc/*.py 	\
 		psdb/elf/*.py						\
 		psdb/probes/*.py					\
 		psdb/probes/stlink/*.py				\
 		psdb/probes/xds110/*.py				\
 		psdb/targets/*.py					\
 		psdb/targets/msp432/*.py			\
-		psdb/targets/stm32/*.py				\
 		psdb/targets/stm32g0/*.py   		\
 		psdb/targets/stm32g4/*.py   		\
 		psdb/targets/stm32h7/*.py			\
 		psdb/targets/stm32wb55/*.py			\
-		psdb/targets/stm32wb55/ipc/*.py 	\
 		psdb/util/*.py
 
 .PHONY: all
