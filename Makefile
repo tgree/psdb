@@ -44,5 +44,5 @@ install: psdb
 uninstall:
 	sudo pip3 uninstall psdb
 
-dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS)
+dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS) Makefile
 	python3 setup.py --quiet sdist bdist_wheel
