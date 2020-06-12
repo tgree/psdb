@@ -4,18 +4,9 @@ from .ipcc import IPCC
 from .pwr import PWR
 from .rcc import RCC
 
-from ..stm32g4 import ADC, DMA, DMAMUX, GPIO, GPT32
-from ..stm32 import USB
 
-
-__all__ = ['ADC',
-           'DMA',
-           'DMAMUX',
-           'FLASH',
+__all__ = ['FLASH',
            'IPCC',
-           'GPIO',
-           'GPT32',
            'PWR',
            'RCC',
-           'USB',
            ]

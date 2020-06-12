@@ -1,7 +1,7 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 import psdb
 from psdb.devices.stm32wb55.ipc import IPC
-from psdb.devices import MemDevice, stm32wb55
+from psdb.devices import MemDevice, stm32, stm32wb55
 from psdb.targets import Target
 
 import struct
@@ -10,18 +10,18 @@ import struct
 DEVICES = [(MemDevice,        'SRAM1',    0x20000000, 0x00030000),
            (MemDevice,        'SRAM2a',   0x20030000, 0x00008000),
            (MemDevice,        'SRAM2b',   0x20038000, 0x00008000),
-           (stm32wb55.GPT32,  'TIM2',     0x40000000),
-           (stm32wb55.USB,    'USB',      0x40006800),
-           (stm32wb55.DMA,    'DMA1',     0x40020000),
-           (stm32wb55.DMA,    'DMA2',     0x40020400),
-           (stm32wb55.DMAMUX, 'DMAMUX',   0x40020800),
-           (stm32wb55.GPIO,   'GPIOA',    0x48000000),
-           (stm32wb55.GPIO,   'GPIOB',    0x48000400),
-           (stm32wb55.GPIO,   'GPIOC',    0x48000800),
-           (stm32wb55.GPIO,   'GPIOD',    0x48000C00),
-           (stm32wb55.GPIO,   'GPIOE',    0x48001000),
-           (stm32wb55.GPIO,   'GPIOH',    0x48001C00),
-           (stm32wb55.ADC,    'ADC1',     0x50040000, 1, 1),
+           (stm32.GPT32,      'TIM2',     0x40000000),
+           (stm32.USB,        'USB',      0x40006800),
+           (stm32.DMA,        'DMA1',     0x40020000),
+           (stm32.DMA,        'DMA2',     0x40020400),
+           (stm32.DMAMUX,     'DMAMUX',   0x40020800),
+           (stm32.GPIO,       'GPIOA',    0x48000000),
+           (stm32.GPIO,       'GPIOB',    0x48000400),
+           (stm32.GPIO,       'GPIOC',    0x48000800),
+           (stm32.GPIO,       'GPIOD',    0x48000C00),
+           (stm32.GPIO,       'GPIOE',    0x48001000),
+           (stm32.GPIO,       'GPIOH',    0x48001C00),
+           (stm32.ADC,        'ADC1',     0x50040000, 1, 1),
            (stm32wb55.RCC,    'RCC',      0x58000000),
            (stm32wb55.PWR,    'PWR',      0x58000400),
            (stm32wb55.IPCC,   'IPCC',     0x58000C00),
