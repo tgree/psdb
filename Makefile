@@ -45,4 +45,4 @@ uninstall:
 	sudo pip3 uninstall psdb
 
 dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS)
-	python3 setup.py sdist bdist_wheel
+	python3 setup.py --quiet sdist bdist_wheel
