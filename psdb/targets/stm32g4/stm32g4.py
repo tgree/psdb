@@ -4,9 +4,9 @@ from psdb.devices import MemDevice, stm32g4
 from psdb.targets import Target
 
 
-DEVICES_2 = [(stm32g4.SRAM,    'SRAM1',    0x20000000, 0x00004000),
-             (stm32g4.SRAM,    'SRAM2',    0x20004000, 0x00001800),
-             (stm32g4.SRAM,    'CCM SRAM', 0x20005800, 0x00002800),
+DEVICES_2 = [(MemDevice,       'SRAM1',    0x20000000, 0x00004000),
+             (MemDevice,       'SRAM2',    0x20004000, 0x00001800),
+             (MemDevice,       'CCM SRAM', 0x20005800, 0x00002800),
              (stm32g4.GPT32,   'TIM2',     0x40000000),
              (stm32g4.GPT16x4, 'TIM3',     0x40000400),
              (stm32g4.GPT16x4, 'TIM4',     0x40000800),
@@ -41,9 +41,9 @@ DEVICES_2 = [(stm32g4.SRAM,    'SRAM1',    0x20000000, 0x00004000),
              (stm32g4.DBGMCU,  'DBGMCU',   0xE0042000),
              ]
 
-DEVICES_3 = [(stm32g4.SRAM,    'SRAM1',    0x20000000, 0x00014000),
-             (stm32g4.SRAM,    'SRAM2',    0x20014000, 0x00004000),
-             (stm32g4.SRAM,    'CCM SRAM', 0x20018000, 0x00008000),
+DEVICES_3 = [(MemDevice,       'SRAM1',    0x20000000, 0x00014000),
+             (MemDevice,       'SRAM2',    0x20014000, 0x00004000),
+             (MemDevice,       'CCM SRAM', 0x20018000, 0x00008000),
              (stm32g4.GPT32,   'TIM2',     0x40000000),
              (stm32g4.GPT16x4, 'TIM3',     0x40000400),
              (stm32g4.GPT16x4, 'TIM4',     0x40000800),
@@ -84,9 +84,9 @@ DEVICES_3 = [(stm32g4.SRAM,    'SRAM1',    0x20000000, 0x00014000),
              ]
 
 
-DEVICES_4 = [(stm32g4.SRAM,    'SRAM1',    0x20000000, 0x00014000),
-             (stm32g4.SRAM,    'SRAM2',    0x20014000, 0x00004000),
-             (stm32g4.SRAM,    'CCM SRAM', 0x20018000, 0x00004000),
+DEVICES_4 = [(MemDevice,       'SRAM1',    0x20000000, 0x00014000),
+             (MemDevice,       'SRAM2',    0x20014000, 0x00004000),
+             (MemDevice,       'CCM SRAM', 0x20018000, 0x00004000),
              (stm32g4.GPT32,   'TIM2',     0x40000000),
              (stm32g4.GPT16x4, 'TIM3',     0x40000400),
              (stm32g4.GPT16x4, 'TIM4',     0x40000800),

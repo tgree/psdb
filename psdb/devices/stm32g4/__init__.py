@@ -18,7 +18,6 @@ from .general_purpose_timer_32 import GPT32
 from .opamp import OPAMP
 from .pwr import PWR
 from .rcc import RCC
-from .sram import SRAM
 from .syscfg import SYSCFG
 from .vrefbuf import VREF
 
@@ -42,7 +41,6 @@ __all__ = ['ACT',
            'OPAMP',
            'PWR',
            'RCC',
-           'SRAM',
            'SYSCFG',
            'VREF',
            ]

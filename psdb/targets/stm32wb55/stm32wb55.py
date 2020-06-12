@@ -7,9 +7,9 @@ from psdb.targets import Target
 import struct
 
 
-DEVICES = [(stm32wb55.SRAM,   'SRAM1',    0x20000000, 0x00030000),
-           (stm32wb55.SRAM,   'SRAM2a',   0x20030000, 0x00008000),
-           (stm32wb55.SRAM,   'SRAM2b',   0x20038000, 0x00008000),
+DEVICES = [(MemDevice,        'SRAM1',    0x20000000, 0x00030000),
+           (MemDevice,        'SRAM2a',   0x20030000, 0x00008000),
+           (MemDevice,        'SRAM2b',   0x20038000, 0x00008000),
            (stm32wb55.GPT32,  'TIM2',     0x40000000),
            (stm32wb55.USB,    'USB',      0x40006800),
            (stm32wb55.DMA,    'DMA1',     0x40020000),
