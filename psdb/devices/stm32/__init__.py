@@ -11,6 +11,7 @@ from .general_purpose_timer_16x2 import GPT16x2
 from .general_purpose_timer_16x4 import GPT16x4
 from .general_purpose_timer_32 import GPT32
 from .usb import USB
+from . import flash_type1
 
 
 __all__ = ['ACT',
@@ -19,6 +20,7 @@ __all__ = ['ACT',
            'DAC',
            'DMA',
            'DMAMUX',
+           'flash_type1',
            'GPIO',
            'GPT16x1',
            'GPT16x2',

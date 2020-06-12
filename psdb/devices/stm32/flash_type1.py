@@ -41,9 +41,9 @@ class UnlockedOptionsContextManager(object):
         self.flash._CR.OPTLOCK = 1
 
 
-class FLASH_Base(Device, Flash):
+class FLASH(Device, Flash):
     '''
-    Common base class for STM32G4 flash devices.
+    Common base class for many STM32 flash devices.
     '''
     def __init__(self, target, regs, sector_size, ap, name, dev_base, mem_base,
                  max_write_freq, otp_base, otp_len, **kwargs):

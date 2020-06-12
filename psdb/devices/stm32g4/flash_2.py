@@ -1,9 +1,9 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 from ..device import Reg32, Reg32W
-from .flash_base import FLASH_Base
+from ..stm32 import flash_type1
 
 
-class FLASH_2(FLASH_Base):
+class FLASH_2(flash_type1.FLASH):
     '''
     Driver for the FLASH category 2 device on the STM32G4 series of MCUs:
         STM32G431
