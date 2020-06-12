@@ -1,5 +1,5 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
-from ..targets.device import Reg32, Reg32R, Reg32W
+from psdb.devices import Reg32, Reg32R, Reg32W
 from . import scs_base
 
 import collections

@@ -1,11 +1,10 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb
-from .flctl import FLCTL
-from ..device import MemDevice
+from psdb.devices import MemDevice, msp432
 from psdb.targets import Target
 
 
-DEVICES = [(FLCTL,  'FLCTL',    0x40011000, 0x00201108),
+DEVICES = [(msp432.FLCTL,  'FLCTL',    0x40011000, 0x00201108),
            ]
 
 

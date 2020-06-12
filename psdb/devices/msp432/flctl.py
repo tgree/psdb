@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from builtins import range
 
-from ..device import Device, Reg32
+from psdb.devices import Device, Reg32
 from .. import flash
 
 
