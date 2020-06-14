@@ -2,6 +2,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb.probes
 import psdb.elf
+import psdb.hexfile
 
 import argparse
 import hashlib
@@ -10,6 +11,7 @@ import sys
 
 
 IMAGE_PARSERS = [psdb.elf.ELFBinary,
+                 psdb.hexfile.HEXFile,
                  ]
 
 
