@@ -9,6 +9,20 @@ import time
 import sys
 
 
+IMAGE_PARSERS = [psdb.elf.ELFBinary,
+                 ]
+
+
+def parse_image(path):
+    for ip in IMAGE_PARSERS:
+        try:
+            return ip(rv.flash)
+        except Exception:
+            pass
+
+    raise Exception('Unrecognized file type.')
+
+
 def main(rv):
     # Dump all debuggers if requested.
     if rv.dump_debuggers:
@@ -74,8 +88,9 @@ def main(rv):
         print('Burning "%s"...' % rv.flash)
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
-        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=True,
-                              bank_swap=rv.flash_inactive)
+        img = parse_image(rv.flash)
+        target.flash.burn_dv(img.flash_dv, verbose=True,
+                             bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
