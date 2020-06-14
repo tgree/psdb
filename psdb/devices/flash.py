@@ -192,13 +192,3 @@ class Flash(object):
             elapsed = time.time() - t0
             print('Verified %u bytes in %.2f seconds (%.2f K/s).' %
                   (total_len, elapsed, total_len / (1024*elapsed)))
-
-    def burn_elf(self, elf_bin, **kwargs):
-        '''
-        Given a psdb.elf.ELFBinary whose layout is appropriate for our target
-        device, burn it into flash.  ELF program headers targetting regions
-        outside of the flash are ignored.
-        '''
-        dv = [(s['p_paddr'], s.data() + b'\x00'*(s['p_memsz'] - s['p_filesz']))
-              for s in elf_bin.iter_segments() if s['p_type'] == 'PT_LOAD']
-        self.burn_dv(dv, **kwargs)
