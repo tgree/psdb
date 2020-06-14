@@ -15,6 +15,7 @@ PSDB_DEPS := \
 		psdb/devices/stm32wb55/*.py			\
 		psdb/devices/stm32wb55/ipc/*.py 	\
 		psdb/elf/*.py						\
+		psdb/hexfile/*.py					\
 		psdb/probes/*.py					\
 		psdb/probes/stlink/*.py				\
 		psdb/probes/xds110/*.py				\
