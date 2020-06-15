@@ -16,7 +16,6 @@ command since the new command overwrites the completion buffer (not to mention
 the obvious race condition).
 '''
 from . import packet
-from . import gatt
 from .. import ipcc
 
 import struct
@@ -240,10 +239,6 @@ class BLEChannel(object):
         assert 0 <= rx_phys and rx_phys <= 3
         payload = struct.pack('<BBB', all_phys, tx_phys, rx_phys)
         self._start_ble_command(HCI_LE_SET_DEFAULT_PHY, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_hal_read_config_data(self, offset):
         '''
@@ -298,43 +293,30 @@ class BLEChannel(object):
         assert len(data) == WRITE_CONFIG_DATA_OFFSETS[offset]
         payload = struct.pack('<BB', offset, len(data)) + data
         self._start_ble_command(ACI_HAL_WRITE_CONFIG_DATA, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_hal_write_config_data_pubaddr(self, ble_mac_addr):
-        return self.aci_hal_write_config_data(0x00,
-                                              bytes(reversed(ble_mac_addr)))
+        self.aci_hal_write_config_data(0x00, bytes(reversed(ble_mac_addr)))
 
     def aci_hal_write_config_data_div(self, data):
-        return self.aci_hal_write_config_data(0x06, data)
+        self.aci_hal_write_config_data(0x06, data)
 
     def aci_hal_write_config_data_er(self, data):
-        return self.aci_hal_write_config_data(0x08, data)
+        self.aci_hal_write_config_data(0x08, data)
 
     def aci_hal_write_config_data_ir(self, data):
-        return self.aci_hal_write_config_data(0x18, data)
+        self.aci_hal_write_config_data(0x18, data)
 
     def aci_hal_write_config_data_random_address(self, data):
-        return self.aci_hal_write_config_data(0x2E, data)
+        self.aci_hal_write_config_data(0x2E, data)
 
     def aci_hal_set_tx_power_level(self, enable_high_power, pa_level):
         assert isinstance(enable_high_power, bool)
         assert 0x00 <= pa_level and pa_level <= 0x1F
         payload = struct.pack('<BB', int(enable_high_power), pa_level)
         self._start_ble_command(ACI_HAL_SET_TX_POWER_LEVEL, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_gatt_init(self):
         self._start_ble_command(ACI_GATT_INIT)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_gatt_add_service(self, u, max_attribute_records, primary=True):
         if isinstance(u, uuid.UUID):
@@ -346,14 +328,6 @@ class BLEChannel(object):
         payload += b'\x01' if primary else b'\x02'
         payload += struct.pack('<B', max_attribute_records)
         self._start_ble_command(ACI_GATT_ADD_SERVICE, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 3
-        assert rsp[0].payload[0] == 0x00
-        service_handle = struct.unpack_from('<H', rsp[0].payload, 1)[0]
-        service = gatt.Service(self, service_handle)
-        self.services[service_handle] = service
-        return service
 
     def aci_gatt_add_char(self, service_handle, u, char_max_len,
                           char_properties, security_permissions, gatt_evt_mask,
@@ -369,22 +343,12 @@ class BLEChannel(object):
                                security_permissions, gatt_evt_mask,
                                enc_key_size, is_variable)
         self._start_ble_command(ACI_GATT_ADD_CHAR, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 3
-        assert rsp[0].payload[0] == 0x00
-        char_handle = struct.unpack_from('<H', rsp[0].payload, 1)[0]
-        return gatt.Characteristic(self.services[service_handle], char_handle)
 
     def aci_gatt_update_char_value(self, service_handle, char_handle,
                                    char_value, val_offset=0):
         payload = struct.pack('<HHBB', service_handle, char_handle, val_offset,
                               len(char_value)) + char_value
         self._start_ble_command(ACI_GATT_UPDATE_CHAR_VALUE, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_gap_init(self, role, privacy_enabled, device_name):
         assert not (role & ~0xF)
@@ -392,29 +356,11 @@ class BLEChannel(object):
         payload = struct.pack('<BBB', role, int(privacy_enabled),
                               len(device_name) + 2)
         self._start_ble_command(ACI_GAP_INIT, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 7
-        assert rsp[0].payload[0] == 0x00
-        (gap_service_handle,
-         dev_name_char_handle,
-         appearance_char_handle) = struct.unpack('<xHHH', rsp[0].payload)
-        gap_service     = gatt.Service(self, gap_service_handle)
-        dev_name_char   = gatt.Characteristic(gap_service, dev_name_char_handle)
-        appearance_char = gatt.Characteristic(gap_service,
-                                              appearance_char_handle)
-
-        self.services[gap_service_handle] = gap_service
-        return gap_service, dev_name_char, appearance_char
 
     def aci_gap_set_io_capability(self, io_capability):
         assert 0 <= io_capability and io_capability <= 4
         payload = struct.pack('<B', io_capability)
         self._start_ble_command(ACI_GAP_SET_IO_CAPABILITY, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_gap_set_authentication_requirement(self, bonding_mode, mitm_mode,
                                                sc_support,
@@ -435,10 +381,6 @@ class BLEChannel(object):
                               min_encryption_key_size, max_encryption_key_size,
                               use_fixed_pin, fixed_pin, identity_address_type)
         self._start_ble_command(ACI_GAP_SET_AUTHENTICATION_REQUIREMENT, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def aci_gap_set_discoverable(self, advertising_type,
                                  advertising_interval_min,
@@ -469,10 +411,6 @@ class BLEChannel(object):
         payload += struct.pack('<HH', slave_conn_interval_min,
                                slave_conn_interval_max)
         self._start_ble_command(ACI_GAP_SET_DISCOVERABLE, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert len(rsp[0].payload) == 1
-        assert rsp[0].payload[0] == 0x00
 
     def pop_all_events(self, dump=False):
         '''
