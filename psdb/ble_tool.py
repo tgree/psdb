@@ -24,6 +24,81 @@ PSDB_UUID      = uuid.UUID('f4182738-aaed-11ea-9ce0-784f435eb986')
 PSDB_CHAR      = uuid.UUID('210c8390-aaf5-11ea-9ce0-784f435eb986')
 
 
+class BLEDelegate(object):
+    IDLE                    = 0
+    WAIT_HCI_RESET          = 1
+    WAIT_READ_PUBADDR       = 2
+    WAIT_READ_IR            = 3
+    WAIT_READ_ER            = 4
+    WAIT_READ_RANDOM_ADDR   = 5
+
+    def __init__(self, client):
+        self.client      = client
+        self.ble_channel = self.client.ipc.ble_channel
+        self.state       = self.IDLE
+
+    def start(self):
+        self.client.register_delegate(self)
+
+        print('Starting BLE firmware...')
+        print(self.client.ipc.system_channel.exec_ble_init())
+
+        print('Resetting HCI...')
+        self.ble_channel.hci_reset()
+        self.state = self.WAIT_HCI_RESET
+
+    def handle_event(self, event):
+        print('Random event: %s' % event)
+
+    def handle_command_status(self, event):
+        print('Random command status: %s' % event)
+        raise Exception('Unexpected COMMAND_STATUS event! %s' % event)
+
+    def handle_command_complete(self, event):
+        print('Command complete: %s' % event)
+        if self.state == self.WAIT_HCI_RESET:
+            assert event.payload == b'\x00'
+            print('Reading CONFIG_DATA_PUBADDR...')
+            self.ble_channel.aci_hal_read_config_data_pubaddr()
+            self.state = self.WAIT_READ_PUBADDR
+
+        elif self.state == self.WAIT_READ_PUBADDR:
+            assert event.payload[0]   == 0
+            assert len(event.payload) == 8
+            assert event.payload[1]   == 6
+            print('PUBADDR: %s' % hexify(event.payload[2:]))
+            print('Reading IR key...')
+            self.ble_channel.aci_hal_read_config_data_ir()
+            self.state = self.WAIT_READ_IR
+
+        elif self.state == self.WAIT_READ_IR:
+            assert event.payload[0]   == 0
+            assert len(event.payload) == 18
+            assert event.payload[1]   == 16
+            print('IRK: %s' % hexify(event.payload[2:]))
+            print('Reading ER key...')
+            self.ble_channel.aci_hal_read_config_data_er()
+            self.state = self.WAIT_READ_ER
+
+        elif self.state == self.WAIT_READ_ER:
+            assert event.payload[0]   == 0
+            assert len(event.payload) == 18
+            assert event.payload[1]   == 16
+            print('ERK: %s' % hexify(event.payload[2:]))
+            print('Reading static random address...')
+            self.ble_channel.aci_hal_read_config_data_random_address()
+            self.state = self.WAIT_READ_RANDOM_ADDR
+
+        elif self.state == self.WAIT_READ_RANDOM_ADDR:
+            assert event.payload[0]   == 0
+            assert len(event.payload) == 8
+            assert event.payload[1]   == 6
+            print('RA: %s' % hexify(event.payload[2:]))
+
+        else:
+            raise Exception('Unexpected COMMAND_COMPLETE event! %s' % event)
+
+
 def gen_manuf_data(client, mac_addr):
     data = struct.pack('<BBBBBBBB6B',
                        13, 0xFF, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -35,32 +110,6 @@ def gen_manuf_data(client, mac_addr):
 
 def ble_hci_gap_gatt_init(client):
     target = client.ipc.target
-
-    # HCI reset to sync the BLE stack.
-    print('Resetting HCI...')
-    rsp = client.ipc.ble_channel.hci_reset()
-    assert len(rsp) == 1
-    assert rsp[0].payload == b'\x00'
-
-    # Read config BD addr.
-    print('Reading CONFIG_DATA_PUBADDR...')
-    rsp = client.ipc.ble_channel.aci_hal_read_config_data_pubaddr()
-    print('PUBADDR: %s' % hexify(rsp))
-
-    # Read IR key.
-    print('Reading IR key...')
-    rsp = client.ipc.ble_channel.aci_hal_read_config_data_ir()
-    print('IRK: %s' % hexify(rsp))
-
-    # Read ER key.
-    print('Reading ER key...')
-    rsp = client.ipc.ble_channel.aci_hal_read_config_data_er()
-    print('ERK: %s' % hexify(rsp))
-
-    # Read the static random address.
-    print('Reading static random address...')
-    rsp = client.ipc.ble_channel.aci_hal_read_config_data_random_address()
-    print('RA: %s' % hexify(rsp))
 
     # Write the generated UDN BD addr.
     print('Writing UDN-generated public address...')
@@ -142,8 +191,13 @@ def adv_init(client):
 
 
 def poll_loop(client):
-    print('Starting BLE firmware...')
-    print(client.ipc.system_channel.exec_ble_init())
+    delegate = BLEDelegate(client)
+    delegate.start()
+
+    while RUNNING:
+        client.poll(timeout=1)
+
+    return
 
     psdb_value = 0
     psdb_char  = ble_hci_gap_gatt_init(client)

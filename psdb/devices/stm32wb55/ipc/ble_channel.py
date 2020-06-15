@@ -225,7 +225,6 @@ class BLEChannel(object):
 
     def hci_reset(self):
         self._start_ble_command(HCI_RESET)
-        return self.wait_and_pop_all_events()
 
     def hci_read_local_version_information(self):
         self._start_ble_command(HCI_READ_LOCAL_VERSION_INFORMATION)
@@ -263,27 +262,21 @@ class BLEChannel(object):
         assert offset in READ_CONFIG_DATA_OFFSETS
         payload = struct.pack('<B', offset)
         self._start_ble_command(ACI_HAL_READ_CONFIG_DATA, payload)
-        rsp = self.wait_and_pop_all_events()
-        assert len(rsp) == 1
-        assert rsp[0].payload[0]   == 0
-        assert len(rsp[0].payload) == READ_CONFIG_DATA_OFFSETS[offset] + 2
-        assert rsp[0].payload[1]   == READ_CONFIG_DATA_OFFSETS[offset]
-        return rsp[0].payload[2:]
 
     def aci_hal_read_config_data_pubaddr(self):
-        return self.aci_hal_read_config_data(0x00)
+        self.aci_hal_read_config_data(0x00)
 
     def aci_hal_read_config_data_div(self):
-        return self.aci_hal_read_config_data(0x06)
+        self.aci_hal_read_config_data(0x06)
 
     def aci_hal_read_config_data_er(self):
-        return self.aci_hal_read_config_data(0x08)
+        self.aci_hal_read_config_data(0x08)
 
     def aci_hal_read_config_data_ir(self):
-        return self.aci_hal_read_config_data(0x18)
+        self.aci_hal_read_config_data(0x18)
 
     def aci_hal_read_config_data_random_address(self):
-        return self.aci_hal_read_config_data(0x80)
+        self.aci_hal_read_config_data(0x80)
 
     def aci_hal_write_config_data(self, offset, data):
         '''
