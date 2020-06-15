@@ -9,6 +9,11 @@ class ELFBinary(object):
         self.elf_file = ELFFile(self.bin_file)
         self.symtab   = self.elf_file.get_section_by_name('.symtab')
         self.entry    = self.elf_file['e_entry']
+        self.flash_dv = [(s['p_paddr'], s.data() +
+                          b'\x00'*(s['p_memsz'] - s['p_filesz']))
+                         for s in self.iter_segments()
+                         if s['p_type'] == 'PT_LOAD'
+                         ]
 
     def iter_segments(self):
         return self.elf_file.iter_segments()

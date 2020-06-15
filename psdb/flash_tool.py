@@ -2,11 +2,27 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import psdb.probes
 import psdb.elf
+import psdb.hexfile
 
 import argparse
 import hashlib
 import time
 import sys
+
+
+IMAGE_PARSERS = [psdb.elf.ELFBinary,
+                 psdb.hexfile.HEXFile,
+                 ]
+
+
+def parse_image(path):
+    for ip in IMAGE_PARSERS:
+        try:
+            return ip(rv.flash)
+        except Exception:
+            pass
+
+    raise Exception('Unrecognized file type.')
 
 
 def main(rv):
@@ -74,8 +90,9 @@ def main(rv):
         print('Burning "%s"...' % rv.flash)
         md5 = hashlib.md5(open(rv.flash, 'rb').read())
         print('MD5: %s' % md5.hexdigest())
-        target.flash.burn_elf(psdb.elf.ELFBinary(rv.flash), verbose=True,
-                              bank_swap=rv.flash_inactive)
+        img = parse_image(rv.flash)
+        target.flash.burn_dv(img.flash_dv, verbose=True,
+                             bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
