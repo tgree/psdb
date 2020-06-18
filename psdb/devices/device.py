@@ -60,9 +60,10 @@ class Reg32W(Reg):
 
 
 class RDCapture(object):
-    def __init__(self, reg, dev):
+    def __init__(self, reg, dev, dev_base):
         object.__setattr__(self, 'reg', reg)
         object.__setattr__(self, 'dev', dev)
+        object.__setattr__(self, 'addr', dev_base + reg.offset)
 
     def __getattr__(self, name):
         try:
@@ -99,7 +100,7 @@ class RDCapture(object):
 class Device(object):
     def __init__(self, owner, ap, dev_base, name, regs, path=None):
         super(Device, self).__setattr__(
-                'reg_map', {'_' + r.name.upper() : RDCapture(r, self)
+                'reg_map', {'_' + r.name.upper() : RDCapture(r, self, dev_base)
                             for r in regs})
 
         self.ap       = ap
