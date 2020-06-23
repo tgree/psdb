@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 
@@ -75,6 +77,18 @@ ENABLE_BITS = {
     'TIM20'   : (0x060, 20),
     'SAI1'    : (0x060, 21),
     'HRTIM1'  : (0x060, 26),
+    }
+
+HPRE_MAP = {
+    1   : 0,
+    2   : 8,
+    4   : 9,
+    8   : 10,
+    16  : 11,
+    64  : 12,
+    128 : 13,
+    256 : 14,
+    512 : 15,
     }
 
 
@@ -473,3 +487,34 @@ class RCC(Device):
         offset, bit = ENABLE_BITS[name]
         if self._get_field(1, bit, offset) == 0:
             self._set_field(1, 1, bit, offset)
+
+    def enable_hse(self):
+        self._CR.HSEON = 1
+        while self._CR.HSERDY == 0:
+            time.sleep(0.01)
+
+    def set_hpre(self, divider):
+        '''
+        Sets the CPU1 HPRE divider (HCLK1).  Valid values are:
+
+            1, 2, 4, 8, 16, 64, 128, 256, 512
+        '''
+        self._CFGR.HPRE = HPRE_MAP[divider]
+        while self._CFGR.HPREF == 0:
+            time.sleep(0.01)
+
+    def set_sysclock_source(self, sw):
+        '''
+        Selects the SYSCLOCK source as follows:
+
+                SW | Source
+                ---+-------
+                1  | HSI16
+                2  | HSE
+                3  | PLL
+                ---+-------
+        '''
+        assert 1 <= sw <= 3
+        self._CFGR.SW = sw
+        while self._CFGR.SWS != sw:
+            time.sleep(0.01)
