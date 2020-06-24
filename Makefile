@@ -1,5 +1,6 @@
 PSDB_VERS := 0.9.0
 PSDB_DEPS := \
+		setup.cfg                           \
 		setup.py							\
 		psdb/*.py							\
 		psdb/block/*.py						\
