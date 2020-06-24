@@ -33,7 +33,7 @@ all: psdb
 
 .PHONY: clean
 clean:
-	rm -rf dist psdb.egg-info
+	rm -rf dist psdb.egg-info build
 	find . -name "*.pyc" | xargs rm
 	find . -name __pycache__ | xargs rm -r
 
