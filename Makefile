@@ -1,5 +1,6 @@
-PSDB_VERS := 0.9.0
+PSDB_VERS := 0.9.1
 PSDB_DEPS := \
+		setup.cfg                           \
 		setup.py							\
 		psdb/*.py							\
 		psdb/block/*.py						\
@@ -32,7 +33,7 @@ all: psdb
 
 .PHONY: clean
 clean:
-	rm -rf dist psdb.egg-info
+	rm -rf dist psdb.egg-info build
 	find . -name "*.pyc" | xargs rm
 	find . -name __pycache__ | xargs rm -r
 

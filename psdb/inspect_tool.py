@@ -356,7 +356,7 @@ def main(screen, args):  # noqa: C901
                                 devs[dev_menu.selection])
 
 
-if __name__ == '__main__':
+def _main():
     # Parse arguments first.
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
@@ -393,3 +393,7 @@ if __name__ == '__main__':
     # Resume the target.
     if args.resume:
         args.target.resume()
+
+
+if __name__ == '__main__':
+    _main()
