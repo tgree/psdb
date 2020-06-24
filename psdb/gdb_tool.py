@@ -405,7 +405,7 @@ def main(rv):
         time.sleep(1)
 
 
-if __name__ == '__main__':
+def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=3333)
     parser.add_argument('--usb-path')
@@ -416,3 +416,7 @@ if __name__ == '__main__':
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--halt', action='store_true')
     main(parser.parse_args())
+
+
+if __name__ == '__main__':
+    _main()
