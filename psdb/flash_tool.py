@@ -18,7 +18,7 @@ IMAGE_PARSERS = [psdb.elf.ELFBinary,
 def parse_image(path):
     for ip in IMAGE_PARSERS:
         try:
-            return ip(rv.flash)
+            return ip(path)
         except Exception:
             pass
 
