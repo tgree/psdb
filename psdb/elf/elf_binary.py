@@ -3,6 +3,11 @@ from elftools.elf.elffile import ELFFile
 
 
 class ELFBinary(object):
+    '''
+    Class used for reading the contents of an existing ELF file; typically used
+    by flashing code to analyze an ELF executable and figure out which blocks
+    of memory to be written where.
+    '''
     def __init__(self, path):
         self.path     = path
         self.bin_file = open(self.path, 'rb')
