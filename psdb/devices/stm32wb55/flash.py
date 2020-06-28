@@ -182,7 +182,7 @@ class FLASH(flash_type1.FLASH):
             self.user_sram2a_size = ((srrvr >> 18) & 0x1F)*1024
         else:
             self.user_sram2a_size = self.target.devs['SRAM2a'].size
-        if not (srrvr & (1 << 31)):
+        if not (srrvr & (1 << 30)):
             self.user_sram2b_size = ((srrvr >> 25) & 0x1F)*1024
         else:
             self.user_sram2b_size = self.target.devs['SRAM2b'].size
