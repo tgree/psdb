@@ -142,6 +142,7 @@ class Core:
         pos = hdr_size + note_size
         assert pos == f.tell()
         for m in self.mmaps:
+            pos = f.tell()
             pad = round_up_pow_2(pos, data_align) - pos
             f.write(b'\x00'*pad)
             f.write(m.data)
