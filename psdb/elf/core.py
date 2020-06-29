@@ -116,7 +116,7 @@ class Core:
                        len(self.mmaps)*Core.PHDR_SIZE)
         note_offset = hdr_size
         note_size   = sum([len(n.data) for n in self.notes])
-        data_align  = 4096
+        data_align  = 1
         data_offset = round_up_pow_2(hdr_size + note_size, data_align)
 
         # Start with the ELF header.
@@ -142,6 +142,7 @@ class Core:
         pos = hdr_size + note_size
         assert pos == f.tell()
         for m in self.mmaps:
+            pos = f.tell()
             pad = round_up_pow_2(pos, data_align) - pos
             f.write(b'\x00'*pad)
             f.write(m.data)
