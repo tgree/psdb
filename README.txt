@@ -77,6 +77,24 @@ device.  It can be connected to with a remote gdb client.
 
 
 ===============================================================================
+psdb_core_tool
+
+The core_tool script can be used to capture the contents of flash and SRAM in
+the form of an ELF core file.  This core file, in conjunction with the
+original ELF executable, can be opened under gdb for offline diagnosis.
+Unfortunately, the standard arm-none-eabi-gdb tool cannot open core files;
+however, gdb-multiarch is able to open these without any trouble.  On Linux,
+this is as simple as installing gdb-multiarch with your package manager.  On
+other systems, installing in a Docker container may be a viable alternative.
+
+The captured core file is independent of the executable or build system
+installed on the microcontroller.
+
+The --peripheral-capture option allows the capture of all registers from
+devices listed in the target's dev array.
+
+
+===============================================================================
 psdb_inspect_tool
 
 The inspect_tool script starts an interactive curses-based tool that can be
