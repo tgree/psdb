@@ -374,8 +374,7 @@ class GDBServer(object):
 
 def main(rv):
     if rv.dump:
-        for p in psdb.probes.PROBES:
-            p.show_info()
+        psdb.probes.dump_probes()
         return
 
     probe = psdb.probes.find_default(usb_path=rv.usb_path)
