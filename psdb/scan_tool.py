@@ -6,7 +6,7 @@ import sys
 
 
 def main(rv):
-    for p in psdb.probes.PROBES:
+    for p in psdb.probes.get_probes():
         p.show_info()
         p.probe(verbose=True).resume()
 

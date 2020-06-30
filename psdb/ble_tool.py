@@ -169,8 +169,7 @@ def main(rv):
 
     # Dump all debuggers if requested.
     if rv.dump_debuggers:
-        for p in psdb.probes.PROBES:
-            p.show_info()
+        psdb.probes.dump_probes()
 
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
