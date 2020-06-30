@@ -5,15 +5,19 @@ import psdb.probes
 import sys
 
 
-def main(rv):
+def main():
     for p in psdb.probes.get_probes():
         p.show_info()
         p.probe(verbose=True).resume()
 
 
-if __name__ == '__main__':
+def _main():
     try:
-        main(None)
+        main()
     except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    _main()
