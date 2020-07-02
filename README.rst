@@ -69,6 +69,18 @@ erased to the value 0xFF::
 
     psdb_flash_tool --connect-under-reset --erase
 
+The flash_tool script can also be used to view and modify the STM32 option
+bytes stored in the MCU's flash.  The ``--get-options`` flag allows one to dump
+the contents of all option bytes::
+
+    psdb_flash_tool --connect-under-reset --get-options
+
+While the ``--option`` argument (which takes two parameters - a
+case-insensitive option name and an option value) can be specified multiple
+times to change options::
+
+    psdb_flash_tool --connect-under-reset --option nboot1 0 --option nboot0 1
+
 
 psdb_core_tool
 ==============
