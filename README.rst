@@ -34,6 +34,7 @@ install the udev rules, you may need to hot-plug it in order for the new rules
 to take effect.  Also, if you just added yourself to the usb group then you
 will need to start a new shell session for that permission to take effect.
 
+
 psdb_flash_tool
 ===============
 The flash_tool script allows you to burn ELF images into flash, retrieve the
@@ -68,6 +69,18 @@ Finally, erasing the flash is also supported.  All writeable sectors will be
 erased to the value 0xFF::
 
     psdb_flash_tool --connect-under-reset --erase
+
+The flash_tool script can also be used to view and modify the STM32 option
+bytes stored in the MCU's flash.  The ``--get-options`` flag allows one to dump
+the contents of all option bytes::
+
+    psdb_flash_tool --connect-under-reset --get-options
+
+While the ``--option`` argument (which takes two parameters - a
+case-insensitive option name and an option value) can be specified multiple
+times to change options::
+
+    psdb_flash_tool --connect-under-reset --option nboot1 0 --option nboot0 1
 
 
 psdb_core_tool
@@ -153,6 +166,7 @@ Sample invocation for updating FUS::
 Note that when upgrading FUS, the target board will reboot at least 4 times.
 
 It is recommended to upgrade to FUS 1.1.0.
+
 
 STLINK Protocol
 ===============
