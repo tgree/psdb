@@ -34,6 +34,7 @@ install the udev rules, you may need to hot-plug it in order for the new rules
 to take effect.  Also, if you just added yourself to the usb group then you
 will need to start a new shell session for that permission to take effect.
 
+
 psdb_flash_tool
 ===============
 The flash_tool script allows you to burn ELF images into flash, retrieve the
@@ -165,6 +166,7 @@ Sample invocation for updating FUS::
 Note that when upgrading FUS, the target board will reboot at least 4 times.
 
 It is recommended to upgrade to FUS 1.1.0.
+
 
 STLINK Protocol
 ===============
