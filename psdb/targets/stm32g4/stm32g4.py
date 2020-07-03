@@ -167,6 +167,18 @@ class STM32G4(Target):
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
+    def enable_rtc(self, rtcsel=1):
+        rcc = self.devs['RCC']
+        pwr = self.devs['PWR']
+        rtc = self.devs['RTC']
+        rcc.enable_device('PWR')
+        pwr.enable_backup_domain()
+        rcc.set_lse_drive_capability(0)
+        rcc.enable_lse()
+        rcc.set_rtcclock_source(rtcsel)
+        rcc.enable_rtc()
+        rtc.init()
+
     @staticmethod
     def is_mcu(db):
         # Only APSEL 0 should be populated.
