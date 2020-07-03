@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 
@@ -6,7 +8,13 @@ class PWR(Device):
     '''
     Driver for the STM Power Control (PWR) device.
     '''
-    REGS = [Reg32('CR1',       0x000),
+    REGS = [Reg32('CR1',       0x000,  [('LPMS',        3),
+                                        ('',            5),
+                                        ('DBP',         1),
+                                        ('VOS',         2),
+                                        ('',            3),
+                                        ('LPR',         1),
+                                        ]),
             Reg32('CR2',       0x004),
             Reg32('CR3',       0x008),
             Reg32('CR4',       0x00C),
@@ -32,3 +40,8 @@ class PWR(Device):
 
     def __init__(self, target, ap, name, addr, **kwargs):
         super(PWR, self).__init__(target, ap, addr, name, PWR.REGS, **kwargs)
+
+    def enable_backup_domain(self):
+        self._CR1.DBP = 1
+        while self._CR1.DBP == 0:
+            time.sleep(0.01)
