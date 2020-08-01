@@ -6,6 +6,19 @@ from .note import NoteSection
 from ..util import round_up_pow_2
 
 
+class CoreThread:
+    def __init__(self, name, cmdline, pid, signal, regs):
+        self.name         = name
+        self.cmdline      = cmdline
+        self.pid          = pid
+        self.signal       = signal
+        self.regs         = regs
+        self.note_section = NoteSection()
+
+        self.note_section.add_prpsinfo('xtalx', 'xtalx')
+        self.note_section.add_prstatus(pid, signal, regs)
+
+
 class Core:
     EHDR_FORMAT = '<8B8xHHLLLLLHHHHHH'
     EHDR_SIZE   = struct.calcsize(EHDR_FORMAT)
@@ -17,8 +30,9 @@ class Core:
     SHDR_SIZE   = struct.calcsize(SHDR_FORMAT)
 
     def __init__(self):
-        self.mmaps = []
-        self.notes = []
+        self.mmaps   = []
+        self.threads = []
+        self.notes   = []
 
     @property
     def phoff(self):
@@ -92,10 +106,9 @@ class Core:
 
             [r0, ..., r15, xpsr, <fpscr>]
         '''
-        ns = NoteSection()
-        ns.add_prpsinfo('xtalx', 'xtalx')
-        ns.add_prstatus(pid, sig, regs)
-        self.notes.append(ns)
+        ct = CoreThread('xtalx', 'xtalx', pid, sig, regs)
+        self.threads.append(ct)
+        self.notes.append(ct.note_section)
 
     def write(self, path):
         '''
