@@ -8,10 +8,9 @@ class ELFBinary(object):
     by flashing code to analyze an ELF executable and figure out which blocks
     of memory to be written where.
     '''
-    def __init__(self, path):
-        self.path     = path
-        self.bin_file = open(self.path, 'rb')
-        self.elf_file = ELFFile(self.bin_file)
+    def __init__(self, file_object):
+        file_object.seek(0)
+        self.elf_file = ELFFile(file_object)
         self.symtab   = self.elf_file.get_section_by_name('.symtab')
         self.entry    = self.elf_file['e_entry']
         self.flash_dv = [(s['p_paddr'], s.data() +
@@ -19,6 +18,10 @@ class ELFBinary(object):
                          for s in self.iter_segments()
                          if s['p_type'] == 'PT_LOAD'
                          ]
+
+    @staticmethod
+    def from_path(path):
+        return ELFBinary(open(path, 'rb'))
 
     def iter_segments(self):
         return self.elf_file.iter_segments()
