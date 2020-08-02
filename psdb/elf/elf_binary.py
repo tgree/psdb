@@ -34,3 +34,21 @@ class ELFBinary(object):
 
     def get_symbol_addr(self, sym):
         return self.get_symbol_by_name(sym)['st_value']
+
+    def _read(self, addr, size, addr_index):
+        for v in self.pv_dv:
+            base = v[addr_index]
+            data = v[2]
+            if base <= addr and addr + size <= base + len(data):
+                offset = addr - base
+                return data[offset:offset + size]
+        return None
+
+    def read_p_addr(self, p_addr, size):
+        return self._read(p_addr, size, 0)
+
+    def read_v_addr(self, v_addr, size):
+        return self._read(v_addr, size, 1)
+
+    def read_symbol(self, sym, size):
+        return self.read_v_addr(sym.entry.st_value, size)
