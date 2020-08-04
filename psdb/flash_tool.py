@@ -10,7 +10,7 @@ import time
 import sys
 
 
-IMAGE_PARSERS = [psdb.elf.ELFBinary,
+IMAGE_PARSERS = [psdb.elf.ELFBinary.from_path,
                  psdb.hexfile.HEXFile,
                  ]
 
