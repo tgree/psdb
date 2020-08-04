@@ -84,7 +84,7 @@ class Core:
                            1,               # p_type = PT_LOAD
                            p_offset,        # p_offset
                            mmap.addr,       # p_vaddr
-                           0,               # p_paddr
+                           mmap.addr,       # p_paddr
                            len(mmap.data),  # p_filesz
                            len(mmap.data),  # p_memsz
                            0x7,             # p_flags = rwx
