@@ -13,11 +13,12 @@ class ELFBinary(object):
         self.elf_file = ELFFile(file_object)
         self.symtab   = self.elf_file.get_section_by_name('.symtab')
         self.entry    = self.elf_file['e_entry']
-        self.flash_dv = [(s['p_paddr'], s.data() +
-                          b'\x00'*(s['p_memsz'] - s['p_filesz']))
+        self.pv_dv    = [(s['p_paddr'], s['p_vaddr'],
+                          s.data() + b'\x00'*(s['p_memsz'] - s['p_filesz']))
                          for s in self.iter_segments()
                          if s['p_type'] == 'PT_LOAD'
                          ]
+        self.flash_dv = [(s[0], s[2]) for s in self.pv_dv]
 
     @staticmethod
     def from_path(path):
