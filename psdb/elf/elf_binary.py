@@ -30,8 +30,11 @@ class ELFBinary(object):
     def get_symbols_by_substring(self, substr):
         return [s for s in self.symtab.iter_symbols() if substr in s.name]
 
-    def get_symbol_by_name(self, sym):
-        s = [s for s in self.symtab.iter_symbols() if s.name == sym]
+    def get_symbols_by_name(self, name):
+        return [s for s in self.symtab.iter_symbols() if s.name == name]
+
+    def get_symbol_by_name(self, name):
+        s = self.get_symbols_by_name(name)
         assert len(s) == 1
         return s[0]
 
