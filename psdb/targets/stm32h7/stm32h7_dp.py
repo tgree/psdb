@@ -5,6 +5,10 @@ from psdb.devices import MemDevice, stm32h7
 from psdb.targets import Target
 
 
+DEVICES = [(stm32h7.FLASH_DP,   'FLASH',    0x52002000, 0x08000000, 3300000),
+           ]
+
+
 class STM32H7_DP(Target):
     def __init__(self, db):
         super(STM32H7_DP, self).__init__(db, 24000000)
@@ -15,8 +19,15 @@ class STM32H7_DP(Target):
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
-        self.flash      = stm32h7.FLASH_DP(self, self.ahb_ap, 'FLASH',
-                                           0x52002000, 0x08000000, 3300000)
+
+        for d in DEVICES:
+            cls  = d[0]
+            name = d[1]
+            addr = d[2]
+            args = d[3:]
+            cls(self, self.ahb_ap, name, addr, *args)
+
+        self.flash = self.devs['FLASH']
         MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
                   self.flash.flash_size)
 
