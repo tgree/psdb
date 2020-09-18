@@ -101,7 +101,7 @@ class Device(object):
     def __init__(self, owner, ap, dev_base, name, regs, path=None):
         super(Device, self).__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self, dev_base)
-                            for r in regs})
+                            for r in regs if not isinstance(r, RegDiv)})
 
         self.ap       = ap
         self.dev_base = dev_base
