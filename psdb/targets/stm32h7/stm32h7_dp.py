@@ -8,8 +8,10 @@ from psdb.targets import Target
 class STM32H7_DP(Target):
     def __init__(self, db):
         super(STM32H7_DP, self).__init__(db, 24000000)
-        self.ahb_ap     = self.db.aps[0]
+        self.m7_ap      = self.db.aps[0]
+        self.m4_ap      = self.db.aps[3]
         self.apbd_ap    = self.db.aps[2]
+        self.ahb_ap     = self.m7_ap
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
@@ -24,11 +26,17 @@ class STM32H7_DP(Target):
     @staticmethod
     def probe(db):
         # APSEL 0, 2 and 3 should be populated.
+        # AP0 is the Cortex-M7 and corresponds with db.cpus[0].
+        # AP3 is the Cortex-M4 and corresponds with db.cpus[1].
         if 0 not in db.aps:
             return None
         if 2 not in db.aps:
             return None
         if 3 not in db.aps:
+            return None
+        if db.cpus[0].ap != db.aps[0]:
+            return None
+        if db.cpus[1].ap != db.aps[3]:
             return None
 
         # APSEL 0 and 3 should be an AHB AP.
