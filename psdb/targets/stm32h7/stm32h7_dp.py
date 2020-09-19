@@ -5,7 +5,8 @@ from psdb.devices import MemDevice, stm32h7
 from psdb.targets import Target
 
 
-DEVICES = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
+# AP0 devices are ones that we access via the M7 core.
+AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (MemDevice,          'SRAM1 ID',     0x10000000, 0x00020000),
            (MemDevice,          'SRAM2 ID',     0x10020000, 0x00020000),
            (MemDevice,          'SRAM3 ID',     0x10040000, 0x00008000),
@@ -19,6 +20,17 @@ DEVICES = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
                                                 3300000),  # noqa: E127
            ]
 
+# AP1 devices are ones accessible in the D3 domain; we can access these via AP1
+# even if both CPU cores are down.
+AP1DEVS = []
+
+# AP2 devices are accessible over the System Debug Bus.  This is mainly for the
+# DBGMCU and other debug devices such as the breakpoint and trace units.
+AP2DEVS = []
+
+# AP3 devices are ones that we access via the M4 core.
+AP3DEVS = []
+
 
 class STM32H7_DP(Target):
     def __init__(self, db):
@@ -31,12 +43,15 @@ class STM32H7_DP(Target):
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
 
-        for d in DEVICES:
-            cls  = d[0]
-            name = d[1]
-            addr = d[2]
-            args = d[3:]
-            cls(self, self.ahb_ap, name, addr, *args)
+        for i, dl in enumerate((AP0DEVS, AP1DEVS, AP2DEVS, AP3DEVS)):
+            ap = self.db.aps[i]
+
+            for d in dl:
+                cls  = d[0]
+                name = d[1]
+                addr = d[2]
+                args = d[3:]
+                cls(self, ap, name, addr, *args)
 
         self.flash = self.devs['FLASH']
         MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
