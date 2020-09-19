@@ -84,6 +84,7 @@ class FlashBank(Device):
             Reg32 ('CRCEADDR',  0x058, [('',                2),
                                         ('CRC_END_ADDR',   18),
                                         ]),
+            Reg32R('CRCDATAR',  0x05C, [('CRC_DATA',       32)]),
             Reg32R('ECC_FAR',   0x060, [('FAIL_ECC_ADDR', 15)]),
             ]
 
