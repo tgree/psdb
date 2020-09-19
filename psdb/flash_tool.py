@@ -63,7 +63,7 @@ def main(rv):
 
     # Dump options if requested.
     if rv.get_options or rv.option:
-        print('Initial OPTR: 0x%08X' % target.flash._OPTR.read())
+        print('Initial options: 0x%08X' % target.flash.get_options_reg())
         print(target.flash.get_options())
 
     # Option bytes if requested.
@@ -71,7 +71,7 @@ def main(rv):
         options = {k.lower() : int(v, 0) for k, v in rv.option}
         target = target.flash.set_options(options, verbose=rv.verbose,
                                           connect_under_reset=True)
-        print('Final OPTR: 0x%08X' % target.flash._OPTR.read())
+        print('Final options: 0x%08X' % target.flash.get_options_reg())
         final_opts = target.flash.get_options()
         print(final_opts)
         for k, v in options.items():
