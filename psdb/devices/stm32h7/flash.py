@@ -141,7 +141,14 @@ class FLASH(Device, Flash):
     '''
     REGS = [Reg32 ('ACR',           0x000),
             Reg32W('OPTKEYR',       0x008),
-            Reg32 ('OPTCR',         0x018),
+            Reg32 ('OPTCR',         0x018, [('OPTLOCK',         1),
+                                            ('OPTSTART',        1),
+                                            ('',                2),
+                                            ('MER',             1),
+                                            ('',                25),
+                                            ('OPTCHANGEERRIE',  1),
+                                            ('SWAP_BANK',       1),
+                                            ]),
             Reg32 ('OPTCCR',        0x024),
             ]
 
