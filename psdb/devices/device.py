@@ -119,7 +119,7 @@ class Device(object):
         except KeyError:
             pass
 
-        raise AttributeError
+        raise AttributeError('No such attribute: "%s"' % name)
 
     def __setattr__(self, name, value):
         rd = self.reg_map.get(name, None)
