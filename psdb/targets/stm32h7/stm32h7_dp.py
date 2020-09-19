@@ -47,38 +47,46 @@ class STM32H7_DP(Target):
 
     @staticmethod
     def probe(db):
-        # APSEL 0, 2 and 3 should be populated.
+        # APSEL 0, 1, 2 and 3 should be populated.
+        # Probing is complicated by the fact that we can disable the M4 or the
+        # M7 using the options registers.  When you disable a core, the AP
+        # exists but is unprobeable and doesn't even identify as an AHB-AP, so
+        # we don't even detect the CPU there in that configuration!  The core
+        # will remain disabled until RCC_GCR.BOOTx is set to 1, after which
+        # point presumably we would be able to probe the AHB-AP properly.  The
+        # RCC is in the D3 domain, so it would be accessible via AP1 even if
+        # both CPUs were disabled for some reason.  Note, however, that the MCU
+        # doesn't allow both CPUs to be disabled via the flash option registers
+        # and if both bits are turned off the MCU will still boot from the M7
+        # core.
+        #
         # AP0 is the Cortex-M7 and corresponds with db.cpus[0].
+        # AP1 is the D3 AHB interconnect.
+        # AP2 is the System Debug Bus (APB-D)
         # AP3 is the Cortex-M4 and corresponds with db.cpus[1].
-        if 0 not in db.aps:
-            return None
-        if 2 not in db.aps:
-            return None
-        if 3 not in db.aps:
-            return None
-        if db.cpus[0].ap != db.aps[0]:
-            return None
-        if db.cpus[1].ap != db.aps[3]:
+        #
+        # Note that other than the existence of AP3, a single-core H7 looks
+        # exactly the same as a dual-core H7.  This might imply that we
+        # shouldn't be treating them separately...
+        if set(db.aps) != set((0, 1, 2, 3)):
             return None
 
-        # APSEL 0 and 3 should be an AHB AP.
-        for ap in (db.aps[0], db.aps[3]):
-            if not isinstance(ap, psdb.access_port.AHBAP):
-                return None
+        # APSEL 1 should be an AHB AP.
+        if not isinstance(db.aps[1], psdb.access_port.AHBAP):
+            return None
 
         # APSEL 2 should be an APB AP.
         if not isinstance(db.aps[2], psdb.access_port.APBAP):
             return None
 
         # Identify the STM32H7 through the base component's CIDR/PIDR
-        # registers.
-        for ap in (db.aps[0], db.aps[2], db.aps[3]):
-            c = ap.base_component
-            if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0450:
-                return None
+        # registers using the System Debug Bus.
+        c = db.aps[2].base_component
+        if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0450:
+            return None
 
-        # There should be exactly two CPUs.
-        if len(db.cpus) != 2:
+        # There should be two or fewer CPUs.
+        if len(db.cpus) > 2:
             return None
 
         # Finally, we can match on the DBGMCU IDC value.
