@@ -140,26 +140,9 @@ class FLASH(Device, Flash):
     Driver for the FLASH device on the STM32H7xx series of MCUs.
     '''
     REGS = [Reg32 ('ACR',           0x000),
-            Reg32W('KEYR1',         0x004),
             Reg32W('OPTKEYR',       0x008),
-            Reg32 ('CR1',           0x00C),
-            Reg32 ('SR1',           0x010),
-            Reg32W('CCR1',          0x014),
             Reg32 ('OPTCR',         0x018),
             Reg32 ('OPTCCR',        0x024),
-            Reg32 ('CRCCR1',        0x050),
-            Reg32 ('CRCSADD1R',     0x054),
-            Reg32 ('CRCEADD1R',     0x058),
-            Reg32R('CRCDATAR',      0x05C),
-            Reg32R('ECC_FA1R',      0x060),
-            Reg32W('KEYR2',         0x104),
-            Reg32 ('CR2',           0x10C),
-            Reg32 ('SR2',           0x110),
-            Reg32W('CCR2',          0x114),
-            Reg32 ('CRCCR2',        0x150),
-            Reg32 ('CRCSADD2R',     0x154),
-            Reg32 ('CRCEADD2R',     0x158),
-            Reg32R('ECC_FA2R',      0x160),
             ]
 
     def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
