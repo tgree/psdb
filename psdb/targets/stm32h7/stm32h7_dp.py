@@ -5,7 +5,18 @@ from psdb.devices import MemDevice, stm32h7
 from psdb.targets import Target
 
 
-DEVICES = [(stm32h7.FLASH_DP,   'FLASH',    0x52002000, 0x08000000, 3300000),
+DEVICES = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
+           (MemDevice,          'SRAM1 ID',     0x10000000, 0x00020000),
+           (MemDevice,          'SRAM2 ID',     0x10020000, 0x00020000),
+           (MemDevice,          'SRAM3 ID',     0x10040000, 0x00008000),
+           (MemDevice,          'M7 DTCM',      0x20000000, 0x00020000),
+           (MemDevice,          'AXI SRAM',     0x24000000, 0x00080000),
+           (MemDevice,          'SRAM1',        0x30000000, 0x00020000),
+           (MemDevice,          'SRAM2',        0x30020000, 0x00020000),
+           (MemDevice,          'SRAM3',        0x30040000, 0x00008000),
+           (MemDevice,          'Backup SRAM',  0x38800000, 0x00001000),
+           (stm32h7.FLASH_DP,   'FLASH',        0x52002000, 0x08000000,
+                                                3300000),  # noqa: E127
            ]
 
 
