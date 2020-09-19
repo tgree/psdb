@@ -1,14 +1,13 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .flash import FLASH
-from ..device import RegDiv, Reg32, Reg32R
+from ..device import Reg32, Reg32R
 
 
 class FLASH_DP(FLASH):
     '''
     Driver for the FLASH device on the STM32H7xx series of dual-core MCUs.
     '''
-    OPT_REGS = [RegDiv('---Options'),
-                Reg32 ('OPTSR_CUR',     0x01C),
+    OPT_REGS = [Reg32 ('OPTSR_CUR',     0x01C),
                 Reg32 ('OPTSR_PRG',     0x020),
                 Reg32R('PRAR_CUR1',     0x028),
                 Reg32 ('PRAR_PRG1',     0x02C),
