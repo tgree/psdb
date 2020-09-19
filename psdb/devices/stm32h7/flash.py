@@ -135,6 +135,20 @@ class UnlockedContextManager(object):
         self.bank._pg_lock()
 
 
+class UnlockedOptionsContextManager(object):
+    def __init__(self, flash):
+        self.flash = flash
+
+    def __enter__(self):
+        if self.flash._OPTCR.OPTLOCK:
+            self.flash._OPTKEYR = 0x08192A3B
+            self.flash._OPTKEYR = 0x4C5D6E7F
+            assert not self.flash._OPTCR.OPTLOCK
+
+    def __exit__(self, type, value, traceback):
+        self.flash._OPTCR.OPTLOCK = 1
+
+
 class FLASH(Device, Flash):
     '''
     Driver for the FLASH device on the STM32H7xx series of MCUs.
@@ -170,6 +184,9 @@ class FLASH(Device, Flash):
 
     def _flash_bank_unlocked(self, bank):
         return UnlockedContextManager(bank)
+
+    def _options_unlocked(self):
+        return UnlockedOptionsContextManager(self)
 
     def set_swd_freq_write(self, verbose=True):
         f = self.target.db.set_tck_freq(self.max_write_freq)
