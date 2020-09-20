@@ -18,11 +18,13 @@ AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (MemDevice,          'Backup SRAM',  0x38800000, 0x00001000),
            (stm32h7.FLASH_DP,   'FLASH',        0x52002000, 0x08000000,
                                                 3300000),  # noqa: E127
+           (stm32h7.RCC,        'RCC_M7',       0x58024400),
            ]
 
 # AP1 devices are ones accessible in the D3 domain; we can access these via AP1
 # even if both CPU cores are down.
-AP1DEVS = [(stm32h7.PWR,        'PWR',          0x58024800),
+AP1DEVS = [(stm32h7.RCC,        'RCC_D3',       0x58024400),
+           (stm32h7.PWR,        'PWR',          0x58024800),
            ]
 
 # AP2 devices are accessible over the System Debug Bus.  This is mainly for the
@@ -30,7 +32,8 @@ AP1DEVS = [(stm32h7.PWR,        'PWR',          0x58024800),
 AP2DEVS = []
 
 # AP3 devices are ones that we access via the M4 core.
-AP3DEVS = []
+AP3DEVS = [(stm32h7.RCC,        'RCC_M4',       0x58024400),
+           ]
 
 
 class STM32H7_DP(Target):
