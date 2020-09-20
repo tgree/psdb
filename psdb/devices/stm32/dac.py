@@ -4,7 +4,7 @@ from ..device import Device, Reg32
 
 class DAC(Device):
     '''
-    Driver for the STM32G4 DAC.
+    Driver for the STM32 DAC.
     '''
     REGS = [Reg32('CR',      0x000),
             Reg32('SWTRGR',  0x004),
@@ -26,10 +26,25 @@ class DAC(Device):
             Reg32('SHSR2',   0x044),
             Reg32('SHHR',    0x048),
             Reg32('SHRR',    0x04C),
-            Reg32('STR1',    0x058),
-            Reg32('STR2',    0x05C),
-            Reg32('STMODR',  0x060),
             ]
 
+    def __init__(self, target, ap, name, addr, sub_regs=None, **kwargs):
+        regs = DAC.REGS + (sub_regs or [])
+        super(DAC, self).__init__(target, ap, addr, name, regs, **kwargs)
+
+
+class DAC_Saw(Device):
+    '''
+    Driver for DACs that have sawtooth functionality (STM32G4).
+
+    The STM32G4 DAC can also take two values at once for a single channel,
+    halving the number of DMA accesses required to generate a signal.
+    '''
+    STREGS = [Reg32('STR1',    0x058),
+              Reg32('STR2',    0x05C),
+              Reg32('STMODR',  0x060),
+              ]
+
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(DAC, self).__init__(target, ap, addr, name, DAC.REGS, **kwargs)
+        super(DAC_Saw, self).__init__(target, ap, name, addr,
+                                      sub_regs=DAC_Saw.STREGS, **kwargs)
