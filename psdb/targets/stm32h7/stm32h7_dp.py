@@ -1,7 +1,7 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 import psdb
 from .rom_table_1 import STM32H7ROMTable1
-from psdb.devices import MemDevice, stm32h7
+from psdb.devices import MemDevice, stm32, stm32h7
 from psdb.targets import Target
 
 
@@ -16,6 +16,7 @@ AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (MemDevice,          'SRAM2',        0x30020000, 0x00020000),
            (MemDevice,          'SRAM3',        0x30040000, 0x00008000),
            (MemDevice,          'Backup SRAM',  0x38800000, 0x00001000),
+           (stm32.DAC,          'DAC1',         0x40007400),
            (stm32h7.FLASH_DP,   'FLASH',        0x52002000, 0x08000000,
                                                 3300000),  # noqa: E127
            (stm32h7.RCC,        'RCC_M7',       0x58024400),
