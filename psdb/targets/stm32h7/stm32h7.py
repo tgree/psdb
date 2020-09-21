@@ -23,10 +23,11 @@ class STM32H7(Target):
 
     @staticmethod
     def probe(db):
-        # APSEL 0 and 2 should be populated.
-        if 0 not in db.aps:
-            return None
-        if 2 not in db.aps:
+        # APSEL 0, 1 and 2 should be populated.
+        # AP0 is the Cortex-M7 and corresponds with db.cpus[0].
+        # AP1 is the D3 AHB interconnect.
+        # AP2 is the System Debug Bus (APB-D)
+        if set(db.aps) != set((0, 1, 2)):
             return None
 
         # APSEL 0 should be an AHB AP.
@@ -34,16 +35,19 @@ class STM32H7(Target):
         if not isinstance(ap, psdb.access_port.AHBAP):
             return None
 
+        # APSEL 1 should be an AHB AP.
+        if not isinstance(db.aps[1], psdb.access_port.AHBAP):
+            return None
+
         # APSEL 2 should be an APB AP.
         if not isinstance(db.aps[2], psdb.access_port.APBAP):
             return None
 
         # Identify the STM32H7 through the base component's CIDR/PIDR
-        # registers.
-        for ap in (db.aps[0], db.aps[2]):
-            c = ap.base_component
-            if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0450:
-                return None
+        # registers using the System Debug Bus.
+        c = db.aps[2].base_component
+        if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0450:
+            return None
 
         # There should be exactly one CPU.
         if len(db.cpus) != 1:

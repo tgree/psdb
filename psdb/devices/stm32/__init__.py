@@ -2,7 +2,8 @@
 from .advanced_control_timer import ACT
 from .adc import ADC
 from .basic_timer import BT
-from .dac import DAC
+from .dac import DAC, DAC_Saw
+from .vrefbuf import VREF
 from .dma import DMA
 from .dma_mux import DMAMUX
 from .gpio import GPIO
@@ -18,6 +19,8 @@ __all__ = ['ACT',
            'ADC',
            'BT',
            'DAC',
+           'DAC_Saw',
+           'VREF',
            'DMA',
            'DMAMUX',
            'flash_type1',

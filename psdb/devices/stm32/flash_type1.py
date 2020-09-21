@@ -206,6 +206,10 @@ class FLASH(Device, Flash):
 
         return self.target.wait_reset_and_reprobe(**kwargs)
 
+    def get_options_reg(self):
+        '''Returns the contents of the options register.'''
+        return self._OPTR.read()
+
     def get_options(self):
         '''
         Returns the set of options currently visible in the OPTR register.  The

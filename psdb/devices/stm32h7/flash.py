@@ -84,6 +84,7 @@ class FlashBank(Device):
             Reg32 ('CRCEADDR',  0x058, [('',                2),
                                         ('CRC_END_ADDR',   18),
                                         ]),
+            Reg32R('CRCDATAR',  0x05C, [('CRC_DATA',       32)]),
             Reg32R('ECC_FAR',   0x060, [('FAIL_ECC_ADDR', 15)]),
             ]
 
@@ -134,31 +135,35 @@ class UnlockedContextManager(object):
         self.bank._pg_lock()
 
 
+class UnlockedOptionsContextManager(object):
+    def __init__(self, flash):
+        self.flash = flash
+
+    def __enter__(self):
+        if self.flash._OPTCR.OPTLOCK:
+            self.flash._OPTKEYR = 0x08192A3B
+            self.flash._OPTKEYR = 0x4C5D6E7F
+            assert not self.flash._OPTCR.OPTLOCK
+
+    def __exit__(self, type, value, traceback):
+        self.flash._OPTCR.OPTLOCK = 1
+
+
 class FLASH(Device, Flash):
     '''
     Driver for the FLASH device on the STM32H7xx series of MCUs.
     '''
     REGS = [Reg32 ('ACR',           0x000),
-            Reg32W('KEYR1',         0x004),
             Reg32W('OPTKEYR',       0x008),
-            Reg32 ('CR1',           0x00C),
-            Reg32 ('SR1',           0x010),
-            Reg32W('CCR1',          0x014),
-            Reg32 ('OPTCR',         0x018),
+            Reg32 ('OPTCR',         0x018, [('OPTLOCK',         1),
+                                            ('OPTSTART',        1),
+                                            ('',                2),
+                                            ('MER',             1),
+                                            ('',                25),
+                                            ('OPTCHANGEERRIE',  1),
+                                            ('SWAP_BANK',       1),
+                                            ]),
             Reg32 ('OPTCCR',        0x024),
-            Reg32 ('CRCCR1',        0x050),
-            Reg32 ('CRCSADD1R',     0x054),
-            Reg32 ('CRCEADD1R',     0x058),
-            Reg32R('CRCDATAR',      0x05C),
-            Reg32R('ECC_FA1R',      0x060),
-            Reg32W('KEYR2',         0x104),
-            Reg32 ('CR2',           0x10C),
-            Reg32 ('SR2',           0x110),
-            Reg32W('CCR2',          0x114),
-            Reg32 ('CRCCR2',        0x150),
-            Reg32 ('CRCSADD2R',     0x154),
-            Reg32 ('CRCEADD2R',     0x158),
-            Reg32R('ECC_FA2R',      0x160),
             ]
 
     def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
@@ -179,6 +184,9 @@ class FLASH(Device, Flash):
 
     def _flash_bank_unlocked(self, bank):
         return UnlockedContextManager(bank)
+
+    def _options_unlocked(self):
+        return UnlockedOptionsContextManager(self)
 
     def set_swd_freq_write(self, verbose=True):
         f = self.target.db.set_tck_freq(self.max_write_freq)
