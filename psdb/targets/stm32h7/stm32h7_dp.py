@@ -25,6 +25,7 @@ AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
 # AP1 devices are ones accessible in the D3 domain; we can access these via AP1
 # even if both CPU cores are down.
 AP1DEVS = [(stm32h7.RCC,        'RCC_D3',       0x58024400),
+           (stm32.VREF,         'VREF',         0x58003C00),
            (stm32h7.PWR,        'PWR',          0x58024800),
            ]
 
