@@ -8,7 +8,6 @@ from .opamp import OPAMP
 from .pwr import PWR
 from .rcc import RCC
 from .syscfg import SYSCFG
-from .vrefbuf import VREF
 
 
 __all__ = ['COMP',
@@ -20,5 +19,4 @@ __all__ = ['COMP',
            'PWR',
            'RCC',
            'SYSCFG',
-           'VREF',
            ]
