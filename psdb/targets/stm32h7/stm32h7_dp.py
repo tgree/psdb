@@ -17,6 +17,9 @@ AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (MemDevice,          'SRAM3',        0x30040000, 0x00008000),
            (MemDevice,          'Backup SRAM',  0x38800000, 0x00001000),
            (stm32.DAC,          'DAC1',         0x40007400),
+           (stm32.DMA_DBM,      'DMA1',         0x40020000),
+           (stm32.DMA_DBM,      'DMA2',         0x40020400),
+           (stm32.DMAMUX,       'DMAMUX1',      0x40020800, 16, 8),
            (stm32h7.FLASH_DP,   'FLASH',        0x52002000, 0x08000000,
                                                 3300000),  # noqa: E127
            (stm32h7.RCC,        'RCC_M7',       0x58024400),
@@ -27,6 +30,7 @@ AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
 AP1DEVS = [(stm32.VREF,         'VREF',         0x58003C00),
            (stm32h7.RCC,        'RCC_D3',       0x58024400),
            (stm32h7.PWR,        'PWR',          0x58024800),
+           (stm32.DMAMUX,       'DMAMUX2',      0x58025800, 8, 8),
            ]
 
 # AP2 devices are accessible over the System Debug Bus.  This is mainly for the
