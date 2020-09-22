@@ -44,3 +44,66 @@ class DMA(Device):
 
     def __init__(self, target, ap, name, addr, **kwargs):
         super(DMA, self).__init__(target, ap, addr, name, DMA.REGS, **kwargs)
+
+
+class DMA_DBM(Device):
+    '''
+    Driver for the STM32H7 DMA device.
+    '''
+    REGS = [Reg32('LISR',   0x000),
+            Reg32('HISR',   0x004),
+            Reg32('LIFCR',  0x008),
+            Reg32('HIFCR',  0x00C),
+            Reg32('S0CR',   0x010 + 0x18*0),
+            Reg32('S0NDTR', 0x014 + 0x18*0),
+            Reg32('S0PAR',  0x018 + 0x18*0),
+            Reg32('S0M0AR', 0x01C + 0x18*0),
+            Reg32('S0M1AR', 0x020 + 0x18*0),
+            Reg32('S0FCR',  0x024 + 0x18*0),
+            Reg32('S1CR',   0x010 + 0x18*1),
+            Reg32('S1NDTR', 0x014 + 0x18*1),
+            Reg32('S1PAR',  0x018 + 0x18*1),
+            Reg32('S1M0AR', 0x01C + 0x18*1),
+            Reg32('S1M1AR', 0x020 + 0x18*1),
+            Reg32('S1FCR',  0x024 + 0x18*1),
+            Reg32('S2CR',   0x010 + 0x18*2),
+            Reg32('S2NDTR', 0x014 + 0x18*2),
+            Reg32('S2PAR',  0x018 + 0x18*2),
+            Reg32('S2M0AR', 0x01C + 0x18*2),
+            Reg32('S2M1AR', 0x020 + 0x18*2),
+            Reg32('S2FCR',  0x024 + 0x18*2),
+            Reg32('S3CR',   0x010 + 0x18*3),
+            Reg32('S3NDTR', 0x014 + 0x18*3),
+            Reg32('S3PAR',  0x018 + 0x18*3),
+            Reg32('S3M0AR', 0x01C + 0x18*3),
+            Reg32('S3M1AR', 0x020 + 0x18*3),
+            Reg32('S3FCR',  0x024 + 0x18*3),
+            Reg32('S4CR',   0x010 + 0x18*4),
+            Reg32('S4NDTR', 0x014 + 0x18*4),
+            Reg32('S4PAR',  0x018 + 0x18*4),
+            Reg32('S4M0AR', 0x01C + 0x18*4),
+            Reg32('S4M1AR', 0x020 + 0x18*4),
+            Reg32('S4FCR',  0x024 + 0x18*4),
+            Reg32('S5CR',   0x010 + 0x18*5),
+            Reg32('S5NDTR', 0x014 + 0x18*5),
+            Reg32('S5PAR',  0x018 + 0x18*5),
+            Reg32('S5M0AR', 0x01C + 0x18*5),
+            Reg32('S5M1AR', 0x020 + 0x18*5),
+            Reg32('S5FCR',  0x024 + 0x18*5),
+            Reg32('S6CR',   0x010 + 0x18*6),
+            Reg32('S6NDTR', 0x014 + 0x18*6),
+            Reg32('S6PAR',  0x018 + 0x18*6),
+            Reg32('S6M0AR', 0x01C + 0x18*6),
+            Reg32('S6M1AR', 0x020 + 0x18*6),
+            Reg32('S6FCR',  0x024 + 0x18*6),
+            Reg32('S7CR',   0x010 + 0x18*7),
+            Reg32('S7NDTR', 0x014 + 0x18*7),
+            Reg32('S7PAR',  0x018 + 0x18*7),
+            Reg32('S7M0AR', 0x01C + 0x18*7),
+            Reg32('S7M1AR', 0x020 + 0x18*7),
+            Reg32('S7FCR',  0x024 + 0x18*7),
+            ]
+
+    def __init__(self, target, ap, name, addr, **kwargs):
+        super(DMA_DBM, self).__init__(target, ap, addr, name, DMA_DBM.REGS,
+                                      **kwargs)
