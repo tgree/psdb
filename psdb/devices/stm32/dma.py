@@ -4,7 +4,7 @@ from ..device import Device, Reg32
 
 class DMA(Device):
     '''
-    Driver for the STM32G4 DMAMUX device.
+    Driver for the STM32G4 DMA device.
     '''
     REGS = [Reg32('ISR',    0x000),
             Reg32('IFCR',   0x004),
