@@ -1,4 +1,6 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 
@@ -127,6 +129,20 @@ ENABLE_BITS = {
     'RTCAPB'            : (0xF4, 16),
     'SAI4'              : (0xF4, 21),
     }
+
+# PRE_REV_MAP maps prescaler register bits to a divider value.
+# PRE_MAP maps divider values to prescaler register bits.
+PRE_REV_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 8, 16, 64, 128, 256, 512]
+PRE_MAP = {PRE_REV_MAP[i] : i for i in reversed(range(len(PRE_REV_MAP)))}
+
+# D2PRE_REV_MAP maps prescaler register bits to a divider value.
+# D2PRE_MAP maps divider values to prescaler register bits.
+D2PRE_REV_MAP = [1, 1, 1, 1, 2, 4, 8, 16]
+D2PRE_MAP = {D2PRE_REV_MAP[i] : i for i in reversed(range(len(D2PRE_REV_MAP)))}
+
+# TIM_KER_DIVIDER maps the concatenation of TIMPRE | D2PPREx to a timer kernel
+# clock divider.
+TIM_KER_DIVIDER = [1, 1, 1, 1, 1, 2, 4, 8, 1, 1, 1, 1, 1, 1, 2, 4]
 
 
 class RCC(Device):
@@ -1468,7 +1484,117 @@ class RCC(Device):
     def __init__(self, target, ap, name, addr, **kwargs):
         super(RCC, self).__init__(target, ap, addr, name, RCC.REGS, **kwargs)
 
+        self._f_hse = None
+
+    @property
+    def f_csi(self):
+        return 4000000
+
+    @property
+    def f_hsi(self):
+        while self._CR.HSIDIVF == 0:
+            time.sleep(0.01)
+        return (64000000 >> self._CR.HSIDIV)
+
+    def set_f_hse(self, f):
+        '''
+        Called by external code that has knowledge of the target board through
+        some other means.
+        '''
+        self._f_hse = f
+
+    @property
+    def f_hse(self):
+        return self._f_hse
+
+    @property
+    def f_pllsrc(self):
+        pllsrc = self._PLLCKSELR.PLLSRC
+        if pllsrc == 0:
+            return self.f_hsi
+        if pllsrc == 1:
+            return self.f_csi
+        if pllsrc == 2:
+            return self.f_hse
+        return 0
+
+    @property
+    def f_pll1_p_clk(self):
+        # TODO: Not implemented yet.
+        return None
+
+    @property
+    def f_sysclk(self):
+        sws = self._CFGR.SWS
+        if sws == 0:
+            return self.f_hsi
+        if sws == 1:
+            return self.f_csi
+        if sws == 2:
+            return self.f_hse
+        if sws == 3:
+            return self.f_pll1_p_clk
+
+    @property
+    def f_sys_d1cpre_ck(self):
+        d1cpre  = self._D1CFGR.D1CPRE
+        divider = PRE_REV_MAP[d1cpre]
+        return self.f_sysclk / divider
+
+    @property
+    def f_hclk(self):
+        hpre    = self._D1CFGR.HPRE
+        divider = PRE_REV_MAP[hpre]
+        return self.f_sys_d1cpre_ck / divider
+
+    @property
+    def f_pclk1(self):
+        d2ppre1 = self._D2CFGR.D2PPRE1
+        divider = D2PRE_REV_MAP[d2ppre1]
+        return self.f_hclk / divider
+
+    @property
+    def f_pclk2(self):
+        d2ppre2 = self._D2CFGR.D2PPRE2
+        divider = D2PRE_REV_MAP[d2ppre2]
+        return self.f_hclk / divider
+
+    @property
+    def f_timx_ker_ck(self):
+        d2ppre1 = self._D2CFGR.D2PPRE1
+        timpre  = self._CFGR.TIMPRE
+        divider = TIM_KER_DIVIDER[(timpre << 3) | d2ppre1]
+        return self.f_hclk / divider
+
+    @property
+    def f_timy_ker_ck(self):
+        d2ppre2 = self._D2CFGR.D2PPRE2
+        timpre  = self._CFGR.TIMPRE
+        divider = TIM_KER_DIVIDER[(timpre << 3) | d2ppre2]
+        return self.f_hclk / divider
+
     def enable_device(self, name):
         offset, bit = ENABLE_BITS[name]
         if self._get_field(1, bit, offset) == 0:
             self._set_field(1, 1, bit, offset)
+
+    def enable_hse(self):
+        self._CR.HSEON = 1
+        while self._CR.HSERDY == 0:
+            time.sleep(0.01)
+
+    def set_sysclock_source(self, sw):
+        '''
+        Selects the SYSCLOCK source as follows:
+
+                SW | Source
+                ---+-------
+                0  | HSI (8, 16, 32 or 64 MHz)
+                1  | CSI (4 MHz)
+                2  | HSE
+                3  | PLL
+                ---+-------
+        '''
+        self._CFGR.SW = sw
+        while self._CFGR.SWS != sw:
+            time.sleep(0.01)
