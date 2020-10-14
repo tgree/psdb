@@ -1,5 +1,6 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
 import time
+import math
 
 from ..device import Device, Reg32
 
@@ -1598,3 +1599,83 @@ class RCC(Device):
         self._CFGR.SW = sw
         while self._CFGR.SWS != sw:
             time.sleep(0.01)
+
+    @staticmethod
+    def get_pll_mnpv(f_target_mhz, f_hsclk):
+        '''
+        Given an input of frequency f_hsclk to the M prescaler, compute the
+        M, N, P values to get an output frequency of f_target_mhz.  The target
+        value should be an integral value in MHz (not Hz!) while f_hsclk should
+        be in Hz.  We compute M, N, P such that:
+
+            f_target_mhz = f_hsclk_mhz * N / (M * P)
+
+        We also compute the VOS mode.
+
+        We have the following general constraints:
+
+            1 <= M <= 63
+
+            f_pllin_mhz = f_hsclk_mhz / M
+            2 <= f_pllin_mhz <= 16      (assuming wide VCO range)
+
+            f_vcoout_mhz = f_pllin_mhz * N
+            4 <= N <= 512
+
+            f_target_mhz = f_vcoout_mhz / P
+            P in {2, 4, 6, 8, 10, 12, ..., 128}
+
+        We have the following constraints in wide VCO frequency range (used
+        when the output from the M prescaler is in the range 2 - 16 MHz):
+
+            VOS0:   1.5 <= f_target_mhz <= 480
+            VOS1:   1.5 <= f_target_mhz <= 400
+            VOS2:   1.5 <= f_target_mhz <= 300
+            VOS3:   1.5 <= f_target_mhz <= 200
+            192 <= f_vcoout_mhz <= 960
+
+        We have the following constraints in medium VCO frequency range (used
+        when the output from the M prescaler is in the range 1 - 2 MHz):
+
+            VOS1:   1.17 <= f_target_mhz <= 210
+            VOS2:   1.17 <= f_target_mhz <= 210
+            VOS3:   1.17 <= f_target_mhz <= 200
+            150 <= f_vcoout_mhz <= 420
+
+        We'll assume for now we use the wide range.
+        '''
+        assert 2 <= f_target_mhz <= 480
+
+        # First find the optimal voltage setting.
+        if f_target_mhz <= 200:
+            vos = 3
+        elif f_target_mhz <= 300:
+            vos = 2
+        elif f_target_mhz <= 400:
+            vos = 1
+        elif f_target_mhz <= 480:
+            vos = 0
+
+        # Find the range of allowed M settings, restricting ourselves so that
+        # f_pllin_mhz is between 2 - 16 MHz.
+        M_min = max(1, math.ceil(f_hsclk / 16000000))
+        M_max = min(63, math.floor(f_hsclk / 2000000))
+
+        # Brute force the rest of it.  We attempt to minimize the
+        # multiplicative factor N under the assumption that more multiplication
+        # means more jitter.  Then we try to maximize the M prescaler in order
+        # to lower the VCO frequency and thus reduce power consumption.
+        f_hsclk_mhz = math.floor(f_hsclk / 1000000)
+        for N in range(4, 512):
+            for M in range(M_max, M_min - 1, -1):
+                f_vcoout_mhz = f_hsclk_mhz * N // M
+                if 192 <= f_vcoout_mhz <= 960:
+                    P = f_vcoout_mhz // f_target_mhz
+                    if not P or P % 2:
+                        continue
+                    if (f_hsclk_mhz * N) % (M * P):
+                        continue
+                    if f_hsclk_mhz * N // (M * P) == f_target_mhz:
+                        return M, N, P, vos
+
+        raise Exception('No valid M, N, P combination!')
