@@ -1655,6 +1655,52 @@ class RCC(Device):
         while self._CFGR.SWS != sw:
             time.sleep(0.01)
 
+    def set_pll_source(self, pllsrc):
+        '''
+        Selects the PLL source as follows:
+
+                PLLSRC | Source
+                -------+-------
+                0      | HSI
+                1      | CSI
+                2      | HSE
+                3      | None (power saving)
+                -------+-------
+        '''
+        self._PLLCKSELR.PLLSRC = pllsrc
+
+    def configure_pll_p_clk(self, M, N, P):
+        '''
+        Given M, N, and P settings, configure PLL P CLK so that it could
+        then be selected as the system clock.  Note that the VOS must already
+        have been configured as appropriate for this setting by the client.
+
+        This assumes we always use the wide VCO range.
+        '''
+        f_pllsrc = self.f_pllsrc
+        f_pllref = f_pllsrc / M
+        assert 1 <= M <= 63
+        assert 4 <= N <= 512
+        assert P and not (P % 2)
+        assert 2000000 <= f_pllref <= 16000000
+
+        self._PLLCKSELR.DIVM1 = M
+        if f_pllref <= 4000000:
+            self._PLLCFGR.PLL1RGE = 1
+        elif f_pllref <= 8000000:
+            self._PLLCFGR.PLL1RGE = 2
+        else:
+            self._PLLCFGR.PLL1RGE = 3
+        self._PLLCFGR.PLL1VCOSEL = 0
+        self._PLLCFGR.PLL1FRACEN = 0
+        self._PLL1DIVR.DIVN1     = N - 1
+        self._PLL1DIVR.DIVP1     = P - 1
+        self._PLL1FRACR          = 0
+        self._PLLCFGR.DIVP1EN    = 1
+        self._CR.PLL1ON          = 1
+        while self._CR.PLL1RDY == 0:
+            time.sleep(0.01)
+
     @staticmethod
     def get_pll_mnpv(f_target_mhz, f_hsclk):
         '''
