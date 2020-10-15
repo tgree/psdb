@@ -136,10 +136,10 @@ ENABLE_BITS = {
 PRE_REV_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 8, 16, 64, 128, 256, 512]
 PRE_MAP = {PRE_REV_MAP[i] : i for i in reversed(range(len(PRE_REV_MAP)))}
 
-# D2PRE_REV_MAP maps prescaler register bits to a divider value.
-# D2PRE_MAP maps divider values to prescaler register bits.
-D2PRE_REV_MAP = [1, 1, 1, 1, 2, 4, 8, 16]
-D2PRE_MAP = {D2PRE_REV_MAP[i] : i for i in reversed(range(len(D2PRE_REV_MAP)))}
+# DPRE_REV_MAP maps prescaler register bits to a divider value.
+# DPRE_MAP maps divider values to prescaler register bits.
+DPRE_REV_MAP = [1, 1, 1, 1, 2, 4, 8, 16]
+DPRE_MAP = {DPRE_REV_MAP[i] : i for i in reversed(range(len(DPRE_REV_MAP)))}
 
 # TIM_KER_DIVIDER maps the concatenation of TIMPRE | D2PPREx to a timer kernel
 # clock divider.
@@ -1521,8 +1521,15 @@ class RCC(Device):
 
     @property
     def f_pll1_p_clk(self):
-        # TODO: Not implemented yet.
-        return None
+        if self._CR.PLL1ON == 0:
+            return 0
+        if self._PLLCFGR.DIVP1EN == 0:
+            return 0
+
+        M = self._PLLCKSELR.DIVM1
+        N = self._PLL1DIVR.DIVN1 + 1
+        P = self._PLL1DIVR.DIVP1 + 1
+        return self.f_pllsrc * N / (M * P)
 
     @property
     def f_sysclk(self):
@@ -1551,13 +1558,25 @@ class RCC(Device):
     @property
     def f_pclk1(self):
         d2ppre1 = self._D2CFGR.D2PPRE1
-        divider = D2PRE_REV_MAP[d2ppre1]
+        divider = DPRE_REV_MAP[d2ppre1]
         return self.f_hclk / divider
 
     @property
     def f_pclk2(self):
         d2ppre2 = self._D2CFGR.D2PPRE2
-        divider = D2PRE_REV_MAP[d2ppre2]
+        divider = DPRE_REV_MAP[d2ppre2]
+        return self.f_hclk / divider
+
+    @property
+    def f_pclk3(self):
+        d1ppre  = self._D1CFGR.D1PPRE
+        divider = DPRE_REV_MAP[d1ppre]
+        return self.f_hclk / divider
+
+    @property
+    def f_pclk4(self):
+        d3ppre  = self._D3CFGR.D3PPRE
+        divider = DPRE_REV_MAP[d3ppre]
         return self.f_hclk / divider
 
     @property
