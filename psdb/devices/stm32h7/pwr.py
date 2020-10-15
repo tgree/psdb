@@ -119,3 +119,44 @@ class PWR(Device):
 
     def __init__(self, target, ap, name, addr, **kwargs):
         super(PWR, self).__init__(target, ap, addr, name, PWR.REGS, **kwargs)
+
+    def _wait_vosrdy(self):
+        while self._D3CR.VOSRDY == 0:
+            time.sleep(0.01)
+
+    def _set_vos(self, vos):
+        # VOS numbers are in reverse... /facepalm
+        self._D3CR.VOS = 4 - vos
+        self._wait_vosrdy()
+
+    def _get_vos(self):
+        self._wait_vosrdy()
+        return 4 - self._D3CR.VOS
+
+    def set_vos(self, vos):
+        rcc    = self.owner.devs['RCC_M7']
+        syscfg = self.owner.devs['SYSCFG']
+        rcc.enable_device('SYSCFG')
+
+        curr_vos = self._get_vos()
+        oden     = syscfg._PWRCR.ODEN
+        if curr_vos == 1 and oden == 1:
+            curr_vos = 0
+
+        if curr_vos == vos:
+            return
+
+        if vos == 0:
+            if curr_vos != 1:
+                self._set_vos(1)
+            syscfg._PWRCR.ODEN = 1
+            self._wait_vosrdy()
+        elif curr_vos == 0:
+            syscfg._PWRCR.ODEN = 0
+            self._wait_vosrdy()
+            self._set_vos(vos)
+        else:
+            self._set_vos(vos)
+
+    def set_mode_ldo(self):
+        self._CR3 = 0x00000002
