@@ -1603,6 +1603,42 @@ class RCC(Device):
         while self._CR.HSERDY == 0:
             time.sleep(0.01)
 
+    def set_d1cpre(self, divider):
+        bits                = PRE_MAP[divider]
+        self._D1CFGR.D1CPRE = bits
+        while self._D1CFGR.D1CPRE != bits:
+            time.sleep(0.01)
+
+    def set_hpre(self, divider):
+        bits              = PRE_MAP[divider]
+        self._D1CFGR.HPRE = bits
+        while self._D1CFGR.HPRE != bits:
+            time.sleep(0.01)
+
+    def set_d1ppre(self, divider):
+        bits                = DPRE_MAP[divider]
+        self._D1CFGR.D1PPRE = bits
+        while self._D1CFGR.D1PPRE != bits:
+            time.sleep(0.01)
+
+    def set_d2ppre1(self, divider):
+        bits                 = DPRE_MAP[divider]
+        self._D2CFGR.D2PPRE1 = bits
+        while self._D2CFGR.D2PPRE1 != bits:
+            time.sleep(0.01)
+
+    def set_d2ppre2(self, divider):
+        bits                 = DPRE_MAP[divider]
+        self._D2CFGR.D2PPRE2 = bits
+        while self._D2CFGR.D2PPRE2 != bits:
+            time.sleep(0.01)
+
+    def set_d3ppre(self, divider):
+        bits                = DPRE_MAP[divider]
+        self._D3CFGR.D3PPRE = bits
+        while self._D3CFGR.D3PPRE != bits:
+            time.sleep(0.01)
+
     def set_sysclock_source(self, sw):
         '''
         Selects the SYSCLOCK source as follows:
