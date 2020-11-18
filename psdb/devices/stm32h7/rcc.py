@@ -1,4 +1,7 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
+import time
+import math
+
 from ..device import Device, Reg32
 
 
@@ -127,6 +130,20 @@ ENABLE_BITS = {
     'RTCAPB'            : (0xF4, 16),
     'SAI4'              : (0xF4, 21),
     }
+
+# PRE_REV_MAP maps prescaler register bits to a divider value.
+# PRE_MAP maps divider values to prescaler register bits.
+PRE_REV_MAP = [1, 1, 1, 1, 1, 1, 1, 1, 2, 4, 8, 16, 64, 128, 256, 512]
+PRE_MAP = {PRE_REV_MAP[i] : i for i in reversed(range(len(PRE_REV_MAP)))}
+
+# DPRE_REV_MAP maps prescaler register bits to a divider value.
+# DPRE_MAP maps divider values to prescaler register bits.
+DPRE_REV_MAP = [1, 1, 1, 1, 2, 4, 8, 16]
+DPRE_MAP = {DPRE_REV_MAP[i] : i for i in reversed(range(len(DPRE_REV_MAP)))}
+
+# TIM_KER_DIVIDER maps the concatenation of TIMPRE | D2PPREx to a timer kernel
+# clock divider.
+TIM_KER_DIVIDER = [1, 1, 1, 1, 1, 2, 4, 8, 1, 1, 1, 1, 1, 1, 2, 4]
 
 
 class RCC(Device):
@@ -1468,7 +1485,298 @@ class RCC(Device):
     def __init__(self, target, ap, name, addr, **kwargs):
         super(RCC, self).__init__(target, ap, addr, name, RCC.REGS, **kwargs)
 
+        self._f_hse = None
+
+    @property
+    def f_csi(self):
+        return 4000000
+
+    @property
+    def f_hsi(self):
+        while self._CR.HSIDIVF == 0:
+            time.sleep(0.01)
+        return (64000000 >> self._CR.HSIDIV)
+
+    def set_f_hse(self, f):
+        '''
+        Called by external code that has knowledge of the target board through
+        some other means.
+        '''
+        self._f_hse = f
+
+    @property
+    def f_hse(self):
+        return self._f_hse
+
+    @property
+    def f_pllsrc(self):
+        pllsrc = self._PLLCKSELR.PLLSRC
+        if pllsrc == 0:
+            return self.f_hsi
+        if pllsrc == 1:
+            return self.f_csi
+        if pllsrc == 2:
+            return self.f_hse
+        return 0
+
+    @property
+    def f_pll1_p_clk(self):
+        if self._CR.PLL1ON == 0:
+            return 0
+        if self._PLLCFGR.DIVP1EN == 0:
+            return 0
+
+        M = self._PLLCKSELR.DIVM1
+        N = self._PLL1DIVR.DIVN1 + 1
+        P = self._PLL1DIVR.DIVP1 + 1
+        return self.f_pllsrc * N / (M * P)
+
+    @property
+    def f_sysclk(self):
+        sws = self._CFGR.SWS
+        if sws == 0:
+            return self.f_hsi
+        if sws == 1:
+            return self.f_csi
+        if sws == 2:
+            return self.f_hse
+        if sws == 3:
+            return self.f_pll1_p_clk
+
+    @property
+    def f_sys_d1cpre_ck(self):
+        d1cpre  = self._D1CFGR.D1CPRE
+        divider = PRE_REV_MAP[d1cpre]
+        return self.f_sysclk / divider
+
+    @property
+    def f_hclk(self):
+        hpre    = self._D1CFGR.HPRE
+        divider = PRE_REV_MAP[hpre]
+        return self.f_sys_d1cpre_ck / divider
+
+    @property
+    def f_pclk1(self):
+        d2ppre1 = self._D2CFGR.D2PPRE1
+        divider = DPRE_REV_MAP[d2ppre1]
+        return self.f_hclk / divider
+
+    @property
+    def f_pclk2(self):
+        d2ppre2 = self._D2CFGR.D2PPRE2
+        divider = DPRE_REV_MAP[d2ppre2]
+        return self.f_hclk / divider
+
+    @property
+    def f_pclk3(self):
+        d1ppre  = self._D1CFGR.D1PPRE
+        divider = DPRE_REV_MAP[d1ppre]
+        return self.f_hclk / divider
+
+    @property
+    def f_pclk4(self):
+        d3ppre  = self._D3CFGR.D3PPRE
+        divider = DPRE_REV_MAP[d3ppre]
+        return self.f_hclk / divider
+
+    @property
+    def f_timx_ker_ck(self):
+        d2ppre1 = self._D2CFGR.D2PPRE1
+        timpre  = self._CFGR.TIMPRE
+        divider = TIM_KER_DIVIDER[(timpre << 3) | d2ppre1]
+        return self.f_hclk / divider
+
+    @property
+    def f_timy_ker_ck(self):
+        d2ppre2 = self._D2CFGR.D2PPRE2
+        timpre  = self._CFGR.TIMPRE
+        divider = TIM_KER_DIVIDER[(timpre << 3) | d2ppre2]
+        return self.f_hclk / divider
+
     def enable_device(self, name):
         offset, bit = ENABLE_BITS[name]
         if self._get_field(1, bit, offset) == 0:
             self._set_field(1, 1, bit, offset)
+
+    def enable_hse(self):
+        self._CR.HSEON = 1
+        while self._CR.HSERDY == 0:
+            time.sleep(0.01)
+
+    def set_d1cpre(self, divider):
+        bits                = PRE_MAP[divider]
+        self._D1CFGR.D1CPRE = bits
+        while self._D1CFGR.D1CPRE != bits:
+            time.sleep(0.01)
+
+    def set_hpre(self, divider):
+        bits              = PRE_MAP[divider]
+        self._D1CFGR.HPRE = bits
+        while self._D1CFGR.HPRE != bits:
+            time.sleep(0.01)
+
+    def set_d1ppre(self, divider):
+        bits                = DPRE_MAP[divider]
+        self._D1CFGR.D1PPRE = bits
+        while self._D1CFGR.D1PPRE != bits:
+            time.sleep(0.01)
+
+    def set_d2ppre1(self, divider):
+        bits                 = DPRE_MAP[divider]
+        self._D2CFGR.D2PPRE1 = bits
+        while self._D2CFGR.D2PPRE1 != bits:
+            time.sleep(0.01)
+
+    def set_d2ppre2(self, divider):
+        bits                 = DPRE_MAP[divider]
+        self._D2CFGR.D2PPRE2 = bits
+        while self._D2CFGR.D2PPRE2 != bits:
+            time.sleep(0.01)
+
+    def set_d3ppre(self, divider):
+        bits                = DPRE_MAP[divider]
+        self._D3CFGR.D3PPRE = bits
+        while self._D3CFGR.D3PPRE != bits:
+            time.sleep(0.01)
+
+    def set_sysclock_source(self, sw):
+        '''
+        Selects the SYSCLOCK source as follows:
+
+                SW | Source
+                ---+-------
+                0  | HSI (8, 16, 32 or 64 MHz)
+                1  | CSI (4 MHz)
+                2  | HSE
+                3  | PLL
+                ---+-------
+        '''
+        self._CFGR.SW = sw
+        while self._CFGR.SWS != sw:
+            time.sleep(0.01)
+
+    def set_pll_source(self, pllsrc):
+        '''
+        Selects the PLL source as follows:
+
+                PLLSRC | Source
+                -------+-------
+                0      | HSI
+                1      | CSI
+                2      | HSE
+                3      | None (power saving)
+                -------+-------
+        '''
+        self._PLLCKSELR.PLLSRC = pllsrc
+
+    def configure_pll_p_clk(self, M, N, P):
+        '''
+        Given M, N, and P settings, configure PLL P CLK so that it could
+        then be selected as the system clock.  Note that the VOS must already
+        have been configured as appropriate for this setting by the client.
+
+        This assumes we always use the wide VCO range.
+        '''
+        f_pllsrc = self.f_pllsrc
+        f_pllref = f_pllsrc / M
+        assert 1 <= M <= 63
+        assert 4 <= N <= 512
+        assert P and not (P % 2)
+        assert 2000000 <= f_pllref <= 16000000
+
+        self._PLLCKSELR.DIVM1 = M
+        if f_pllref <= 4000000:
+            self._PLLCFGR.PLL1RGE = 1
+        elif f_pllref <= 8000000:
+            self._PLLCFGR.PLL1RGE = 2
+        else:
+            self._PLLCFGR.PLL1RGE = 3
+        self._PLLCFGR.PLL1VCOSEL = 0
+        self._PLLCFGR.PLL1FRACEN = 0
+        self._PLL1DIVR.DIVN1     = N - 1
+        self._PLL1DIVR.DIVP1     = P - 1
+        self._PLL1FRACR          = 0
+        self._PLLCFGR.DIVP1EN    = 1
+        self._CR.PLL1ON          = 1
+        while self._CR.PLL1RDY == 0:
+            time.sleep(0.01)
+
+    @staticmethod
+    def get_pll_mnpv(f_target_mhz, f_hsclk):
+        '''
+        Given an input of frequency f_hsclk to the M prescaler, compute the
+        M, N, P values to get an output frequency of f_target_mhz.  The target
+        value should be an integral value in MHz (not Hz!) while f_hsclk should
+        be in Hz.  We compute M, N, P such that:
+
+            f_target_mhz = f_hsclk_mhz * N / (M * P)
+
+        We also compute the VOS mode.
+
+        We have the following general constraints:
+
+            1 <= M <= 63
+
+            f_pllin_mhz = f_hsclk_mhz / M
+            2 <= f_pllin_mhz <= 16      (assuming wide VCO range)
+
+            f_vcoout_mhz = f_pllin_mhz * N
+            4 <= N <= 512
+
+            f_target_mhz = f_vcoout_mhz / P
+            P in {2, 4, 6, 8, 10, 12, ..., 128}
+
+        We have the following constraints in wide VCO frequency range (used
+        when the output from the M prescaler is in the range 2 - 16 MHz):
+
+            VOS0:   1.5 <= f_target_mhz <= 480
+            VOS1:   1.5 <= f_target_mhz <= 400
+            VOS2:   1.5 <= f_target_mhz <= 300
+            VOS3:   1.5 <= f_target_mhz <= 200
+            192 <= f_vcoout_mhz <= 960
+
+        We have the following constraints in medium VCO frequency range (used
+        when the output from the M prescaler is in the range 1 - 2 MHz):
+
+            VOS1:   1.17 <= f_target_mhz <= 210
+            VOS2:   1.17 <= f_target_mhz <= 210
+            VOS3:   1.17 <= f_target_mhz <= 200
+            150 <= f_vcoout_mhz <= 420
+
+        We'll assume for now we use the wide range.
+        '''
+        assert 2 <= f_target_mhz <= 480
+
+        # First find the optimal voltage setting.
+        if f_target_mhz <= 200:
+            vos = 3
+        elif f_target_mhz <= 300:
+            vos = 2
+        elif f_target_mhz <= 400:
+            vos = 1
+        elif f_target_mhz <= 480:
+            vos = 0
+
+        # Find the range of allowed M settings, restricting ourselves so that
+        # f_pllin_mhz is between 2 - 16 MHz.
+        M_min = max(1, math.ceil(f_hsclk / 16000000))
+        M_max = min(63, math.floor(f_hsclk / 2000000))
+
+        # Brute force the rest of it.  We attempt to minimize the
+        # multiplicative factor N under the assumption that more multiplication
+        # means more jitter.  Then we try to maximize the M prescaler in order
+        # to lower the VCO frequency and thus reduce power consumption.
+        f_hsclk_mhz = math.floor(f_hsclk / 1000000)
+        for N in range(4, 512):
+            for M in range(M_max, M_min - 1, -1):
+                f_vcoout_mhz = f_hsclk_mhz * N // M
+                if 192 <= f_vcoout_mhz <= 960:
+                    P = f_vcoout_mhz // f_target_mhz
+                    if not P or P % 2:
+                        continue
+                    if (f_hsclk_mhz * N) % (M * P):
+                        continue
+                    if f_hsclk_mhz * N // (M * P) == f_target_mhz:
+                        return M, N, P, vos
+
+        raise Exception('No valid M, N, P combination!')

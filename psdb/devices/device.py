@@ -122,8 +122,8 @@ class Device(object):
         raise AttributeError('No such attribute: "%s"' % name)
 
     def __setattr__(self, name, value):
-        rd = self.reg_map.get(name, None)
-        if rd is not None:
+        if name[0] == '_' and name.upper() == name:
+            rd = self.reg_map[name]
             if isinstance(value, RDCapture):
                 rd.write(value.read())
             else:

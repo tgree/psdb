@@ -1,4 +1,4 @@
-PSDB_VERS := 0.9.3
+PSDB_VERS := 0.9.4
 PSDB_DEPS := \
 		setup.cfg                           \
 		setup.py							\
