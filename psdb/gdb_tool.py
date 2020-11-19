@@ -150,7 +150,7 @@ class GDBServer(object):
     STATE_HALTED  = 1
     STATE_RUNNING = 2
 
-    def __init__(self, target, port, verbose, halted):
+    def __init__(self, target, port, verbose, halted, cpu):
         self.handlers = {
                 b'g'    : self._handle_read_registers,
                 b'?'    : self._handle_question,
@@ -165,6 +165,7 @@ class GDBServer(object):
         self.target        = target
         self.port          = port
         self.verbose       = verbose
+        self.cpu           = cpu
         self.state         = self.STATE_HALTED if halted else self.STATE_RUNNING
         self.thread        = threading.Thread(target=self._workloop)
         self.thread.daemon = True
@@ -193,8 +194,7 @@ class GDBServer(object):
         assert self.state == self.STATE_RUNNING
 
         self.target.halt()
-        print('CPU halted. PC: 0x%08X'
-              % self.target.cpus[0].read_core_register('pc'))
+        print('CPU halted. PC: 0x%08X' % self.cpu.read_core_register('pc'))
         self.state = self.STATE_HALTED
 
     def _resume(self):
@@ -208,9 +208,8 @@ class GDBServer(object):
         assert self.state == self.STATE_HALTED
 
         print('CPU stepping one instruction.')
-        self.target.cpus[0].single_step()
-        print('CPU halted. PC: 0x%08X'
-              % self.target.cpus[0].read_core_register('pc'))
+        self.cpu.single_step()
+        print('CPU halted. PC: 0x%08X' % self.cpu.read_core_register('pc'))
 
     def _process_connection(self, sock):
         if self.state == self.STATE_RUNNING:
@@ -235,12 +234,12 @@ class GDBServer(object):
         if gc.poll_break(timeout=0.1):
             print('Received BREAK request from gdb.')
             self._halt()
-        elif not self.target.cpus[0].is_halted():
+        elif not self.cpu.is_halted():
             time.sleep(0.01)
             return
         else:
             print('CPU halted itself. PC: 0x%08X'
-                  % self.target.cpus[0].read_core_register('pc'))
+                  % self.cpu.read_core_register('pc'))
             self.state = self.STATE_HALTED
 
         gc.send_packet(b'S05')
@@ -259,7 +258,7 @@ class GDBServer(object):
         Returns the concatenation of all registers defined in the REG_MAP list.
         '''
         data = b''
-        regs = self.target.cpus[0].read_core_registers()
+        regs = self.cpu.read_core_registers()
         for r in REG_MAP:
             v = regs[r]
             data += b'%02x%02x%02x%02x' % ((v >>  0) & 0xFF,
@@ -281,7 +280,7 @@ class GDBServer(object):
 
         print('Reading %u bytes from 0x%08X' % (n, addr))
         try:
-            mem = self.target.cpus[0].read_bulk(addr, n)
+            mem = self.cpu.read_bulk(addr, n)
             return b''.join(b'%02x' % ord(bytes([b])) for b in mem)
         except Exception as e:
             print('Read threw exception. %s' % e)
@@ -303,7 +302,7 @@ class GDBServer(object):
             data += bytes([v])
 
         try:
-            self.target.cpus[0].write_bulk(data, addr)
+            self.cpu.write_bulk(data, addr)
             return b'OK'
         except Exception:
             print('Write threw exception.')
@@ -344,8 +343,7 @@ class GDBServer(object):
         addr = int(args[1], 16)
         kind = int(args[2], 16)
         print('Inserting HW breakpoint 0x%08X of kind 0x%X' % (addr, kind))
-        for c in self.target.cpus:
-            c.bpu.insert_breakpoint(addr)
+        self.cpu.bpu.insert_breakpoint(addr)
         return b'OK'
 
     def _handle_remove_breakpoint(self, pkt):
@@ -367,8 +365,7 @@ class GDBServer(object):
         addr = int(args[1], 16)
         kind = int(args[2], 16)
         print('Removing HW breakpoint 0x%08X of kind 0x%X' % (addr, kind))
-        for c in self.target.cpus:
-            c.bpu.remove_breakpoint(addr)
+        self.cpu.bpu.remove_breakpoint(addr)
         return b'OK'
 
 
@@ -388,17 +385,16 @@ def main(rv):
                          connect_under_reset=rv.connect_under_reset)
     target.set_max_tck_freq()
 
-    for i, c in enumerate(target.cpus):
-        if c.bpu is not None:
-            c.bpu.reset()
-            print('CPU%u: %s' % (i, c.bpu))
+    c = target.cpus[rv.cpu]
+    if c.bpu is not None:
+        c.bpu.reset()
+        print('CPU%u: %s' % (rv.cpu, c.bpu))
 
     if not rv.halt:
         target.resume()
     else:
-        print('CPU halted. PC: 0x%08X'
-              % target.cpus[0].read_core_register('pc'))
-    GDBServer(target, rv.port, rv.verbose, rv.halt)
+        print('CPU halted. PC: 0x%08X' % c.read_core_register('pc'))
+    GDBServer(target, rv.port, rv.verbose, rv.halt, c)
 
     while True:
         time.sleep(1)
@@ -414,6 +410,7 @@ def _main():
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--halt', action='store_true')
+    parser.add_argument('--cpu', type=int, default=0)
     main(parser.parse_args())
 
 
