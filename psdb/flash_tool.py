@@ -86,12 +86,14 @@ def main(rv):
 
     # Write a new ELF image to flash if requested.
     if rv.flash:
-        print('Burning "%s"...' % rv.flash)
-        md5 = hashlib.md5(open(rv.flash, 'rb').read())
-        print('MD5: %s' % md5.hexdigest())
-        img = parse_image(rv.flash)
-        target.flash.burn_dv(img.flash_dv, verbose=True,
-                             bank_swap=rv.flash_inactive)
+        dv = []
+        for f in rv.flash:
+            print('Burning "%s"...' % f)
+            md5 = hashlib.md5(open(f, 'rb').read())
+            print('MD5: %s' % md5.hexdigest())
+            img = parse_image(f)
+            dv = psdb.elf.dv.merge_dvs(dv, img.flash_dv)
+        target.flash.burn_dv(dv, verbose=True, bank_swap=rv.flash_inactive)
         print('Flash completed successfully.')
         target.reset_halt()
 
@@ -131,7 +133,7 @@ def _main():
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--read-flash')
-    parser.add_argument('--flash')
+    parser.add_argument('--flash', action='append')
     parser.add_argument('--write-raw-binary')
     parser.add_argument('--flash-inactive', action='store_true')
     parser.add_argument('--erase', action='store_true')
