@@ -18,7 +18,7 @@ class Component(object):
                 self.ap, self.addr, self.cidr, self.pidr, self.subtype)
 
     @staticmethod
-    def probe(ap, entry, base=0, parent=None):
+    def probe(ap, entry, base=0, parent=None, match=True):
         if entry == 0x00000000:
             # End of table
             return None
@@ -33,9 +33,12 @@ class Component(object):
             return None
 
         c = Component(parent, ap, (base + entry) & 0xFFFFF000)
+        if not match:
+            return c
+
         return matcher.match(c)
 
-    def probe_children(self, prefix='  ', verbose=False):
+    def probe_children(self, prefix='  ', verbose=False, match=True):
         '''
         Probe for child components.  If we've already probed for children, this
         will discard the existing children and do the hierarchy again.  This is
@@ -70,7 +73,8 @@ class Component(object):
             if entry == 0:
                 break
 
-            c = Component.probe(self.ap, entry, base=self.addr, parent=self)
+            c = Component.probe(self.ap, entry, base=self.addr, parent=self,
+                                match=match)
             if c is not None:
                 if verbose:
                     print('  %s%s' % (prefix, c))
@@ -80,7 +84,7 @@ class Component(object):
 
         prefix += '  '
         for c in self.children:
-            c.probe_children(prefix=prefix, verbose=verbose)
+            c.probe_children(prefix=prefix, verbose=verbose, match=match)
 
     def read_id_block(self, addr):
         mem = self.ap.read_bulk(addr, 16)
