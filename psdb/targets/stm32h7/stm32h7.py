@@ -47,6 +47,8 @@ class STM32H7(Target):
         # registers using the System Debug Bus.
         c = db.aps[2].base_component
         if not c:
+            c = db.aps[2].probe_components(match=False, recurse=False)
+        if not c:
             return False
         if (c.addr, c.cidr, c.pidr) != (0xE00E0000, 0xB105100D, 0xA0450):
             return False
@@ -56,6 +58,19 @@ class STM32H7(Target):
             return False
 
         return True
+
+    @staticmethod
+    def pre_probe(db, verbose):
+        # Ensure this is an STM32H7 part.
+        if not STM32H7.is_mcu(db):
+            return
+
+        # Enable all the clocks that we want to use.
+        cr = dbgmcu.read_cr(db)
+        if (cr & 0x00700187) != 0x00700187:
+            if verbose:
+                print('Detected STM32H7, enabling all DBGMCU debug clocks.')
+            dbgmcu.write_cr(db, cr | 0x00700187)
 
     @staticmethod
     def probe(db):
