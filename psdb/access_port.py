@@ -50,6 +50,7 @@ class MemAP(AP):
         self.csw_ainc       = self.csw_reset & 0x00000030
         self.csw            = -1
         self.tar            = self._read_tar()
+        self.base_component = None
 
     def __repr__(self):
         features = [MemAP.FLAGS_TABLE[f]
