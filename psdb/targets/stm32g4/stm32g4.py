@@ -2,6 +2,7 @@
 import psdb
 from psdb.devices import MemDevice, stm32, stm32g4
 from psdb.targets import Target
+from . import dbgmcu
 
 
 DEVICES_2 = [(MemDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
@@ -164,21 +165,51 @@ class STM32G4(Target):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
-    def probe(db):
-        # APSEL 0 should be populated.
-        if 0 not in db.aps:
-            return None
+    def is_mcu(db):
+        # Only APSEL 0 should be populated.
+        if set(db.aps) != set((0,)):
+            return False
 
         # APSEL 0 should be an AHB AP.
         ap = db.aps[0]
         if not isinstance(ap, psdb.access_port.AHBAP):
-            return None
+            return False
 
         # Identify the STM32G4 through the base component's CIDR/PIDR
         # registers.
         c = db.aps[0].base_component
-        if (not c or c.cidr != 0xB105100D or
-                c.pidr not in (0xA0468, 0xA0469, 0xA0479)):
+        if not c:
+            c = db.aps[0].probe_components(match=False, recurse=False)
+        if not c:
+            return False
+        if c.cidr != 0xB105100D:
+            return False
+        if c.pidr not in (0xA0468, 0xA0469, 0xA0479):
+            return False
+
+        # Finally, we can match on the DBGMCU IDC value.
+        if dbgmcu.read_idc_dev_id(db) not in (0x468, 0x469, 0x479):
+            return False
+
+        return True
+
+    @staticmethod
+    def pre_probe(db, verbose):
+        # Ensure this is an STM32G4 part.
+        if not STM32G4.is_mcu(db):
+            return
+
+        # Enable all the clocks we want to use.
+        cr = dbgmcu.read_cr(db)
+        if (cr & 0x00000007) != 0x00000007:
+            if verbose:
+                print('Detected STM32G4, enabling all DBGMCU debug clocks.')
+            dbgmcu.write_cr(db, cr | 0x00000007)
+
+    @staticmethod
+    def probe(db):
+        # Ensure this is an STM32G4 part.
+        if not STM32G4.is_mcu(db):
             return None
 
         # There should be exactly one CPU.
