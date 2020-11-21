@@ -12,18 +12,18 @@ def dv_overlaps_region(dv, addr, size):
     return False
 
 
-assert not dv_overlaps_region([(5, b'12345')],  0, 2)
-assert not dv_overlaps_region([(5, b'12345')],  1, 2)
-assert not dv_overlaps_region([(5, b'12345')],  2, 2)
-assert not dv_overlaps_region([(5, b'12345')],  3, 2)
-assert     dv_overlaps_region([(5, b'12345')],  4, 2)
-assert     dv_overlaps_region([(5, b'12345')],  5, 2)
-assert     dv_overlaps_region([(5, b'12345')],  6, 2)
-assert     dv_overlaps_region([(5, b'12345')],  7, 2)
-assert     dv_overlaps_region([(5, b'12345')],  8, 2)
-assert     dv_overlaps_region([(5, b'12345')],  9, 2)
-assert not dv_overlaps_region([(5, b'12345')], 10, 2)
-assert not dv_overlaps_region([(5, b'12345')], 11, 2)
+assert (not dv_overlaps_region([(5, b'12345')],  0, 2))
+assert (not dv_overlaps_region([(5, b'12345')],  1, 2))
+assert (not dv_overlaps_region([(5, b'12345')],  2, 2))
+assert (not dv_overlaps_region([(5, b'12345')],  3, 2))
+assert (    dv_overlaps_region([(5, b'12345')],  4, 2))
+assert (    dv_overlaps_region([(5, b'12345')],  5, 2))
+assert (    dv_overlaps_region([(5, b'12345')],  6, 2))
+assert (    dv_overlaps_region([(5, b'12345')],  7, 2))
+assert (    dv_overlaps_region([(5, b'12345')],  8, 2))
+assert (    dv_overlaps_region([(5, b'12345')],  9, 2))
+assert (not dv_overlaps_region([(5, b'12345')], 10, 2))
+assert (not dv_overlaps_region([(5, b'12345')], 11, 2))
 
 
 def merge_dvs(lhs, rhs):
