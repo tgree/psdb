@@ -2,9 +2,9 @@
 import time
 
 import psdb
-from .rom_table_1 import STM32H7ROMTable1
 from psdb.devices import MemDevice, stm32, stm32h7
 from psdb.targets import Target
+from . import dbgmcu
 
 
 # AP0 devices are ones that we access via the M7 core.
@@ -69,7 +69,7 @@ class STM32H7_DP(Target):
         self.ahb_ap     = self.m7_ap
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
-        self.mcu_idcode = self.apbd_ap.read_32(0xE00E1000)
+        self.mcu_idcode = dbgmcu.read_idc(db)
 
         for i, dl in enumerate((AP0DEVS, AP1DEVS, AP2DEVS, AP3DEVS)):
             ap = self.db.aps[i]
@@ -191,7 +191,7 @@ class STM32H7_DP(Target):
         return 8 * 63 * (nsamples - 1) *rcc.f_timy_ker_ck / ticks
 
     @staticmethod
-    def probe(db):
+    def is_mcu(db):
         # APSEL 0, 1, 2 and 3 should be populated.
         # Probing is complicated by the fact that we can disable the M4 or the
         # M7 using the options registers.  When you disable a core, the AP
@@ -214,30 +214,38 @@ class STM32H7_DP(Target):
         # exactly the same as a dual-core H7.  This might imply that we
         # shouldn't be treating them separately...
         if set(db.aps) != set((0, 1, 2, 3)):
-            return None
+            return False
 
         # APSEL 1 should be an AHB AP.
         if not isinstance(db.aps[1], psdb.access_port.AHBAP):
-            return None
+            return False
 
         # APSEL 2 should be an APB AP.
         if not isinstance(db.aps[2], psdb.access_port.APBAP):
-            return None
+            return False
 
         # Identify the STM32H7 through the base component's CIDR/PIDR
         # registers using the System Debug Bus.
         c = db.aps[2].base_component
-        if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0450:
+        if not c:
+            return False
+        if (c.addr, c.cidr, c.pidr) != (0xE00E0000, 0xB105100D, 0xA0450):
+            return False
+
+        # Finally, we can match on the DBGMCU IDC value.
+        if dbgmcu.read_idc_dev_id(db) != 0x450:
+            return False
+
+        return True
+
+    @staticmethod
+    def probe(db):
+        # Ensure this is an STM32H7 DP part.
+        if not STM32H7_DP.is_mcu(db):
             return None
 
         # There should be two or fewer CPUs.
         if len(db.cpus) > 2:
-            return None
-
-        # Finally, we can match on the DBGMCU IDC value.
-        rt1 = db.aps[2].base_component.find_components_by_type(STM32H7ROMTable1)
-        assert len(rt1) == 1
-        if (rt1[0].read_dbgmcu_idc() & 0x00000FFF) != 0x450:
             return None
 
         return STM32H7_DP(db)
