@@ -137,6 +137,8 @@ class Probe(object):
             raise psdb.ProbeException('Unsupported DP version %u (0x%08X)' % (
                                       dpver, self.dpidr))
 
+        psdb.targets.pre_probe(self, verbose)
+
         self.cpus = []
         for _, ap in self.aps.items():
             ap.base_component = ap.probe_components(verbose=verbose)
