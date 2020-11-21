@@ -33,7 +33,7 @@ class DAC(Device):
         super(DAC, self).__init__(target, ap, addr, name, regs, **kwargs)
 
 
-class DAC_Saw(Device):
+class DAC_Saw(DAC):
     '''
     Driver for DACs that have sawtooth functionality (STM32G4).
 
