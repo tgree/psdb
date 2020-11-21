@@ -203,7 +203,9 @@ class STM32H7_DP(Target):
         # both CPUs were disabled for some reason.  Note, however, that the MCU
         # doesn't allow both CPUs to be disabled via the flash option registers
         # and if both bits are turned off the MCU will still boot from the M7
-        # core.
+        # core.  Finally, note that enabling all of the clocks in debug mode
+        # via DBGMCU_CR doesn't allow us to probe the disabled CPUs despite
+        # behaving similarly to a CPU stuck in a WFI instruction.
         #
         # AP0 is the Cortex-M7 and corresponds with db.cpus[0].
         # AP1 is the D3 AHB interconnect.
