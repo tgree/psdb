@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .. import usb_probe
 from . import cdb
+from . import errors
 import psdb
 
 from struct import pack, unpack_from
@@ -41,21 +42,6 @@ FEATURE_SWD_SET_FREQ  = (1 << 1)
 FEATURE_BULK_READ_16  = (1 << 2)
 FEATURE_BULK_WRITE_16 = (1 << 3)
 FEATURE_VOLTAGE       = (1 << 4)
-
-
-class STLinkCmdException(psdb.ProbeException):
-    def __init__(self, cmd, rsp, msg):
-        super(psdb.ProbeException, self).__init__(msg)
-        self.cmd = cmd
-        self.rsp = rsp
-        self.err = rsp[0]
-
-
-class STLinkXFERException(psdb.ProbeException):
-    def __init__(self, status, fault_addr, msg):
-        super(psdb.ProbeException, self).__init__(msg)
-        self.status     = status
-        self.fault_addr = fault_addr
 
 
 class STLink(usb_probe.Probe):
@@ -108,13 +94,12 @@ class STLink(usb_probe.Probe):
         '''
         for _ in range(retries):
             data = self._usb_xfer_in(cmd, rx_size)
-            if data[0] == 0x80:
+            if data[0] == errors.DEBUG_OK:
                 return data
 
-            if data[0] not in (0x10, 0x14):
-                raise STLinkCmdException(cmd, data,
-                                         'Unexpected error 0x%02X: %s'
-                                         % (data[0], data))
+            if data[0] not in (errors.SWD_AP_WAIT, errors.SWD_DP_WAIT):
+                raise errors.STLinkCmdException(
+                    cmd, data, 'Unexpected error 0x%02X: %s' % (data[0], data))
             time.sleep(delay)
         raise psdb.ProbeException('Max retries exceeded!')
 
@@ -130,7 +115,7 @@ class STLink(usb_probe.Probe):
         '''
         raise NotImplementedError
 
-    def _usb_raise_for_status(self, allowed_status=[0x80]):
+    def _usb_raise_for_status(self, allowed_status=[errors.DEBUG_OK]):
         '''
         Raises an exception if the last transfer status code is not in the
         allowed_status list.
@@ -140,7 +125,7 @@ class STLink(usb_probe.Probe):
             msg = 'Unexpected error 0x%02X' % status
             if fault_addr is not None:
                 msg += ' at 0x%08X' % fault_addr
-            raise STLinkXFERException(status, fault_addr, msg)
+            raise errors.STLinkXFERException(status, fault_addr, msg)
 
     def _read_dpidr(self):
         '''
