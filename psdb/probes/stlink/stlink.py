@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .. import usb_probe
 from . import cdb
+from . import errors
 import psdb
 
 from struct import pack, unpack_from
@@ -30,9 +31,9 @@ DATA_SIZE = 4096
 
 # Commands to exit DFU, DEBUG or SWIM mode.  We need this table so that we can
 # get the probe out of its current mode and into SWD mode.
-MODE_EXIT_CMD = {cdb.MODE_DFU:   cdb.LeaveDFUMode.make(),
-                 cdb.MODE_DEBUG: cdb.LeaveDebugMode.make(),
-                 cdb.MODE_SWIM:  cdb.LeaveSWIMMode.make(),
+MODE_EXIT_CMD = {cdb.MODE_DFU:   cdb.LeaveDFUMode(),
+                 cdb.MODE_DEBUG: cdb.LeaveDebugMode(),
+                 cdb.MODE_SWIM:  cdb.LeaveSWIMMode(),
                  }
 
 # Features supported by various versions of the STLINK firmware.
@@ -41,21 +42,8 @@ FEATURE_SWD_SET_FREQ  = (1 << 1)
 FEATURE_BULK_READ_16  = (1 << 2)
 FEATURE_BULK_WRITE_16 = (1 << 3)
 FEATURE_VOLTAGE       = (1 << 4)
-
-
-class STLinkCmdException(psdb.ProbeException):
-    def __init__(self, cmd, rsp, msg):
-        super(psdb.ProbeException, self).__init__(msg)
-        self.cmd = cmd
-        self.rsp = rsp
-        self.err = rsp[0]
-
-
-class STLinkXFERException(psdb.ProbeException):
-    def __init__(self, status, fault_addr, msg):
-        super(psdb.ProbeException, self).__init__(msg)
-        self.status     = status
-        self.fault_addr = fault_addr
+FEATURE_AP            = (1 << 5)
+FEATURE_OPEN_AP       = (1 << 6)
 
 
 class STLink(usb_probe.Probe):
@@ -69,78 +57,14 @@ class STLink(usb_probe.Probe):
         self.dpidr    = None
         self.features = 0
 
-    def _usb_xfer_in(self, cmd, rx_size, timeout=1000):
+    def _check_xfer_status(self):
         '''
-        Writes a 16-byte command to the TX_EP and then reads a response of the
-        given rx_size from the RX_EP.  The rx_size parameter can be specified
-        as None to avoid enforcing the RX buffer size.  In that case, a
-        variable-length response of up to 4096 bytes can be returned and it is
-        up to the caller to validate it.
-        '''
-        assert len(cmd) == 16
-        assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
-        if rx_size is None:
-            return self.usb_dev.read(RX_EP, DATA_SIZE, timeout=timeout)
-        rsp = self.usb_dev.read(RX_EP, rx_size, timeout=timeout)
-        assert len(rsp) == rx_size
-        return rsp
-
-    def _usb_xfer_out(self, cmd, data, timeout=1000):
-        '''
-        Writes a 16-byte command parameter is less than 16 bytes to the TX_EP
-        and then writes the data buffer to the TX_EP.
-        '''
-        assert len(cmd) == 16
-        assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
-        assert self.usb_dev.write(TX_EP, data, timeout=timeout) == len(data)
-
-    def _usb_xfer_null(self, cmd):
-        '''
-        Writes a 16-byte command to the TX_EP.  No data is transferred.
-        '''
-        assert len(cmd) == 16
-        assert self.usb_dev.write(TX_EP, cmd) == len(cmd)
-
-    def _cmd_allow_retry(self, cmd, rx_size, retries=10, delay=0.1):
-        '''
-        Performs a xfer_in operation, retrying it if necessary based on the
-        first byte of the response which is an error code.
-        '''
-        for _ in range(retries):
-            data = self._usb_xfer_in(cmd, rx_size)
-            if data[0] == 0x80:
-                return data
-
-            if data[0] not in (0x10, 0x14):
-                raise STLinkCmdException(cmd, data,
-                                         'Unexpected error 0x%02X: %s'
-                                         % (data[0], data))
-            time.sleep(delay)
-        raise psdb.ProbeException('Max retries exceeded!')
-
-    def _usb_last_xfer_status(self):
-        '''
-        To be implemented by the subclass.  Different STLINK probes get the
-        transfer status in different ways.  This should return a tuple of the
-        form:
-
-            (status, fault_addr)
-
-        If the fault_addr is not available, None should be returned.
+        To be implemented by the subclass to check the XFER status of the last
+        data phase for CDBs that don't contain an embedded status code.  This
+        should retrieve a status code and invoke cdb.check_status() with the
+        result.
         '''
         raise NotImplementedError
-
-    def _usb_raise_for_status(self, allowed_status=[0x80]):
-        '''
-        Raises an exception if the last transfer status code is not in the
-        allowed_status list.
-        '''
-        status, fault_addr = self._usb_last_xfer_status()
-        if status not in allowed_status:
-            msg = 'Unexpected error 0x%02X' % status
-            if fault_addr is not None:
-                msg += ' at 0x%08X' % fault_addr
-            raise STLinkXFERException(status, fault_addr, msg)
 
     def _read_dpidr(self):
         '''
@@ -148,21 +72,60 @@ class STLink(usb_probe.Probe):
         '''
         raise NotImplementedError
 
+    def _exec_cdb(self, cmd, timeout=1000):
+        '''
+        Executes a CDB by writing it to the TX_EP and then driving the various
+        phases according to the CDB flags.
+        '''
+        assert len(cmd.cdb) == 16
+        assert self.usb_dev.write(TX_EP, cmd.cdb) == len(cmd.cdb)
+
+        if cmd.CMD_FLAGS & cdb.HAS_DATA_OUT_PHASE:
+            size = self.usb_dev.write(TX_EP, cmd.data_out, timeout=timeout)
+            assert size == len(cmd.data_out)
+
+        if cmd.CMD_FLAGS & cdb.HAS_DATA_IN_PHASE:
+            rsp = self.usb_dev.read(RX_EP, cmd.RSP_LEN, timeout=timeout)
+            if cmd.CMD_FLAGS & cdb.HAS_EMBEDDED_STATUS:
+                if rsp[0] != errors.DEBUG_OK:
+                    raise errors.STLinkCmdException(cmd.cdb, rsp)
+            retval = cmd.decode(rsp)
+        else:
+            retval = None
+
+        if cmd.CMD_FLAGS & cdb.HAS_STATUS_PHASE:
+            self._check_xfer_status()
+
+        return retval
+
+    def _cmd_allow_retry(self, cmd, retries=10, delay=0.1):
+        '''
+        Executes the CDB, retrying it if necessary based on the status code.
+
+        Returns the decoded response if a response is expected.
+        '''
+        for _ in range(retries):
+            try:
+                return self._exec_cdb(cmd)
+            except errors.STLinkCmdException as e:
+                if e.err not in (errors.SWD_AP_WAIT, errors.SWD_DP_WAIT):
+                    raise
+            time.sleep(delay)
+        raise psdb.ProbeException('Max retries exceeded!')
+
     def _get_voltage(self):
         '''
         Returns the target voltage.
         '''
         assert self.features & FEATURE_VOLTAGE
-        rsp = self._usb_xfer_in(cdb.ReadVoltage.make(), 8)
-        vref_adc, target_adc = cdb.ReadVoltage.decode(rsp)
+        vref_adc, target_adc = self._exec_cdb(cdb.ReadVoltage())
         return 2.4 * target_adc / vref_adc
 
     def _current_mode(self):
         '''
         Returns the current mode that the probe is in (SWIM, JTAG, SWD, etc.).
         '''
-        rsp = self._usb_xfer_in(cdb.GetCurrentMode.make(), 2)
-        return cdb.GetCurrentMode.decode(rsp)
+        return self._exec_cdb(cdb.GetCurrentMode())
 
     def _mode_leave(self, mode):
         '''
@@ -171,7 +134,7 @@ class STLink(usb_probe.Probe):
         '''
         cmd = MODE_EXIT_CMD.get(mode)
         if cmd:
-            self._usb_xfer_null(cmd)
+            self._exec_cdb(cmd)
 
     def _leave_current_mode(self):
         '''
@@ -184,7 +147,7 @@ class STLink(usb_probe.Probe):
         Enters SWD mode.
         '''
         self._leave_current_mode()
-        self._cmd_allow_retry(cdb.SWDConnect.make(), 2)
+        self._cmd_allow_retry(cdb.SWDConnect())
         assert self._current_mode() == cdb.MODE_DEBUG
 
     def _bulk_read_8(self, addr, n, ap_num=0):
@@ -194,10 +157,7 @@ class STLink(usb_probe.Probe):
         assert n <= self.max_rw8
         if not n:
             return bytes(b'')
-        cmd = cdb.BulkRead8.make(addr, n, ap_num)
-        rsp = self._usb_xfer_in(cmd, 2 if n == 1 else n)
-        self._usb_raise_for_status()
-        return cdb.BulkRead8.decode(rsp, n)
+        return self._exec_cdb(cdb.BulkRead8(addr, n, ap_num))
 
     def _bulk_read_16(self, addr, n, ap_num=0):
         '''
@@ -207,10 +167,7 @@ class STLink(usb_probe.Probe):
         assert self.features & FEATURE_BULK_READ_16
         if not n:
             return bytes(b'')
-        cmd = cdb.BulkRead16.make(addr, n, ap_num)
-        rsp = self._usb_xfer_in(cmd, n*2)
-        self._usb_raise_for_status()
-        return cdb.BulkRead16.decode(rsp)
+        return self._exec_cdb(cdb.BulkRead16(addr, n, ap_num))
 
     def _bulk_read_32(self, addr, n, ap_num=0):
         '''
@@ -218,10 +175,7 @@ class STLink(usb_probe.Probe):
         '''
         if not n:
             return bytes(b'')
-        cmd = cdb.BulkRead32.make(addr, n, ap_num)
-        rsp = self._usb_xfer_in(cmd, n*4)
-        self._usb_raise_for_status()
-        return cdb.BulkRead32.decode(rsp)
+        return self._exec_cdb(cdb.BulkRead32(addr, n, ap_num))
 
     def _bulk_write_8(self, data, addr, ap_num=0):
         '''
@@ -230,8 +184,7 @@ class STLink(usb_probe.Probe):
         assert len(data) <= self.max_rw8
         if not data:
             return
-        self._usb_xfer_out(cdb.BulkWrite8.make(data, addr, ap_num), data)
-        self._usb_raise_for_status()
+        self._exec_cdb(cdb.BulkWrite8(data, addr, ap_num))
 
     def _bulk_write_16(self, data, addr, ap_num=0):
         '''
@@ -240,8 +193,7 @@ class STLink(usb_probe.Probe):
         '''
         if not data:
             return
-        self._usb_xfer_out(cdb.BulkWrite16.make(data, addr, ap_num), data)
-        self._usb_raise_for_status()
+        self._exec_cdb(cdb.BulkWrite16(data, addr, ap_num))
 
     def _bulk_write_32(self, data, addr, ap_num=0):
         '''
@@ -249,8 +201,7 @@ class STLink(usb_probe.Probe):
         '''
         if not data:
             return
-        self._usb_xfer_out(cdb.BulkWrite32.make(data, addr, ap_num), data)
-        self._usb_raise_for_status()
+        self._exec_cdb(cdb.BulkWrite32(data, addr, ap_num))
 
     def _should_offload_ap(self, ap_num):
         '''
@@ -268,22 +219,26 @@ class STLink(usb_probe.Probe):
 
     def assert_srst(self):
         '''Holds the target in reset.'''
-        self._cmd_allow_retry(cdb.SetSRST.make(True), 2)
+        self._cmd_allow_retry(cdb.SetSRST(True))
 
     def deassert_srst(self):
         '''Releases the target from reset.'''
-        self._cmd_allow_retry(cdb.SetSRST.make(False), 2)
+        self._cmd_allow_retry(cdb.SetSRST(False))
+
+    def open_ap(self, apsel):
+        '''Prepares the AP for use.'''
+        if self.features & FEATURE_OPEN_AP:
+            self._cmd_allow_retry(cdb.OpenAP(apsel))
 
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''
-        cmd = cdb.ReadAPReg.make(apsel, addr)
-        rsp = self._cmd_allow_retry(cmd, 8)
-        return cdb.ReadAPReg.decode(rsp)
+        assert self.features & FEATURE_AP
+        return self._cmd_allow_retry(cdb.ReadAPReg(apsel, addr))
 
     def write_ap_reg(self, apsel, addr, value):
         '''Write a 32-bit register in the AP address space.'''
-        cmd = cdb.WriteAPReg.make(apsel, addr, value)
-        self._cmd_allow_retry(cmd, 2)
+        assert self.features & FEATURE_AP
+        self._cmd_allow_retry(cdb.WriteAPReg(apsel, addr, value))
 
     def read_32(self, addr, ap_num=0):
         '''
@@ -294,9 +249,7 @@ class STLink(usb_probe.Probe):
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._read_32(addr)
 
-        cmd = cdb.Read32.make(addr, ap_num)
-        rsp = self._cmd_allow_retry(cmd, 8)
-        return cdb.Read32.decode(rsp)
+        return self._cmd_allow_retry(cdb.Read32(addr, ap_num))
 
     def read_16(self, addr, ap_num=0):
         '''
@@ -339,8 +292,7 @@ class STLink(usb_probe.Probe):
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._write_32(v, addr)
 
-        cmd = cdb.Write32.make(addr, v, ap_num)
-        self._cmd_allow_retry(cmd, 2)
+        self._cmd_allow_retry(cdb.Write32(addr, v, ap_num))
 
     def write_16(self, v, addr, ap_num=0):
         '''

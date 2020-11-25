@@ -6,4 +6,5 @@ from . import dv
 
 __all__ = ['ELFBinary',
            'Core',
+           'dv',
            ]

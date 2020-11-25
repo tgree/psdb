@@ -339,6 +339,9 @@ class XDS110(usb_probe.Probe):
         p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq - 5.5))
         return 1000000000./p_ns
 
+    def open_ap(self, apsel):
+        pass
+
     def read_dp_reg(self, addr):
         '''Read a 32-bit register from the DP address space. '''
         return self.cmapi_read_dap_reg(1, 0, addr)

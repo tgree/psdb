@@ -1,6 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .xds110 import xds110
-from .stlink import stlink_v2_1, stlink_v3e, stlink_v3set
+from .stlink import stlink_v2_1, stlink_v3e, stlink_v3set, stlink_v3_2vcp
 import psdb
 
 
@@ -14,7 +14,8 @@ def get_probes():
         PROBES = (xds110.enumerate() +
                   stlink_v2_1.enumerate() +
                   stlink_v3e.enumerate() +
-                  stlink_v3set.enumerate()
+                  stlink_v3set.enumerate() +
+                  stlink_v3_2vcp.enumerate()
                   )
     return PROBES
 

@@ -18,6 +18,10 @@ class Target(object):
         self.cpus         = self.db.cpus
         self.devs         = collections.OrderedDict()
 
+    @staticmethod
+    def pre_probe(db, verbose):
+        pass
+
     def set_max_tck_freq(self):
         '''
         Sets the debug probe to the target's maximum supported SWD frequency.

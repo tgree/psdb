@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, Reg32
 
 

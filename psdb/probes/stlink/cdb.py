@@ -2,6 +2,8 @@
 from struct import pack, unpack
 from builtins import bytes
 
+from . import errors
+
 
 # Different modes the probe can be in.
 MODE_DFU    = 0
@@ -10,20 +12,45 @@ MODE_DEBUG  = 2
 MODE_SWIM   = 3
 MODE_BOOT   = 4
 
-
-def make_cdb(cmd):
-    '''
-    Right-pads the specified command with zeroes to make it a 16-byte CDB.
-    '''
-    assert len(cmd) <= 16
-    return cmd + bytes(b'\x00'*(16 - len(cmd)))
+# Command types
+HAS_DATA_OUT_PHASE  = (1 << 0)  # USB write op after the CDB.
+HAS_DATA_IN_PHASE   = (1 << 1)  # USB read op after the CDB.
+HAS_EMBEDDED_STATUS = (1 << 2)  # Data IN phase has status in first byte.
+HAS_STATUS_PHASE    = (1 << 3)  # Full XFER_STATUS phase after CDB/DATA phases.
 
 
-class STLinkCommand(object):
+def check_xfer_status(status, fault_addr=None):
+    if status == errors.DEBUG_OK:
+        return
+    msg = 'Unexpected error 0x%02X' % status
+    if fault_addr is not None:
+        msg += ' at 0x%08X' % fault_addr
+    raise errors.STLinkXFERException(status, fault_addr, msg)
+
+
+class STLinkCommandDecodeNotImplementedError(Exception):
+    pass
+
+
+class STLinkCommand:
     '''
     Attempt at documenting the SLINK command protocol.
     '''
-    pass
+    def __init__(self, cmd):
+        assert hasattr(self, 'CMD_FLAGS')
+        if self.CMD_FLAGS & HAS_DATA_IN_PHASE:
+            assert not (self.CMD_FLAGS & HAS_DATA_OUT_PHASE)
+            assert hasattr(self, 'RSP_LEN')
+        else:
+            assert not hasattr(self, 'RSP_LEN')
+        if self.CMD_FLAGS & HAS_DATA_OUT_PHASE:
+            assert hasattr(self, 'data_out')
+        assert len(cmd) <= 16
+        self.cmd = cmd
+        self.cdb = cmd + bytes(b'\x00'*(16 - len(cmd)))
+
+    def decode(self, rsp):
+        assert self.CMD_FLAGS & HAS_DATA_IN_PHASE
 
 
 class Version1(STLinkCommand):
@@ -50,13 +77,13 @@ class Version1(STLinkCommand):
         | v_stlink  |     v_jtag      |     v_swim      |
         +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<B', 0xF1))
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 6
 
-    @staticmethod
-    def decode(rsp):
-        assert len(rsp) == 6
+    def __init__(self):
+        super().__init__(pack('<B', 0xF1))
+
+    def decode(self, rsp):
         v0, v1, vid, pid = unpack('<BBHH', rsp)
         v = (v0 << 8) | v1
         v_stlink = (v >> 12) & 0x0F
@@ -85,12 +112,13 @@ class Version2(STLinkCommand):
         |               VID               |               PID               |
         +---------------------------------+---------------------------------+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<B', 0xFB))
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 12
 
-    @staticmethod
-    def decode(rsp):
+    def __init__(self):
+        super().__init__(pack('<B', 0xFB))
+
+    def decode(self, rsp):
         (v_stlink, v_swim, v_jtag, v_msd, v_bridge,
          _, _, _, vid, pid) = unpack('<BBBBBBBBHH', rsp)
         return v_stlink, v_swim, v_jtag, v_msd, v_bridge, vid, pid
@@ -110,19 +138,20 @@ class ReadVoltage(STLinkCommand):
         |      0xF7      |
         +----------------+
 
-    RX_EP (12 bytes):
+    RX_EP (8 bytes):
         +-------------------------------------------------------------------+
         |                             vref_adc                              |
         +-------------------------------------------------------------------+
         |                            target_adc                             |
         +-------------------------------------------------------------------+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<B', 0xF7))
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 8
 
-    @staticmethod
-    def decode(rsp):
+    def __init__(self):
+        super().__init__(pack('<B', 0xF7))
+
+    def decode(self, rsp):
         vref_adc, target_adc = unpack('<LL', rsp)
         return vref_adc, target_adc
 
@@ -146,13 +175,13 @@ class ReadCoreID(STLinkCommand):
         |                               DPIDR                               |
         +-------------------------------------------------------------------+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF2, 0x22))
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 4
 
-    @staticmethod
-    def decode(rsp):
-        assert len(rsp) == 4
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x22))
+
+    def decode(self, rsp):
         dpidr, = unpack('<I', rsp)
         return dpidr
 
@@ -179,20 +208,26 @@ class ReadIDCodes(STLinkCommand):
         |                                ???                                |
         +-------------------------------------------------------------------+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF2, 0x31))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 12
 
-    @staticmethod
-    def decode(rsp):
-        assert len(rsp) == 12
-        status, _, _, _, dpidr, unknown = unpack('<BBBBII', rsp)
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x31))
+
+    def decode(self, rsp):
+        _, _, _, _, dpidr, unknown = unpack('<BBBBII', rsp)
         return dpidr, unknown
 
 
 class GetCurrentMode(STLinkCommand):
     '''
-    Returns the STLINK probe's current mode.
+    Returns the STLINK probe's current mode, which can be one of:
+
+        MODE_DFU    = 0
+        MODE_MASS   = 1
+        MODE_DEBUG  = 2
+        MODE_SWIM   = 3
+        MODE_BOOT   = 4
 
     Availability: All.
 
@@ -206,12 +241,13 @@ class GetCurrentMode(STLinkCommand):
         |      MODE      |       --       |
         +----------------+----------------+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<B', 0xF5))
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 2
 
-    @staticmethod
-    def decode(rsp):
+    def __init__(self):
+        super().__init__(pack('<B', 0xF5))
+
+    def decode(self, rsp):
         mode, _ = unpack('<BB', rsp)
         return mode
 
@@ -230,9 +266,10 @@ class LeaveDFUMode(STLinkCommand):
     RX_EP:
         None
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF3, 0x07))
+    CMD_FLAGS = 0
+
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF3, 0x07))
 
 
 class LeaveDebugMode(STLinkCommand):
@@ -249,9 +286,10 @@ class LeaveDebugMode(STLinkCommand):
     RX_EP:
         None
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF2, 0x21))
+    CMD_FLAGS = 0
+
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x21))
 
 
 class LeaveSWIMMode(STLinkCommand):
@@ -268,9 +306,10 @@ class LeaveSWIMMode(STLinkCommand):
     RX_EP:
         None
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF4, 0x01))
+    CMD_FLAGS = 0
+
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF4, 0x01))
 
 
 class SWDConnect(STLinkCommand):
@@ -291,9 +330,11 @@ class SWDConnect(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BBB', 0xF2, 0x30, 0xA3))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self):
+        super().__init__(pack('<BBB', 0xF2, 0x30, 0xA3))
 
 
 class SetSWDCLKDivisor(STLinkCommand):
@@ -334,9 +375,11 @@ class SetSWDCLKDivisor(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    @staticmethod
-    def make(divisor):
-        return make_cdb(pack('<BBH', 0xF2, 0x43, divisor))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, divisor):
+        super().__init__(pack('<BBH', 0xF2, 0x43, divisor))
 
 
 class GetComFreqs(STLinkCommand):
@@ -376,15 +419,14 @@ class GetComFreqs(STLinkCommand):
         |                            freq_khz[N-1]                          |
         +-------------------------------------------------------------------+
     '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
     MAX_FREQS = 10
     RSP_LEN   = 12 + 4*MAX_FREQS
 
-    @staticmethod
-    def make(is_jtag):
-        return make_cdb(pack('<BBB', 0xF2, 0x62, int(is_jtag)))
+    def __init__(self, is_jtag):
+        super().__init__(pack('<BBB', 0xF2, 0x62, int(is_jtag)))
 
-    @staticmethod
-    def decode(rsp):
+    def decode(self, rsp):
         avail = (len(rsp) - 12) / 4
         count = min(avail, rsp[8], GetComFreqs.MAX_FREQS)
         return unpack('<' + 'I'*count, rsp[12:12 + count*4])
@@ -420,13 +462,14 @@ class SetComFreq(STLinkCommand):
         |                           act_freq_khz                            |
         +----------------+----------------+----------------+----------------+
     '''
-    @staticmethod
-    def make(freq_khz, is_jtag):
-        return make_cdb(pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, freq_khz))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 8
 
-    @staticmethod
-    def decode(rsp):
-        status, _, _, _, act_freq_khz = unpack('<BBBBI', rsp)
+    def __init__(self, freq_khz, is_jtag):
+        super().__init__(pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, freq_khz))
+
+    def decode(self, rsp):
+        _, _, _, _, act_freq_khz = unpack('<BBBBI', rsp)
         return act_freq_khz
 
 
@@ -465,15 +508,20 @@ class BulkRead8(STLinkCommand):
         +----------------+----------------+
         |    DATA[0]     |       --       |
         +----------------+----------------+
-    '''
-    @staticmethod
-    def make(addr, n, ap_num):
-        assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
-        return make_cdb(pack('<BBIHB', 0xF2, 0x0C, addr, n, ap_num))
 
-    @staticmethod
-    def decode(rsp, n):
-        return bytes(rsp[:n])
+    Status should be retrieved via a LastXFERStatus command.
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, addr, n, ap_num):
+        assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
+        self.RSP_LEN = max(n, 2)
+        self.N       = n
+        super().__init__(pack('<BBIHB', 0xF2, 0x0C, addr, n, ap_num))
+
+    def decode(self, rsp):
+        assert len(rsp) == self.RSP_LEN
+        return bytes(rsp[:self.N])
 
 
 class BulkRead16(STLinkCommand):
@@ -508,15 +556,19 @@ class BulkRead16(STLinkCommand):
         +---------------------------------+---------------------------------+
         |               ...               |          DATA[N/2 - 1]          |
         +---------------------------------+---------------------------------+
+
+    Status should be retrieved via a LastXFERStatus command.
     '''
-    @staticmethod
-    def make(addr, n, ap_num):
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, addr, n, ap_num):
         assert addr % 2 == 0
         assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
-        return make_cdb(pack('<BBIHB', 0xF2, 0x47, addr, n*2, ap_num))
+        self.RSP_LEN = n*2
+        super().__init__(pack('<BBIHB', 0xF2, 0x47, addr, n*2, ap_num))
 
-    @staticmethod
-    def decode(rsp):
+    def decode(self, rsp):
+        assert len(rsp) == self.RSP_LEN
         return bytes(rsp)
 
 
@@ -552,15 +604,19 @@ class BulkRead32(STLinkCommand):
         +---------------------------------+---------------------------------+
         |               ...               |          DATA[N/4 - 1]          |
         +---------------------------------+---------------------------------+
+
+    Status should be retrieved via a LastXFERStatus command.
     '''
-    @staticmethod
-    def make(addr, n, ap_num):
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, addr, n, ap_num):
         assert addr % 4 == 0
         assert (addr & 0xFFFFFC00) == ((addr + n*4 - 1) & 0xFFFFFC00)
-        return make_cdb(pack('<BBIHB', 0xF2, 0x07, addr, n*4, ap_num))
+        self.RSP_LEN = n*4
+        super().__init__(pack('<BBIHB', 0xF2, 0x07, addr, n*4, ap_num))
 
-    @staticmethod
-    def decode(rsp):
+    def decode(self, rsp):
+        assert len(rsp) == self.RSP_LEN
         return bytes(rsp)
 
 
@@ -591,11 +647,15 @@ class BulkWrite8(STLinkCommand):
         +----------------+----------------+----------------+----------------+
         |    DATA[0]     |      ...       |      ...       |   DATA[N-1]    |
         +----------------+----------------+----------------+----------------+
+
+    Status should be retrieved via a LastXFERStatus command.
     '''
-    @staticmethod
-    def make(data, addr, ap_num):
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, data, addr, ap_num):
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-        return make_cdb(pack('<BBIHB', 0xF2, 0x0D, addr, len(data), ap_num))
+        self.data_out = data
+        super().__init__(pack('<BBIHB', 0xF2, 0x0D, addr, len(data), ap_num))
 
 
 class BulkWrite16(STLinkCommand):
@@ -628,13 +688,17 @@ class BulkWrite16(STLinkCommand):
         +---------------------------------+---------------------------------+
         |               ...               |          DATA[N/2 - 1]          |
         +---------------------------------+---------------------------------+
+
+    Status should be retrieved via a LastXFERStatus command.
     '''
-    @staticmethod
-    def make(data, addr, ap_num):
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, data, addr, ap_num):
         assert addr % 2 == 0
         assert len(data) % 2 == 0
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-        return make_cdb(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num))
+        self.data_out = data
+        super().__init__(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num))
 
 
 class BulkWrite32(STLinkCommand):
@@ -667,19 +731,22 @@ class BulkWrite32(STLinkCommand):
         +---------------------------------+---------------------------------+
         |               ...               |          DATA[N/4 - 1]          |
         +---------------------------------+---------------------------------+
+
+    Status should be retrieved via a LastXFERStatus command.
     '''
-    @staticmethod
-    def make(data, addr, ap_num):
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, data, addr, ap_num):
         assert addr % 4 == 0
         assert len(data) % 4 == 0
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
-        return make_cdb(pack('<BBIHB', 0xF2, 0x08, addr, len(data), ap_num))
+        self.data_out = data
+        super().__init__(pack('<BBIHB', 0xF2, 0x08, addr, len(data), ap_num))
 
 
 class LastXFERStatus2(STLinkCommand):
     '''
-    Returns the status of the last DATA transfer since it is not available in
-    the DATA phase.  A None value is also decoded, indicating that the fault
+    Checks the status of the last DATA transfer since it is not available in
     address is not available in the event of error.
 
     Availability: V1 and V2.  LastXFERStatus12 is required for V3 and
@@ -695,23 +762,21 @@ class LastXFERStatus2(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 2
 
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF2, 0x3B))
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x3B))
 
-    @staticmethod
-    def decode(rsp):
-        status, _ = unpack('<BB')
-        return status, None
+    def decode(self, rsp):
+        status, _ = unpack('<BB', rsp)
+        return status
 
 
 class LastXFERStatus12(STLinkCommand):
     '''
-    Returns the status of the last DATA transfer since it is not available in
-    the DATA phase.  In the event of an error, the faulting address is included
-    in the response.
+    Checks the status of the last DATA transfer since it is not available in
+    address is not available in the event of error.
 
     Availability: V3 and V2 with J >= 15.
 
@@ -729,14 +794,13 @@ class LastXFERStatus12(STLinkCommand):
         |                                --                                 |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 12
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 12
 
-    @staticmethod
-    def make():
-        return make_cdb(pack('<BB', 0xF2, 0x3E))
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x3E))
 
-    @staticmethod
-    def decode(rsp):
+    def decode(self, rsp):
         status, _, _, _, fault_addr, _ = unpack('<BBBBII', rsp)
         return status, fault_addr
 
@@ -764,22 +828,72 @@ class SetSRST(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    @staticmethod
-    def make(asserted):
-        return make_cdb(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, asserted):
+        super().__init__(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
+
+
+class OpenAP(STLinkCommand):
+    '''
+    Availability: V2.1 J28 and V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x4B      |       AP       |
+        +----------------+----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, ap_num):
+        super().__init__(pack('<BBB', 0xF2, 0x4B, ap_num))
+
+
+class CloseAP(STLinkCommand):
+    '''
+    Availability: V2.1 J28 and V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x4C      |       AP       |
+        +----------------+----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, ap_num):
+        super().__init__(pack('<BBB', 0xF2, 0x4C, ap_num))
 
 
 class ReadAPReg(STLinkCommand):
     '''
     Reads a 32-bit register from the AP register space.  This is mostly useful
     so that we can retrieve the BASE register from the AP, allowing us to find
-    the base address of this AP's ROM tables.
+    the base address of this AP's ROM tables.  Prior to accessing AP register
+    space, the AP must be opened using an OpenAP() command on firmware versions
+    where OpenAP() is available.
+
+    Specifying an AP of 0xFFFF allows reading from the DP registers instead of
+    from an attached AP.  There is no OpenAP() equivalent for DP accesses; DP
+    reads require no prior setup.
 
     According to an OpenOCD commit message, the STLINK supports AP accesses to
     AP numbers 0-8. (Commit 5c55fbb065a829beafa233e5c0c0be56d9664934).
     Attempts to access AP numbers outside this range return STATUS 29.
 
-    Availability: Undocumented command.  At least V2.1 J29 and V3.
+    Availability: V2.1 J24 and V3.
 
     TX_EP (CDB):
         +----------------+----------------+---------------------------------+
@@ -795,22 +909,25 @@ class ReadAPReg(STLinkCommand):
         |                           Register Value                          |
         +-------------------------------------------------------------------+
     '''
-    @staticmethod
-    def make(ap_num, addr):
-        return make_cdb(pack('<BBHB', 0xF2, 0x45, ap_num, addr))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 8
 
-    @staticmethod
-    def decode(rsp):
-        status, _, _, _, reg32 = unpack('<BBBBI', rsp)
+    def __init__(self, ap_num, addr):
+        super().__init__(pack('<BBHB', 0xF2, 0x45, ap_num, addr))
+
+    def decode(self, rsp):
+        _, _, _, _, reg32 = unpack('<BBBBI', rsp)
         return reg32
 
 
 class WriteAPReg(STLinkCommand):
     '''
     Writes a 32-bit register in the AP register space.  This does get invoked
-    when we probe the sizes supported by an AHBAP or APBAP.
+    when we probe the sizes supported by an AHBAP or APBAP.  Prior to accessing
+    AP register space, the AP must be opened using an OpenAP() command on
+    firmware versions where OpenAP() is available.
 
-    Availability: Undocumented command.  At least V2.1 J29 and V3.
+    Availability: V2.1 J24 and V3.
 
     TX_EP (CDB):
         +----------------+----------------+---------------------------------+
@@ -826,9 +943,11 @@ class WriteAPReg(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    @staticmethod
-    def make(ap_num, addr, value):
-        return make_cdb(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, ap_num, addr, value):
+        super().__init__(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
 
 
 class Read32(STLinkCommand):
@@ -853,14 +972,15 @@ class Read32(STLinkCommand):
         |                           Register Value                          |
         +-------------------------------------------------------------------+
     '''
-    @staticmethod
-    def make(addr, ap_num):
-        assert addr % 4 == 0
-        return make_cdb(pack('<BBIB', 0xF2, 0x36, addr, ap_num))
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 8
 
-    @staticmethod
-    def decode(rsp):
-        status, _, _, _, u32 = unpack('<BBBBI', rsp)
+    def __init__(self, addr, ap_num):
+        assert addr % 4 == 0
+        super().__init__(pack('<BBIB', 0xF2, 0x36, addr, ap_num))
+
+    def decode(self, rsp):
+        _, _, _, _, u32 = unpack('<BBBBI', rsp)
         return u32
 
 
@@ -886,7 +1006,9 @@ class Write32(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    @staticmethod
-    def make(addr, v, ap_num):
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, addr, v, ap_num):
         assert addr % 4 == 0
-        return make_cdb(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))
+        super().__init__(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))

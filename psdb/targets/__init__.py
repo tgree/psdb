@@ -20,6 +20,11 @@ TARGETS = [msp432.MSP432P401,
            ]
 
 
+def pre_probe(db, verbose):
+    for t in TARGETS:
+        t.pre_probe(db, verbose)
+
+
 def probe(db):
     for t in TARGETS:
         device = t.probe(db)

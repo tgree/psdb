@@ -34,36 +34,37 @@ class STLinkV2_1(stlink.STLink):
             self.features |= stlink.FEATURE_RW_STATUS_12
         if self.ver_jtag >= 22:
             self.features |= stlink.FEATURE_SWD_SET_FREQ
+        if self.ver_jtag >= 24:
+            self.features |= stlink.FEATURE_AP
         if self.ver_jtag >= 26:
             self.features |= stlink.FEATURE_BULK_READ_16
             self.features |= stlink.FEATURE_BULK_WRITE_16
+        if self.ver_jtag >= 28:
+            self.features |= stlink.FEATURE_OPEN_AP
 
-    def _usb_last_xfer_status(self):
+    def _check_xfer_status(self):
         if self.features & stlink.FEATURE_RW_STATUS_12:
-            cls = cdb.LastXFERStatus12
+            status, fault_addr = self._exec_cdb(cdb.LastXFERStatus12())
         else:
-            cls = cdb.LastXFERStatus2
+            status     = self._exec_cdb(cdb.LastXFERStatus2())
+            fault_addr = None
 
-        rsp = self._usb_xfer_in(cls.make(), cls.RSP_LEN)
-        return cls.decode(rsp)
+        cdb.check_xfer_status(status, fault_addr)
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(cdb.Version1.make(), 6)
         (self.ver_stlink,
          self.ver_jtag,
          self.ver_swim,
          self.ver_vid,
-         self.ver_pid) = cdb.Version1.decode(rsp)
+         self.ver_pid) = self._exec_cdb(cdb.Version1())
 
     def _read_dpidr(self):
-        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
-        return cdb.ReadIDCodes.decode(rsp)[0]
+        return self._cmd_allow_retry(cdb.ReadIDCodes())[0]
 
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22
-        cmd = cdb.SetSWDCLKDivisor.make(divisor)
-        self._cmd_allow_retry(cmd, 2)
+        self._cmd_allow_retry(cdb.SetSWDCLKDivisor(divisor))
 
     def set_tck_freq(self, freq_hz):
         '''

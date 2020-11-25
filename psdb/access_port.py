@@ -50,6 +50,7 @@ class MemAP(AP):
         self.csw_ainc       = self.csw_reset & 0x00000030
         self.csw            = -1
         self.tar            = self._read_tar()
+        self.base_component = None
 
     def __repr__(self):
         features = [MemAP.FLAGS_TABLE[f]
@@ -80,12 +81,15 @@ class MemAP(AP):
     def write_bulk(self, data, addr):
         self.db.write_bulk(data, addr, self.ap_num)
 
-    def probe_components(self, verbose=False):
-        self.base_component = Component.probe(self, self._read_base())
-        if self.base_component:
+    def probe_components(self, verbose=False, match=True, recurse=True):
+        c = Component.probe(self, self._read_base(), match=match)
+        if c:
             if verbose:
-                print('  %s' % self.base_component)
-            self.base_component.probe_children(verbose=verbose)
+                print('  %s' % c)
+            if recurse:
+                c.probe_children(verbose=verbose, match=match)
+
+        return c
 
     def _probe_sizes(self):
         '''
