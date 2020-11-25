@@ -7,6 +7,7 @@ SWIM_OK                     = 0x00
 SWIM_BUSY                   = 0x01
 DEBUG_OK                    = 0x80
 DEBUG_FAULT                 = 0x81
+COM_FREQ_TOO_LOW_ERROR      = 0x08
 JTAG_GET_IDCODE_ERROR       = 0x09
 JTAG_WRITE_ERROR            = 0x0C
 JTAG_WRITE_VERIFY_ERROR     = 0x0D
