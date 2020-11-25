@@ -48,26 +48,22 @@ class STLinkV2_1(stlink.STLink):
         else:
             cls = cdb.LastXFERStatus2
 
-        rsp = self._usb_xfer_in(cls.make(), cls.RSP_LEN)
-        return cls.decode(rsp)
+        self._usb_xfer_in(cls())
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(cdb.Version1.make(), 6)
         (self.ver_stlink,
          self.ver_jtag,
          self.ver_swim,
          self.ver_vid,
-         self.ver_pid) = cdb.Version1.decode(rsp)
+         self.ver_pid) = self._usb_xfer_in(cdb.Version1())
 
     def _read_dpidr(self):
-        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
-        return cdb.ReadIDCodes.decode(rsp)[0]
+        return self._cmd_allow_retry(cdb.ReadIDCodes())[0]
 
     def _set_swdclk_divisor(self, divisor):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22
-        cmd = cdb.SetSWDCLKDivisor.make(divisor)
-        self._cmd_allow_retry(cmd, 2)
+        self._cmd_allow_retry(cdb.SetSWDCLKDivisor(divisor))
 
     def set_tck_freq(self, freq_hz):
         '''

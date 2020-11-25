@@ -1,6 +1,7 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 from . import stlink
 from . import cdb
+from . import errors
 import psdb
 
 
@@ -23,30 +24,25 @@ class STLinkV3_Base(stlink.STLink):
         self._swd_freqs_khz = sorted(self._get_com_freq(), reverse=True)
 
     def _usb_last_xfer_status(self):
-        rsp = self._usb_xfer_in(cdb.LastXFERStatus12.make(), 12)
-        return cdb.LastXFERStatus12.decode(rsp)
+        self._usb_xfer_in(cdb.LastXFERStatus12())
 
     def _usb_version(self):
-        rsp = self._usb_xfer_in(cdb.Version2.make(), 12)
         (self.ver_stlink,
          self.ver_swim,
          self.ver_jtag,
          self.ver_msd,
          self.ver_bridge,
          self.ver_vid,
-         self.ver_pid) = cdb.Version2.decode(rsp)
+         self.ver_pid) = self._usb_xfer_in(cdb.Version2())
 
     def _read_dpidr(self):
-        rsp = self._cmd_allow_retry(cdb.ReadIDCodes.make(), 12)
-        return cdb.ReadIDCodes.decode(rsp)[0]
+        return self._cmd_allow_retry(cdb.ReadIDCodes())[0]
 
     def _get_com_freq(self, is_jtag=False):
         '''
         Returns the list of supported frequencies, in kHz.
         '''
-        cmd   = cdb.GetComFreqs.make(is_jtag)
-        rsp   = self._cmd_allow_retry(cmd, cdb.GetComFreqs.RSP_LEN)
-        return cdb.GetComFreqs.decode(rsp)
+        return self._cmd_allow_retry(cdb.GetComFreqs(is_jtag))
 
     def _set_com_freq(self, freq_khz, is_jtag=False):
         '''
@@ -54,12 +50,11 @@ class STLinkV3_Base(stlink.STLink):
         that doesn't exceed the requested one.  Returns the actual frequency in
         kHz.
         '''
-        cmd = cdb.SetComFreq.make(freq_khz, is_jtag)
+        cmd = cdb.SetComFreq(freq_khz, is_jtag)
         try:
-            rsp = self._cmd_allow_retry(cmd, 8)
-            return cdb.SetComFreq.decode(rsp)
-        except stlink.STLinkCmdException as e:
-            if e.err != 0x08:
+            return self._cmd_allow_retry(cmd)
+        except errors.STLinkCmdException as e:
+            if e.err != errors.COM_FREQ_TOO_LOW_ERROR:
                 raise
         if is_jtag:
             raise psdb.ProbeException('Requested JTAG frequency %u kHz too low.'

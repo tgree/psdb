@@ -26,8 +26,9 @@ SWD_BAD_AP_ERROR            = 0x1D
 
 
 class STLinkCmdException(psdb.ProbeException):
-    def __init__(self, cmd, rsp, msg):
-        super(psdb.ProbeException, self).__init__(msg)
+    def __init__(self, cmd, rsp):
+        super(psdb.ProbeException, self).__init__(
+            'Unexpected error 0x%02X: %s' % (rsp[0], rsp))
         self.cmd = cmd
         self.rsp = rsp
         self.err = rsp[0]
