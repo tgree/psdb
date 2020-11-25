@@ -34,9 +34,13 @@ class STLinkV2_1(stlink.STLink):
             self.features |= stlink.FEATURE_RW_STATUS_12
         if self.ver_jtag >= 22:
             self.features |= stlink.FEATURE_SWD_SET_FREQ
+        if self.ver_jtag >= 24:
+            self.features |= stlink.FEATURE_AP
         if self.ver_jtag >= 26:
             self.features |= stlink.FEATURE_BULK_READ_16
             self.features |= stlink.FEATURE_BULK_WRITE_16
+        if self.ver_jtag >= 28:
+            self.features |= stlink.FEATURE_OPEN_AP
 
     def _usb_last_xfer_status(self):
         if self.features & stlink.FEATURE_RW_STATUS_12:

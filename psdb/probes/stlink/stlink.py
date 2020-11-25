@@ -42,6 +42,8 @@ FEATURE_SWD_SET_FREQ  = (1 << 1)
 FEATURE_BULK_READ_16  = (1 << 2)
 FEATURE_BULK_WRITE_16 = (1 << 3)
 FEATURE_VOLTAGE       = (1 << 4)
+FEATURE_AP            = (1 << 5)
+FEATURE_OPEN_AP       = (1 << 6)
 
 
 class STLink(usb_probe.Probe):
@@ -259,14 +261,22 @@ class STLink(usb_probe.Probe):
         '''Releases the target from reset.'''
         self._cmd_allow_retry(cdb.SetSRST.make(False), 2)
 
+    def open_ap(self, apsel):
+        '''Prepares the AP for use.'''
+        if self.features & FEATURE_OPEN_AP:
+            cmd = cdb.OpenAP.make(apsel)
+            self._cmd_allow_retry(cmd, 2)
+
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''
+        assert self.features & FEATURE_AP
         cmd = cdb.ReadAPReg.make(apsel, addr)
         rsp = self._cmd_allow_retry(cmd, 8)
         return cdb.ReadAPReg.decode(rsp)
 
     def write_ap_reg(self, apsel, addr, value):
         '''Write a 32-bit register in the AP address space.'''
+        assert self.features & FEATURE_AP
         cmd = cdb.WriteAPReg.make(apsel, addr, value)
         self._cmd_allow_retry(cmd, 2)
 

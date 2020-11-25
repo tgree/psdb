@@ -22,6 +22,9 @@ class Probe(object):
     def set_tck_freq(self, freq):
         raise NotImplementedError
 
+    def open_ap(self, ap_num):
+        raise NotImplementedError
+
     def read_32(self, addr, ap_num=0):
         raise NotImplementedError
 
@@ -107,6 +110,11 @@ class Probe(object):
         '''Probe all 256 APs for a non-zero IDR.'''
         self.aps = {}
         for ap_num in range(256):
+            try:
+                self.open_ap(ap_num)
+            except Exception:
+                continue
+
             ap = psdb.access_port.probe_ap(self, ap_num, verbose=verbose)
             if ap:
                 self.aps[ap_num] = ap

@@ -18,6 +18,8 @@ class STLinkV3_Base(stlink.STLink):
         self.features      |= stlink.FEATURE_BULK_WRITE_16
         self.features      |= stlink.FEATURE_RW_STATUS_12
         self.features      |= stlink.FEATURE_VOLTAGE
+        self.features      |= stlink.FEATURE_AP
+        self.features      |= stlink.FEATURE_OPEN_AP
         self._swd_freqs_khz = sorted(self._get_com_freq(), reverse=True)
 
     def _usb_last_xfer_status(self):
