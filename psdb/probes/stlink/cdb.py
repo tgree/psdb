@@ -49,8 +49,8 @@ class STLinkCommand:
         self.cmd = cmd
         self.cdb = cmd + bytes(b'\x00'*(16 - len(cmd)))
 
-    def decode(self):
-        raise STLinkCommandDecodeNotImplementedError()
+    def decode(self, rsp):
+        assert self.CMD_FLAGS & HAS_DATA_IN_PHASE
 
 
 class Version1(STLinkCommand):
@@ -336,9 +336,6 @@ class SWDConnect(STLinkCommand):
     def __init__(self):
         super().__init__(pack('<BBB', 0xF2, 0x30, 0xA3))
 
-    def decode(self, rsp):
-        pass
-
 
 class SetSWDCLKDivisor(STLinkCommand):
     '''
@@ -383,9 +380,6 @@ class SetSWDCLKDivisor(STLinkCommand):
 
     def __init__(self, divisor):
         super().__init__(pack('<BBH', 0xF2, 0x43, divisor))
-
-    def decode(self, rsp):
-        pass
 
 
 class GetComFreqs(STLinkCommand):
@@ -840,9 +834,6 @@ class SetSRST(STLinkCommand):
     def __init__(self, asserted):
         super().__init__(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
 
-    def decode(self, rsp):
-        pass
-
 
 class OpenAP(STLinkCommand):
     '''
@@ -864,9 +855,6 @@ class OpenAP(STLinkCommand):
     def __init__(self, ap_num):
         super().__init__(pack('<BBB', 0xF2, 0x4B, ap_num))
 
-    def decode(self, rsp):
-        pass
-
 
 class CloseAP(STLinkCommand):
     '''
@@ -887,9 +875,6 @@ class CloseAP(STLinkCommand):
 
     def __init__(self, ap_num):
         super().__init__(pack('<BBB', 0xF2, 0x4C, ap_num))
-
-    def decode(self, rsp):
-        pass
 
 
 class ReadAPReg(STLinkCommand):
@@ -964,9 +949,6 @@ class WriteAPReg(STLinkCommand):
     def __init__(self, ap_num, addr, value):
         super().__init__(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
 
-    def decode(self, rsp):
-        pass
-
 
 class Read32(STLinkCommand):
     '''
@@ -1030,6 +1012,3 @@ class Write32(STLinkCommand):
     def __init__(self, addr, v, ap_num):
         assert addr % 4 == 0
         super().__init__(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))
-
-    def decode(self, rsp):
-        pass
