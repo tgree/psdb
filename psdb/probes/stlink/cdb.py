@@ -769,17 +769,61 @@ class SetSRST(STLinkCommand):
         return make_cdb(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
 
 
+class OpenAP(STLinkCommand):
+    '''
+    Availability: V2.1 J28 and V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x4B      |       AP       |
+        +----------------+----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make(ap_num):
+        return make_cdb(pack('<BBB', 0xF2, 0x4B, ap_num))
+
+
+class CloseAP(STLinkCommand):
+    '''
+    Availability: V2.1 J28 and V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x4C      |       AP       |
+        +----------------+----------------+----------------+
+
+    RX_EP (2 bytes):
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    @staticmethod
+    def make(ap_num):
+        return make_cdb(pack('<BBB', 0xF2, 0x4C, ap_num))
+
+
 class ReadAPReg(STLinkCommand):
     '''
     Reads a 32-bit register from the AP register space.  This is mostly useful
     so that we can retrieve the BASE register from the AP, allowing us to find
-    the base address of this AP's ROM tables.
+    the base address of this AP's ROM tables.  Prior to accessing AP register
+    space, the AP must be opened using an OpenAP() command on firmware versions
+    where OpenAP() is available.
+
+    Specifying an AP of 0xFFFF allows reading from the DP registers instead of
+    from an attached AP.  There is no OpenAP() equivalent for DP accesses; DP
+    reads require no prior setup.
 
     According to an OpenOCD commit message, the STLINK supports AP accesses to
     AP numbers 0-8. (Commit 5c55fbb065a829beafa233e5c0c0be56d9664934).
     Attempts to access AP numbers outside this range return STATUS 29.
 
-    Availability: Undocumented command.  At least V2.1 J29 and V3.
+    Availability: V2.1 J24 and V3.
 
     TX_EP (CDB):
         +----------------+----------------+---------------------------------+
@@ -808,9 +852,11 @@ class ReadAPReg(STLinkCommand):
 class WriteAPReg(STLinkCommand):
     '''
     Writes a 32-bit register in the AP register space.  This does get invoked
-    when we probe the sizes supported by an AHBAP or APBAP.
+    when we probe the sizes supported by an AHBAP or APBAP.  Prior to accessing
+    AP register space, the AP must be opened using an OpenAP() command on
+    firmware versions where OpenAP() is available.
 
-    Availability: Undocumented command.  At least V2.1 J29 and V3.
+    Availability: V2.1 J24 and V3.
 
     TX_EP (CDB):
         +----------------+----------------+---------------------------------+
