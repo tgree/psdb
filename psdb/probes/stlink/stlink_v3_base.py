@@ -23,8 +23,9 @@ class STLinkV3_Base(stlink.STLink):
         self.features      |= stlink.FEATURE_OPEN_AP
         self._swd_freqs_khz = sorted(self._get_com_freq(), reverse=True)
 
-    def _usb_last_xfer_status(self):
-        self._usb_xfer_in(cdb.LastXFERStatus12())
+    def _check_xfer_status(self):
+        status, fault_addr = self._exec_cdb(cdb.LastXFERStatus12())
+        cdb.check_xfer_status(status, fault_addr)
 
     def _usb_version(self):
         (self.ver_stlink,
@@ -33,7 +34,7 @@ class STLinkV3_Base(stlink.STLink):
          self.ver_msd,
          self.ver_bridge,
          self.ver_vid,
-         self.ver_pid) = self._usb_xfer_in(cdb.Version2())
+         self.ver_pid) = self._exec_cdb(cdb.Version2())
 
     def _read_dpidr(self):
         return self._cmd_allow_retry(cdb.ReadIDCodes())[0]

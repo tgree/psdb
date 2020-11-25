@@ -42,20 +42,21 @@ class STLinkV2_1(stlink.STLink):
         if self.ver_jtag >= 28:
             self.features |= stlink.FEATURE_OPEN_AP
 
-    def _usb_last_xfer_status(self):
+    def _check_xfer_status(self):
         if self.features & stlink.FEATURE_RW_STATUS_12:
-            cls = cdb.LastXFERStatus12
+            status, fault_addr = self._exec_cdb(cdb.LastXFERStatus12())
         else:
-            cls = cdb.LastXFERStatus2
+            status     = self._exec_cdb(cdb.LastXFERStatus2())
+            fault_addr = None
 
-        self._usb_xfer_in(cls())
+        cdb.check_xfer_status(status, fault_addr)
 
     def _usb_version(self):
         (self.ver_stlink,
          self.ver_jtag,
          self.ver_swim,
          self.ver_vid,
-         self.ver_pid) = self._usb_xfer_in(cdb.Version1())
+         self.ver_pid) = self._exec_cdb(cdb.Version1())
 
     def _read_dpidr(self):
         return self._cmd_allow_retry(cdb.ReadIDCodes())[0]

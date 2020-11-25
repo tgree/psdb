@@ -12,6 +12,21 @@ MODE_DEBUG  = 2
 MODE_SWIM   = 3
 MODE_BOOT   = 4
 
+# Command types
+HAS_DATA_OUT_PHASE  = (1 << 0)  # USB write op after the CDB.
+HAS_DATA_IN_PHASE   = (1 << 1)  # USB read op after the CDB.
+HAS_EMBEDDED_STATUS = (1 << 2)  # Data IN phase has status in first byte.
+HAS_STATUS_PHASE    = (1 << 3)  # Full XFER_STATUS phase after CDB/DATA phases.
+
+
+def check_xfer_status(status, fault_addr=None):
+    if status == errors.DEBUG_OK:
+        return
+    msg = 'Unexpected error 0x%02X' % status
+    if fault_addr is not None:
+        msg += ' at 0x%08X' % fault_addr
+    raise errors.STLinkXFERException(status, fault_addr, msg)
+
 
 class STLinkCommandDecodeNotImplementedError(Exception):
     pass
@@ -22,7 +37,14 @@ class STLinkCommand:
     Attempt at documenting the SLINK command protocol.
     '''
     def __init__(self, cmd):
-        assert hasattr(self, 'RSP_LEN')
+        assert hasattr(self, 'CMD_FLAGS')
+        if self.CMD_FLAGS & HAS_DATA_IN_PHASE:
+            assert not (self.CMD_FLAGS & HAS_DATA_OUT_PHASE)
+            assert hasattr(self, 'RSP_LEN')
+        else:
+            assert not hasattr(self, 'RSP_LEN')
+        if self.CMD_FLAGS & HAS_DATA_OUT_PHASE:
+            assert hasattr(self, 'data_out')
         assert len(cmd) <= 16
         self.cmd = cmd
         self.cdb = cmd + bytes(b'\x00'*(16 - len(cmd)))
@@ -55,7 +77,8 @@ class Version1(STLinkCommand):
         | v_stlink  |     v_jtag      |     v_swim      |
         +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
     '''
-    RSP_LEN = 6
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 6
 
     def __init__(self):
         super().__init__(pack('<B', 0xF1))
@@ -89,7 +112,8 @@ class Version2(STLinkCommand):
         |               VID               |               PID               |
         +---------------------------------+---------------------------------+
     '''
-    RSP_LEN = 12
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 12
 
     def __init__(self):
         super().__init__(pack('<B', 0xFB))
@@ -121,7 +145,8 @@ class ReadVoltage(STLinkCommand):
         |                            target_adc                             |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 8
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 8
 
     def __init__(self):
         super().__init__(pack('<B', 0xF7))
@@ -150,7 +175,8 @@ class ReadCoreID(STLinkCommand):
         |                               DPIDR                               |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 4
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 4
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF2, 0x22))
@@ -182,7 +208,8 @@ class ReadIDCodes(STLinkCommand):
         |                                ???                                |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 12
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 12
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF2, 0x31))
@@ -196,7 +223,13 @@ class ReadIDCodes(STLinkCommand):
 
 class GetCurrentMode(STLinkCommand):
     '''
-    Returns the STLINK probe's current mode.
+    Returns the STLINK probe's current mode, which can be one of:
+
+        MODE_DFU    = 0
+        MODE_MASS   = 1
+        MODE_DEBUG  = 2
+        MODE_SWIM   = 3
+        MODE_BOOT   = 4
 
     Availability: All.
 
@@ -210,7 +243,8 @@ class GetCurrentMode(STLinkCommand):
         |      MODE      |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 2
 
     def __init__(self):
         super().__init__(pack('<B', 0xF5))
@@ -234,7 +268,7 @@ class LeaveDFUMode(STLinkCommand):
     RX_EP:
         None
     '''
-    RSP_LEN = None
+    CMD_FLAGS = 0
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF3, 0x07))
@@ -254,7 +288,7 @@ class LeaveDebugMode(STLinkCommand):
     RX_EP:
         None
     '''
-    RSP_LEN = None
+    CMD_FLAGS = 0
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF2, 0x21))
@@ -274,7 +308,7 @@ class LeaveSWIMMode(STLinkCommand):
     RX_EP:
         None
     '''
-    RSP_LEN = None
+    CMD_FLAGS = 0
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF4, 0x01))
@@ -298,7 +332,8 @@ class SWDConnect(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self):
         super().__init__(pack('<BBB', 0xF2, 0x30, 0xA3))
@@ -347,7 +382,8 @@ class SetSWDCLKDivisor(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self, divisor):
         super().__init__(pack('<BBH', 0xF2, 0x43, divisor))
@@ -395,6 +431,7 @@ class GetComFreqs(STLinkCommand):
         |                            freq_khz[N-1]                          |
         +-------------------------------------------------------------------+
     '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
     MAX_FREQS = 10
     RSP_LEN   = 12 + 4*MAX_FREQS
 
@@ -439,7 +476,8 @@ class SetComFreq(STLinkCommand):
         |                           act_freq_khz                            |
         +----------------+----------------+----------------+----------------+
     '''
-    RSP_LEN = 8
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 8
 
     def __init__(self, freq_khz, is_jtag):
         super().__init__(pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, freq_khz))
@@ -489,6 +527,8 @@ class BulkRead8(STLinkCommand):
 
     Status should be retrieved via a LastXFERStatus command.
     '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
     def __init__(self, addr, n, ap_num):
         assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
         self.RSP_LEN = max(n, 2)
@@ -535,6 +575,8 @@ class BulkRead16(STLinkCommand):
 
     Status should be retrieved via a LastXFERStatus command.
     '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
     def __init__(self, addr, n, ap_num):
         assert addr % 2 == 0
         assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
@@ -581,6 +623,8 @@ class BulkRead32(STLinkCommand):
 
     Status should be retrieved via a LastXFERStatus command.
     '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
     def __init__(self, addr, n, ap_num):
         assert addr % 4 == 0
         assert (addr & 0xFFFFFC00) == ((addr + n*4 - 1) & 0xFFFFFC00)
@@ -622,10 +666,11 @@ class BulkWrite8(STLinkCommand):
 
     Status should be retrieved via a LastXFERStatus command.
     '''
-    RSP_LEN = None
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
 
     def __init__(self, data, addr, ap_num):
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
+        self.data_out = data
         super().__init__(pack('<BBIHB', 0xF2, 0x0D, addr, len(data), ap_num))
 
 
@@ -662,12 +707,13 @@ class BulkWrite16(STLinkCommand):
 
     Status should be retrieved via a LastXFERStatus command.
     '''
-    RSP_LEN = None
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
 
     def __init__(self, data, addr, ap_num):
         assert addr % 2 == 0
         assert len(data) % 2 == 0
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
+        self.data_out = data
         super().__init__(pack('<BBIHB', 0xF2, 0x48, addr, len(data), ap_num))
 
 
@@ -704,12 +750,13 @@ class BulkWrite32(STLinkCommand):
 
     Status should be retrieved via a LastXFERStatus command.
     '''
-    RSP_LEN = None
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
 
     def __init__(self, data, addr, ap_num):
         assert addr % 4 == 0
         assert len(data) % 4 == 0
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
+        self.data_out = data
         super().__init__(pack('<BBIHB', 0xF2, 0x08, addr, len(data), ap_num))
 
 
@@ -731,16 +778,15 @@ class LastXFERStatus2(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 2
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF2, 0x3B))
 
     def decode(self, rsp):
         status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkXFERException(
-                status, None, 'Unexpected error 0x%02X' % status)
+        return status
 
 
 class LastXFERStatus12(STLinkCommand):
@@ -764,17 +810,15 @@ class LastXFERStatus12(STLinkCommand):
         |                                --                                 |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 12
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 12
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF2, 0x3E))
 
     def decode(self, rsp):
         status, _, _, _, fault_addr, _ = unpack('<BBBBII', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkXFERException(
-                status, fault_addr,
-                'Unexpected error 0x%02X at 0x%08X' % (status, fault_addr))
+        return status, fault_addr
 
 
 class SetSRST(STLinkCommand):
@@ -800,7 +844,8 @@ class SetSRST(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self, asserted):
         super().__init__(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
@@ -825,7 +870,8 @@ class OpenAP(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self, ap_num):
         super().__init__(pack('<BBB', 0xF2, 0x4B, ap_num))
@@ -850,7 +896,8 @@ class CloseAP(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self, ap_num):
         super().__init__(pack('<BBB', 0xF2, 0x4C, ap_num))
@@ -893,7 +940,8 @@ class ReadAPReg(STLinkCommand):
         |                           Register Value                          |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 8
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 8
 
     def __init__(self, ap_num, addr):
         super().__init__(pack('<BBHB', 0xF2, 0x45, ap_num, addr))
@@ -928,7 +976,8 @@ class WriteAPReg(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self, ap_num, addr, value):
         super().__init__(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
@@ -961,7 +1010,8 @@ class Read32(STLinkCommand):
         |                           Register Value                          |
         +-------------------------------------------------------------------+
     '''
-    RSP_LEN = 8
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 8
 
     def __init__(self, addr, ap_num):
         assert addr % 4 == 0
@@ -996,7 +1046,8 @@ class Write32(STLinkCommand):
         |     STATUS     |       --       |
         +----------------+----------------+
     '''
-    RSP_LEN = 2
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
 
     def __init__(self, addr, v, ap_num):
         assert addr % 4 == 0
