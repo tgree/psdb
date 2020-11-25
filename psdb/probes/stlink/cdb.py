@@ -215,8 +215,6 @@ class ReadIDCodes(STLinkCommand):
         super().__init__(pack('<BB', 0xF2, 0x31))
 
     def decode(self, rsp):
-        if rsp[0] != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
         _, _, _, _, dpidr, unknown = unpack('<BBBBII', rsp)
         return dpidr, unknown
 
@@ -339,9 +337,7 @@ class SWDConnect(STLinkCommand):
         super().__init__(pack('<BBB', 0xF2, 0x30, 0xA3))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass
 
 
 class SetSWDCLKDivisor(STLinkCommand):
@@ -389,9 +385,7 @@ class SetSWDCLKDivisor(STLinkCommand):
         super().__init__(pack('<BBH', 0xF2, 0x43, divisor))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass
 
 
 class GetComFreqs(STLinkCommand):
@@ -439,8 +433,6 @@ class GetComFreqs(STLinkCommand):
         super().__init__(pack('<BBB', 0xF2, 0x62, int(is_jtag)))
 
     def decode(self, rsp):
-        if rsp[0] != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
         avail = (len(rsp) - 12) / 4
         count = min(avail, rsp[8], GetComFreqs.MAX_FREQS)
         return unpack('<' + 'I'*count, rsp[12:12 + count*4])
@@ -483,8 +475,6 @@ class SetComFreq(STLinkCommand):
         super().__init__(pack('<BBBBI', 0xF2, 0x61, int(is_jtag), 0, freq_khz))
 
     def decode(self, rsp):
-        if rsp[0] != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
         _, _, _, _, act_freq_khz = unpack('<BBBBI', rsp)
         return act_freq_khz
 
@@ -851,9 +841,7 @@ class SetSRST(STLinkCommand):
         super().__init__(pack('<BBB', 0xF2, 0x3C, int(not asserted)))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass
 
 
 class OpenAP(STLinkCommand):
@@ -877,9 +865,7 @@ class OpenAP(STLinkCommand):
         super().__init__(pack('<BBB', 0xF2, 0x4B, ap_num))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass
 
 
 class CloseAP(STLinkCommand):
@@ -903,9 +889,7 @@ class CloseAP(STLinkCommand):
         super().__init__(pack('<BBB', 0xF2, 0x4C, ap_num))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass
 
 
 class ReadAPReg(STLinkCommand):
@@ -947,8 +931,6 @@ class ReadAPReg(STLinkCommand):
         super().__init__(pack('<BBHB', 0xF2, 0x45, ap_num, addr))
 
     def decode(self, rsp):
-        if rsp[0] != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
         _, _, _, _, reg32 = unpack('<BBBBI', rsp)
         return reg32
 
@@ -983,9 +965,7 @@ class WriteAPReg(STLinkCommand):
         super().__init__(pack('<BBHHI', 0xF2, 0x46, ap_num, addr, value))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass
 
 
 class Read32(STLinkCommand):
@@ -1018,8 +998,6 @@ class Read32(STLinkCommand):
         super().__init__(pack('<BBIB', 0xF2, 0x36, addr, ap_num))
 
     def decode(self, rsp):
-        if rsp[0] != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
         _, _, _, _, u32 = unpack('<BBBBI', rsp)
         return u32
 
@@ -1054,6 +1032,4 @@ class Write32(STLinkCommand):
         super().__init__(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))
 
     def decode(self, rsp):
-        status, _ = unpack('<BB', rsp)
-        if status != errors.DEBUG_OK:
-            raise errors.STLinkCmdException(self.cdb, rsp)
+        pass

@@ -86,10 +86,10 @@ class STLink(usb_probe.Probe):
 
         if cmd.CMD_FLAGS & cdb.HAS_DATA_IN_PHASE:
             rsp = self.usb_dev.read(RX_EP, cmd.RSP_LEN, timeout=timeout)
-            try:
-                retval = cmd.decode(rsp)
-            except cdb.STLinkCommandDecodeNotImplementedError:
-                pass
+            if cmd.CMD_FLAGS & cdb.HAS_EMBEDDED_STATUS:
+                if rsp[0] != errors.DEBUG_OK:
+                    raise errors.STLinkCmdException(cmd.cdb, rsp)
+            retval = cmd.decode(rsp)
         else:
             retval = None
 
