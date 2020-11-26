@@ -136,6 +136,8 @@ class Probe(object):
         if connect_under_reset:
             self.assert_srst()
 
+        self.connect()
+
         dpver = ((self.dpidr & 0x0000F000) >> 12)
         if dpver == 1:
             self._probe_dp_v1(verbose=verbose)

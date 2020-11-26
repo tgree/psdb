@@ -390,7 +390,7 @@ class XDS110(usb_probe.Probe):
     def write_8(self, v, addr, ap_num=0):
         self._bulk_write_8(bytes([v]), addr, ap_num)
 
-    def probe(self, **kwargs):
+    def connect(self):
         # Deassert SRST in case someone left it asserted.
         self.deassert_srst()
 
@@ -405,8 +405,6 @@ class XDS110(usb_probe.Probe):
             assert err == 0
         self.cmapi_acquire()
 
-        # Probe the target.
-        return super(XDS110, self).probe(**kwargs)
 
     def show_info(self):
         super(XDS110, self).show_info()
