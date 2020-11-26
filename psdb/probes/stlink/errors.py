@@ -5,6 +5,7 @@ import psdb
 # Error status codes
 SWIM_OK                     = 0x00
 SWIM_BUSY                   = 0x01
+NO_DEVICE_CONNECTED         = 0x05
 COM_FREQ_TOO_LOW_ERROR      = 0x08
 JTAG_GET_IDCODE_ERROR       = 0x09
 JTAG_WRITE_ERROR            = 0x0C
