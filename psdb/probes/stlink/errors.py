@@ -5,8 +5,6 @@ import psdb
 # Error status codes
 SWIM_OK                     = 0x00
 SWIM_BUSY                   = 0x01
-DEBUG_OK                    = 0x80
-DEBUG_FAULT                 = 0x81
 COM_FREQ_TOO_LOW_ERROR      = 0x08
 JTAG_GET_IDCODE_ERROR       = 0x09
 JTAG_WRITE_ERROR            = 0x0C
@@ -23,6 +21,8 @@ SWD_AP_WDATA_ERROR          = 0x18
 SWD_AP_STICKY_ERROR         = 0x19
 SWD_AP_STICKY_OVERRUN_ERROR = 0x1A
 SWD_BAD_AP_ERROR            = 0x1D
+DEBUG_OK                    = 0x80
+DEBUG_FAULT                 = 0x81
 
 
 class STLinkCmdException(psdb.ProbeException):
