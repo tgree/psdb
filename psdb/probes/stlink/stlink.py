@@ -230,6 +230,14 @@ class STLink(usb_probe.Probe):
         if self.features & FEATURE_OPEN_AP:
             self._cmd_allow_retry(cdb.OpenAP(apsel))
 
+    def read_dp_reg(self, addr):
+        '''Read a 32-bit register from the DP address space. '''
+        return self.read_ap_reg(0xFFFF, addr)
+
+    def write_dp_reg(self, addr, value):
+        '''Write a 32-bit register in the DP address space. '''
+        return self.write_ap_reg(0xFFFF, addr, value)
+
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''
         assert self.features & FEATURE_AP
