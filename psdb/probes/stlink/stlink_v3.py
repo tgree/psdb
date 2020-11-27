@@ -31,7 +31,11 @@ class STLinkV3(stlink.STLink):
         self._usb_version()
         assert self.ver_stlink == 3
 
-        self.max_rw8        = 512
+        if self.ver_jtag < 6:
+            self.max_rw8 = 64
+        else:
+            self.max_rw8 = 512
+
         self.features      |= stlink.FEATURE_BULK_READ_16
         self.features      |= stlink.FEATURE_BULK_WRITE_16
         self.features      |= stlink.FEATURE_RW_STATUS_12
