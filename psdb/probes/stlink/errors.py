@@ -56,8 +56,7 @@ def status_string(status):
 
 class STLinkCmdException(psdb.ProbeException):
     def __init__(self, cmd, rsp):
-        super(psdb.ProbeException, self).__init__(
-            'Unexpected error 0x%02X: %s' % (rsp[0], rsp))
+        super().__init__('Unexpected error 0x%02X: %s' % (rsp[0], rsp))
         self.cmd = cmd
         self.rsp = rsp
         self.err = rsp[0]
@@ -65,6 +64,6 @@ class STLinkCmdException(psdb.ProbeException):
 
 class STLinkXFERException(psdb.ProbeException):
     def __init__(self, status, fault_addr, msg):
-        super(psdb.ProbeException, self).__init__(msg)
+        super().__init__(msg)
         self.status     = status
         self.fault_addr = fault_addr
