@@ -5,17 +5,6 @@ from . import cdb
 import psdb
 
 
-# Unknown commands sniffed via debugger:
-# --------------------------------------------------------
-#   Req: f2 4b 00 01 00 00 00 00 00 00 00 00 00 00 00 00
-#              AP
-#   Rsp: 80 00
-# --------------------------------------------------------
-#   Req: f2 4c 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-#              AP
-#   Rsp: 80 00
-# --------------------------------------------------------
-
 class STLinkV2_1(stlink.STLink):
     '''
     STLink V2.1 debug probe.  This can be found on the Nucleo 144 board we have
