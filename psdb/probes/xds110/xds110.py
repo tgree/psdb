@@ -29,7 +29,7 @@ def version_string(v):
 
 class XDS110VersionException(psdb.ProbeException):
     def __init__(self, fw_version, min_fw_version):
-        super(XDS110VersionException, self).__init__(
+        super().__init__(
             'Firmware version %s is too old, use Code Composer Studio to '
             'upgrade to at least %s.' % (version_string(fw_version),
                                          version_string(min_fw_version)))
@@ -39,7 +39,7 @@ class XDS110VersionException(psdb.ProbeException):
 
 class XDS110CommandException(psdb.ProbeException):
     def __init__(self, error, allowed_errs, response):
-        super(XDS110CommandException, self).__init__('XDS110 error %d' % error)
+        super().__init__('XDS110 error %d' % error)
         self.error        = error
         self.allowed_errs = allowed_errs
         self.response     = response
@@ -47,7 +47,7 @@ class XDS110CommandException(psdb.ProbeException):
 
 class XDS110(usb_probe.Probe):
     def __init__(self, usb_dev):
-        super(XDS110, self).__init__(usb_dev, 'XDS110')
+        super().__init__(usb_dev, 'XDS110')
         self.fw_version, self.hw_version = self.xds_version()
         self.csw_bases = {}
         if self.fw_version < MIN_FW_VERSION:
@@ -407,7 +407,7 @@ class XDS110(usb_probe.Probe):
 
 
     def show_info(self):
-        super(XDS110, self).show_info()
+        super().show_info()
         print(' Hardware Ver: 0x%04X' % self.hw_version)
         print(' Firmware Ver: %s' % version_string(self.fw_version))
 

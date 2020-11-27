@@ -27,7 +27,7 @@ class STLinkV3(stlink.STLink):
         0x3753 - STLINK-V3 in dual-VCP mode (V3SET)
     '''
     def __init__(self, usb_dev):
-        super(STLinkV3, self).__init__(usb_dev, 'STLinkV3')
+        super().__init__(usb_dev, 'STLinkV3')
         self._usb_version()
         assert self.ver_stlink == 3
 
@@ -94,7 +94,7 @@ class STLinkV3(stlink.STLink):
         return self._set_com_freq(freq_hz // 1000, is_jtag=False) * 1000
 
     def show_info(self):
-        super(STLinkV3, self).show_info()
+        super().show_info()
         print(' Firmware Ver: V%uJ%uM%uB%uS%u' % (
             self.ver_stlink, self.ver_jtag, self.ver_msd, self.ver_bridge,
             self.ver_swim))

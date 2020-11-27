@@ -53,7 +53,7 @@ class STLink(usb_probe.Probe):
     debug probe as a virtual COM port.
     '''
     def __init__(self, usb_dev, name):
-        super(STLink, self).__init__(usb_dev, name)
+        super().__init__(usb_dev, name)
         self.dpidr    = None
         self.features = 0
 
@@ -289,7 +289,7 @@ class STLink(usb_probe.Probe):
         '''
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._read_bulk(addr, size)
-        return super(STLink, self).read_bulk(addr, size, ap_num)
+        return super().read_bulk(addr, size, ap_num)
 
     def write_32(self, v, addr, ap_num=0):
         '''
@@ -325,7 +325,7 @@ class STLink(usb_probe.Probe):
         '''
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._write_bulk(data, addr)
-        super(STLink, self).write_bulk(data, addr, ap_num)
+        super().write_bulk(data, addr, ap_num)
 
     def connect(self):
         self._swd_connect()
