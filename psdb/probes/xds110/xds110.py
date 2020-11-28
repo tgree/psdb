@@ -324,6 +324,24 @@ class XDS110(usb_probe.Probe):
         reqs += self._make_dp_write_request((ap_num << 24), 0x08)
         self.ocd_dap_request(reqs, 0)
 
+    def _bulk_write_16(self, data, addr, ap_num=0):
+        assert addr % 2 == 0
+        assert len(data) % 2 == 0
+        if not data:
+            return
+        assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
+
+        csw_base = self._get_csw_base(ap_num)
+        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
+        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x11, 0x00)
+        reqs += self._make_ap_write_request(addr, 0x04)
+        for i in range(len(data)//2):
+            v     = unpack_from('<H', data, offset=i*2)[0]
+            reqs += self._make_ap_write_request((v << 8*(addr % 4)), 0x0C)
+            addr += 2
+        reqs += self._make_dp_write_request((ap_num << 24), 0x08)
+        self.ocd_dap_request(reqs, 0)
+
     def _bulk_write_32(self, data, addr, ap_num=0):
         assert addr % 4 == 0
         assert len(data) % 4 == 0
