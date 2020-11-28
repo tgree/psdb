@@ -278,8 +278,7 @@ class STLink(usb_probe.Probe):
         '''
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._read_8(addr)
-        u16 = self._bulk_read_8(addr, 1, ap_num=ap_num)
-        return unpack_from('<H', u16)[0] & 0xFF
+        return unpack_from('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
 
     def read_bulk(self, addr, size, ap_num=0):
         '''
