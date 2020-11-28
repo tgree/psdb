@@ -4,7 +4,7 @@ from . import cdb
 from . import errors
 import psdb
 
-from struct import pack, unpack
+from struct import pack
 from builtins import bytes, range
 import time
 

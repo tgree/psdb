@@ -420,7 +420,6 @@ class XDS110(usb_probe.Probe):
             assert err == 0
         self.cmapi_acquire()
 
-
     def show_info(self):
         super().show_info()
         print(' Hardware Ver: 0x%04X' % self.hw_version)
