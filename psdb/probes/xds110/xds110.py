@@ -382,9 +382,6 @@ class XDS110(usb_probe.Probe):
         '''Write a 32-bit register in the AP address space.'''
         self.cmapi_write_dap_reg(0, apsel, addr, value)
 
-    def read_32(self, addr, ap_num=0):
-        return unpack('<I', self._bulk_read_32(addr, 1, ap_num))[0]
-
     def write_32(self, v, addr, ap_num=0):
         self._bulk_write_32(pack('<I', v), addr, ap_num)
 

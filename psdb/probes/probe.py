@@ -30,7 +30,7 @@ class Probe(object):
         raise NotImplementedError
 
     def read_32(self, addr, ap_num=0):
-        raise NotImplementedError
+        return unpack('<I', self._bulk_read_32(addr, 1, ap_num=ap_num))[0]
 
     def read_16(self, addr, ap_num=0):
         return unpack('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
