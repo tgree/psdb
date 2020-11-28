@@ -319,7 +319,7 @@ class XDS110(usb_probe.Probe):
         reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x10, 0x00)
         reqs += self._make_ap_write_request(addr, 0x04)
         for v in data:
-            reqs += self._make_ap_write_request((ord(v) << 8*(addr % 4)), 0x0C)
+            reqs += self._make_ap_write_request((v << 8*(addr % 4)), 0x0C)
             addr += 1
         reqs += self._make_dp_write_request((ap_num << 24), 0x08)
         self.ocd_dap_request(reqs, 0)
