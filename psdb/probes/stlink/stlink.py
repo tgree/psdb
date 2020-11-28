@@ -316,7 +316,7 @@ class STLink(usb_probe.Probe):
         '''
         if not self._should_offload_ap(ap_num):
             return self.aps[ap_num]._write_8(v, addr)
-        self._bulk_write_8(chr(v), addr, ap_num)
+        self._bulk_write_8(pack('<B', v), addr, ap_num)
 
     def write_bulk(self, data, addr, ap_num=0):
         '''
