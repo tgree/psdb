@@ -2,22 +2,22 @@
 import time
 
 import psdb
-from psdb.devices import MemDevice, stm32, stm32h7
+from psdb.devices import MemDevice, RAMDevice, stm32, stm32h7
 from psdb.targets import Target
 from . import dbgmcu
 
 
 # AP0 devices are ones that we access via the M7 core.
-AP0DEVS = [(MemDevice,          'M7 ITCM',      0x00000000, 0x00010000),
-           (MemDevice,          'SRAM1 ID',     0x10000000, 0x00020000),
-           (MemDevice,          'SRAM2 ID',     0x10020000, 0x00020000),
-           (MemDevice,          'SRAM3 ID',     0x10040000, 0x00008000),
-           (MemDevice,          'M7 DTCM',      0x20000000, 0x00020000),
-           (MemDevice,          'AXI SRAM',     0x24000000, 0x00080000),
-           (MemDevice,          'SRAM1',        0x30000000, 0x00020000),
-           (MemDevice,          'SRAM2',        0x30020000, 0x00020000),
-           (MemDevice,          'SRAM3',        0x30040000, 0x00008000),
-           (MemDevice,          'Backup SRAM',  0x38800000, 0x00001000),
+AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
+           (RAMDevice,          'SRAM1 ID',     0x10000000, 0x00020000),
+           (RAMDevice,          'SRAM2 ID',     0x10020000, 0x00020000),
+           (RAMDevice,          'SRAM3 ID',     0x10040000, 0x00008000),
+           (RAMDevice,          'M7 DTCM',      0x20000000, 0x00020000),
+           (RAMDevice,          'AXI SRAM',     0x24000000, 0x00080000),
+           (RAMDevice,          'SRAM1',        0x30000000, 0x00020000),
+           (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
+           (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
+           (RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
            (stm32h7.TIM6,       'TIM6',         0x40001000),
            (stm32h7.TIM7,       'TIM7',         0x40001400),
            (stm32.DAC,          'DAC1',         0x40007400),
