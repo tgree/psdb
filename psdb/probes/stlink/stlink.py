@@ -4,7 +4,6 @@ from . import cdb
 from . import errors
 import psdb
 
-from struct import pack
 from builtins import bytes, range
 import time
 
@@ -252,12 +251,6 @@ class STLink(usb_probe.Probe):
         transactions.
         '''
         self._cmd_allow_retry(cdb.Write32(addr, v, ap_num))
-
-    def write_16(self, v, addr, ap_num=0):
-        '''
-        Writes a 16-bit value using the 16-bit bulk write command.
-        '''
-        self._bulk_write_16(pack('<H', v), addr, ap_num)
 
     def connect(self):
         self._swd_connect()

@@ -42,7 +42,7 @@ class Probe(object):
         raise NotImplementedError
 
     def write_16(self, v, addr, ap_num=0):
-        raise NotImplementedError
+        self._bulk_write_16(pack('<H', v), addr, ap_num=ap_num)
 
     def write_8(self, v, addr, ap_num=0):
         self._bulk_write_8(pack('<B', v), addr, ap_num=ap_num)

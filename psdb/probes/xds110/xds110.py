@@ -396,15 +396,6 @@ class XDS110(usb_probe.Probe):
     def write_32(self, v, addr, ap_num=0):
         self._bulk_write_32(pack('<I', v), addr, ap_num)
 
-    def write_16(self, v, addr, ap_num=0):
-        csw_base = self._get_csw_base(ap_num)
-        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
-        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x01, 0x00)
-        reqs += self._make_ap_write_request(addr, 0x04)
-        reqs += self._make_ap_write_request(v << 8*(addr % 4), 0x0C)
-        reqs += self._make_dp_write_request((ap_num << 24), 0x08)
-        self.ocd_dap_request(reqs, 0)
-
     def connect(self):
         # Deassert SRST in case someone left it asserted.
         self.deassert_srst()
