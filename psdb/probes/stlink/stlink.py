@@ -4,7 +4,7 @@ from . import cdb
 from . import errors
 import psdb
 
-from struct import pack, unpack_from
+from struct import pack, unpack
 from builtins import bytes, range
 import time
 
@@ -249,7 +249,7 @@ class STLink(usb_probe.Probe):
         For this to make much sense you'll probably want to use a 16-bit
         aligned address.  Not tested across 32-bit word boundaries.
         '''
-        return unpack_from('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
+        return unpack('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
 
     def read_8(self, addr, ap_num=0):
         '''
@@ -257,7 +257,7 @@ class STLink(usb_probe.Probe):
         whether or not this actually performs a single 8-bit access since the
         8-bit bulk read actually returns 2 bytes if you do a single-byte read.
         '''
-        return unpack_from('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
+        return unpack('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
 
     def write_32(self, v, addr, ap_num=0):
         '''
