@@ -265,6 +265,30 @@ class XDS110(usb_probe.Probe):
             addr += 1
         return mem
 
+    def _bulk_read_16(self, addr, n, ap_num=0):
+        '''
+        Bulk read n aligned 16-bit values.  Must not cross a page boundary.
+        '''
+        assert addr % 2 == 0
+        assert n <= 64
+        if not n:
+            return bytes(b'')
+        assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
+
+        csw_base = self._get_csw_base(ap_num)
+        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
+        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x11, 0x00)
+        reqs += self._make_ap_write_request(addr, 0x04)
+        reqs += self._make_ap_read_request(0x0C)*n
+        reqs += self._make_dp_read_request(0x0C)
+        results = self.ocd_dap_request(reqs, 1 + n)
+        mem = bytes(b'')
+        for v in results[1:]:
+            mem += b'%c%c' % (((v >> (8*(addr % 4) + 0)) & 0xFF),
+                              ((v >> (8*(addr % 4) + 8)) & 0xFF))
+            addr += 2
+        return mem
+
     def _bulk_read_32(self, addr, n, ap_num=0):
         '''
         Bulk read n aligned 32-bit values.  Must not cross a page boundary.
