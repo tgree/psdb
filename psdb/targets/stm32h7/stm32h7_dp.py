@@ -32,7 +32,8 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
 
 # AP1 devices are ones accessible in the D3 domain; we can access these via AP1
 # even if both CPU cores are down.
-AP1DEVS = [(RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
+AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
+           (RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
            (stm32h7.SYSCFG,     'SYSCFG',       0x58000400),
            (stm32.VREF,         'VREF',         0x58003C00),
            (stm32.GPIO,         'GPIOA',        0x58020000),
