@@ -309,7 +309,6 @@ class XDS110(usb_probe.Probe):
         return r
 
     def _bulk_write_8(self, data, addr, ap_num=0):
-        assert len(data) <= 64
         if not data:
             return
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
