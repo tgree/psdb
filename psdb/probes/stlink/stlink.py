@@ -191,6 +191,7 @@ class STLink(usb_probe.Probe):
         Writes a consecutive number of 16-bit halfwords to the 16-bit aligned
         addr.
         '''
+        assert self.features & FEATURE_BULK_WRITE_16
         if not data:
             return
         self._exec_cdb(cdb.BulkWrite16(data, addr, ap_num))
