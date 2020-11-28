@@ -483,11 +483,6 @@ class BulkRead8(STLinkCommand):
     Note that if N == 1 the response will be two bytes long and the second byte
     should be ignored.
 
-    Note: this command should not be used if the AP type is not an AHBAP.  The
-          probe will clobber the upper bits of the CSW register which can
-          result in the probe being locked out of the target if CSW.DbgSwEnable
-          gets cleared.
-
     Availability: All.
 
     TX_EP (CDB):
@@ -534,11 +529,6 @@ class BulkRead16(STLinkCommand):
     Note that the API takes a count of N halfwords, but the CDB itself takes a
     count of N*2 bytes.
 
-    Note: this command should not be used if the AP type is not an AHBAP.  The
-          probe will clobber the upper bits of the CSW register which can
-          result in the probe being locked out of the target if CSW.DbgSwEnable
-          gets cleared.
-
     Availability: V3+ and V2 with J >= 26.
 
     TX_EP (CDB):
@@ -582,11 +572,6 @@ class BulkRead32(STLinkCommand):
     Note that the API takes a count of N words, but the CDB itself takes a
     count of N*4 bytes.
 
-    Note: this command should not be used if the AP type is not an AHBAP.  The
-          probe will clobber the upper bits of the CSW register which can
-          result in the probe being locked out of the target if CSW.DbgSwEnable
-          gets cleared.
-
     Availability: All.
 
     TX_EP (CDB):
@@ -627,11 +612,6 @@ class BulkWrite8(STLinkCommand):
     since it is not encoded in the response.  The write should not cross a 1K
     page boundary.
 
-    Note: this command should not be used if the AP type is not an AHBAP.  The
-          probe will clobber the upper bits of the CSW register which can
-          result in the probe being locked out of the target if CSW.DbgSwEnable
-          gets cleared.
-
     Availability: All.
 
     TX_EP (CDB):
@@ -665,11 +645,6 @@ class BulkWrite16(STLinkCommand):
     is not encoded in the response.  The write should not cross a 1K page
     boundary, should be a multiple of 2 bytes and the address must be 2-byte
     aligned.
-
-    Note: this command should not be used if the AP type is not an AHBAP.  The
-          probe will clobber the upper bits of the CSW register which can
-          result in the probe being locked out of the target if CSW.DbgSwEnable
-          gets cleared.
 
     Availability: V3+ and V2 with J >= 26.
 
@@ -708,11 +683,6 @@ class BulkWrite32(STLinkCommand):
     is not encoded in the response.  The write should not cross a 1K page
     boundary, should be a multiple of 4 bytes and the address must be 4-byte
     aligned.
-
-    Note: this command should not be used if the AP type is not an AHBAP.  The
-          probe will clobber the upper bits of the CSW register which can
-          result in the probe being locked out of the target if CSW.DbgSwEnable
-          gets cleared.
 
     Availability: All.
 

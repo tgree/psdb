@@ -204,20 +204,6 @@ class STLink(usb_probe.Probe):
             return
         self._exec_cdb(cdb.BulkWrite32(data, addr, ap_num))
 
-    def _should_offload_ap(self, ap_num):
-        '''
-        Decide whether or not we should offload AP accesses to the debug probe.
-        If there is no populated AP then we have to offload since we don't have
-        a class instance to maintain the AP state; otherwise, if there is an AP
-        and we've detected it to be an AHBAP then it's safe to offload to the
-        probe.  For other types of AP, the debug probe will clobber the upper
-        bits of the CSW register and this can have bad side effects such as
-        preventing the CPU from accessing debug hardware (i.e. by clearing
-        CSW.DbgSwEnable).
-        '''
-        ap = self.aps.get(ap_num)
-        return ap and isinstance(ap, psdb.access_port.AHBAP)
-
     def assert_srst(self):
         '''Holds the target in reset.'''
         self._cmd_allow_retry(cdb.SetSRST(True))
@@ -255,9 +241,6 @@ class STLink(usb_probe.Probe):
         efficient than using _bulk_read_32() since the error is returned
         atomically in the same transaction.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_32(addr)
-
         return self._cmd_allow_retry(cdb.Read32(addr, ap_num))
 
     def read_16(self, addr, ap_num=0):
@@ -266,8 +249,6 @@ class STLink(usb_probe.Probe):
         For this to make much sense you'll probably want to use a 16-bit
         aligned address.  Not tested across 32-bit word boundaries.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_16(addr)
         return unpack_from('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
 
     def read_8(self, addr, ap_num=0):
@@ -276,20 +257,7 @@ class STLink(usb_probe.Probe):
         whether or not this actually performs a single 8-bit access since the
         8-bit bulk read actually returns 2 bytes if you do a single-byte read.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_8(addr)
         return unpack_from('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
-
-    def read_bulk(self, addr, size, ap_num=0):
-        '''
-        Do a bulk read operation from the specified address.  If the start or
-        end addresses are not word-aligned then multiple transactions will take
-        place.  If the address range crosses a 1K page boundary, multiple
-        transactions will take place to handle the TAR auto-increment issue.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_bulk(addr, size)
-        return super().read_bulk(addr, size, ap_num)
 
     def write_32(self, v, addr, ap_num=0):
         '''
@@ -297,35 +265,19 @@ class STLink(usb_probe.Probe):
         efficient than using _bulk_write_32() since it requires fewer USB
         transactions.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_32(v, addr)
-
         self._cmd_allow_retry(cdb.Write32(addr, v, ap_num))
 
     def write_16(self, v, addr, ap_num=0):
         '''
         Writes a 16-bit value using the 16-bit bulk write command.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_16(v, addr)
         self._bulk_write_16(pack('<H', v), addr, ap_num)
 
     def write_8(self, v, addr, ap_num=0):
         '''
         Writes an 8-bit value using the 8-bit bulk read command.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_8(v, addr)
         self._bulk_write_8(pack('<B', v), addr, ap_num)
-
-    def write_bulk(self, data, addr, ap_num=0):
-        '''
-        Bulk-writes memory by offloading it to the debug probe.  Currently only
-        aligned 32-bit accesses are allowed.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_bulk(data, addr)
-        super().write_bulk(data, addr, ap_num)
 
     def connect(self):
         self._swd_connect()
