@@ -91,6 +91,10 @@ class Probe(object):
         _bulk_write_32() methods.  The probe should override this method if it
         needs to do a different type of offload.
         '''
+        # Handle empty transfers.
+        if not data:
+            return
+
         # For short misaligned transfers, just do a single 8-bit bulk
         # transaction.
         if ((addr % 4) or (len(data) % 4)) and len(data) <= 64:
@@ -99,16 +103,18 @@ class Probe(object):
         # For long transfers, align with 8-bit, then do 32-bit, then do 8-bit
         # for the tail.
         align_count = (4 - addr) & 3
-        count = min(align_count, len(data))
-        self._bulk_write_8(data[:count], addr, ap_num)
-        addr += count
-        data  = data[count:]
+        count       = min(align_count, len(data))
+        if count:
+            self._bulk_write_8(data[:count], addr, ap_num)
+            addr += count
+            data  = data[count:]
         while len(data) >= 4:
             count = min(len(data), 0x400 - (addr & 0x3FF))//4
             self._bulk_write_32(data[:count*4], addr, ap_num)
             addr += count*4
             data  = data[count*4:]
-        self._bulk_write_8(data, addr, ap_num)
+        if data:
+            self._bulk_write_8(data, addr, ap_num)
 
     def halt(self):
         for c in self.cpus:

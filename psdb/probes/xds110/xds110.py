@@ -309,8 +309,7 @@ class XDS110(usb_probe.Probe):
         return r
 
     def _bulk_write_8(self, data, addr, ap_num=0):
-        if not data:
-            return
+        assert data
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)
@@ -326,8 +325,7 @@ class XDS110(usb_probe.Probe):
     def _bulk_write_16(self, data, addr, ap_num=0):
         assert addr % 2 == 0
         assert len(data) % 2 == 0
-        if not data:
-            return
+        assert data
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)
@@ -344,8 +342,7 @@ class XDS110(usb_probe.Probe):
     def _bulk_write_32(self, data, addr, ap_num=0):
         assert addr % 4 == 0
         assert len(data) % 4 == 0
-        if not data:
-            return
+        assert data
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)

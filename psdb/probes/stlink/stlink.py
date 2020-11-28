@@ -193,16 +193,14 @@ class STLink(usb_probe.Probe):
         addr.
         '''
         assert self.features & FEATURE_BULK_WRITE_16
-        if not data:
-            return
+        assert data
         self._exec_cdb(cdb.BulkWrite16(data, addr, ap_num))
 
     def _bulk_write_32(self, data, addr, ap_num=0):
         '''
         Writes a consecutive number of 32-bit words to the 32-bit aligned addr.
         '''
-        if not data:
-            return
+        assert data
         self._exec_cdb(cdb.BulkWrite32(data, addr, ap_num))
 
     def assert_srst(self):
