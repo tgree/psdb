@@ -34,6 +34,15 @@ class Probe(object):
     def read_8(self, addr, ap_num=0):
         raise NotImplementedError
 
+    def write_32(self, v, addr, ap_num=0):
+        raise NotImplementedError
+
+    def write_16(self, v, addr, ap_num=0):
+        raise NotImplementedError
+
+    def write_8(self, v, addr, ap_num=0):
+        raise NotImplementedError
+
     def read_bulk(self, addr, size, ap_num=0):
         '''
         Do a bulk read operation from the specified address.  If the start or
@@ -64,15 +73,6 @@ class Probe(object):
             size -= count*4
         mem += self._bulk_read_8(addr, size, ap_num)
         return mem
-
-    def write_32(self, v, addr, ap_num=0):
-        raise NotImplementedError
-
-    def write_16(self, v, addr, ap_num=0):
-        raise NotImplementedError
-
-    def write_8(self, v, addr, ap_num=0):
-        raise NotImplementedError
 
     def write_bulk(self, data, addr, ap_num=0):
         '''
