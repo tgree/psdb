@@ -385,17 +385,6 @@ class XDS110(usb_probe.Probe):
     def read_32(self, addr, ap_num=0):
         return unpack('<I', self._bulk_read_32(addr, 1, ap_num))[0]
 
-    def read_16(self, addr, ap_num=0):
-        csw_base = self._get_csw_base(ap_num)
-        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
-        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x01, 0x00)
-        reqs += self._make_ap_write_request(addr, 0x04)
-        reqs += self._make_ap_read_request(0x0C)
-        reqs += self._make_dp_read_request(0x0C)
-        results = self.ocd_dap_request(reqs, 2)
-        v = results[1]
-        return ((v >> 8*(addr % 4)) & 0xFFFF)
-
     def write_32(self, v, addr, ap_num=0):
         self._bulk_write_32(pack('<I', v), addr, ap_num)
 

@@ -243,14 +243,6 @@ class STLink(usb_probe.Probe):
         '''
         return self._cmd_allow_retry(cdb.Read32(addr, ap_num))
 
-    def read_16(self, addr, ap_num=0):
-        '''
-        Reads a 16-bit word using the 16-bit bulk read command.
-        For this to make much sense you'll probably want to use a 16-bit
-        aligned address.  Not tested across 32-bit word boundaries.
-        '''
-        return unpack('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
-
     def write_32(self, v, addr, ap_num=0):
         '''
         Writes a single 32-bit word to the 32-bit aligned addr.  This is more
