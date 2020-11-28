@@ -251,14 +251,6 @@ class STLink(usb_probe.Probe):
         '''
         return unpack('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
 
-    def read_8(self, addr, ap_num=0):
-        '''
-        Reads an 8-bit value using the 8-bit bulk read command.  Unclear
-        whether or not this actually performs a single 8-bit access since the
-        8-bit bulk read actually returns 2 bytes if you do a single-byte read.
-        '''
-        return unpack('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
-
     def write_32(self, v, addr, ap_num=0):
         '''
         Writes a single 32-bit word to the 32-bit aligned addr.  This is more

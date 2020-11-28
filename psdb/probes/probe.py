@@ -4,6 +4,7 @@ import psdb.targets
 
 import time
 from builtins import range
+from struct import unpack
 
 
 class Probe(object):
@@ -25,6 +26,9 @@ class Probe(object):
     def open_ap(self, ap_num):
         raise NotImplementedError
 
+    def _bulk_read_8(self, addr, n, ap_num=0):
+        raise NotImplementedError
+
     def read_32(self, addr, ap_num=0):
         raise NotImplementedError
 
@@ -32,7 +36,7 @@ class Probe(object):
         raise NotImplementedError
 
     def read_8(self, addr, ap_num=0):
-        raise NotImplementedError
+        return unpack('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
 
     def write_32(self, v, addr, ap_num=0):
         raise NotImplementedError

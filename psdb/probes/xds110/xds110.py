@@ -372,9 +372,6 @@ class XDS110(usb_probe.Probe):
         v = results[1]
         return ((v >> 8*(addr % 4)) & 0xFFFF)
 
-    def read_8(self, addr, ap_num=0):
-        return ord(self._bulk_read_8(addr, 1, ap_num))
-
     def write_32(self, v, addr, ap_num=0):
         self._bulk_write_32(pack('<I', v), addr, ap_num)
 
