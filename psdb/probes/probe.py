@@ -58,6 +58,10 @@ class Probe(object):
         _bulk_read_32() methods.  The probe should override this method if it
         needs to do a different type of offload.
         '''
+        # Handle empty transfers.
+        if not size:
+            return bytes(b'')
+
         # For short misaligned transfers, just do a single 8-bit access
         # transaction.
         if ((addr % 4) or (size % 4)) and size <= 64:
@@ -65,17 +69,20 @@ class Probe(object):
 
         # For long transfers, align with 8-bit, then do 32-bit, then do 8-bit
         # for the tail.
+        mem         = bytes(b'')
         align_count = (4 - addr) & 3
         count       = min(align_count, size)
-        mem         = self._bulk_read_8(addr, count, ap_num)
-        addr       += count
-        size       -= count
+        if count:
+            mem  += self._bulk_read_8(addr, count, ap_num)
+            addr += count
+            size -= count
         while size >= 4:
             count = min(size, 0x400 - (addr & 0x3FF))//4
             mem  += self._bulk_read_32(addr, count, ap_num)
             addr += count*4
             size -= count*4
-        mem += self._bulk_read_8(addr, size, ap_num)
+        if size:
+            mem += self._bulk_read_8(addr, size, ap_num)
         return mem
 
     def write_bulk(self, data, addr, ap_num=0):

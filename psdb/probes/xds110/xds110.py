@@ -247,9 +247,7 @@ class XDS110(usb_probe.Probe):
         '''
         Bulk read n 8-bit values.  Must not cross a page boundary.
         '''
-        assert n <= 64
-        if not n:
-            return bytes(b'')
+        assert 0 < n <= 64
         assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)
@@ -270,9 +268,7 @@ class XDS110(usb_probe.Probe):
         Bulk read n aligned 16-bit values.  Must not cross a page boundary.
         '''
         assert addr % 2 == 0
-        assert n <= 64
-        if not n:
-            return bytes(b'')
+        assert 0 < n <= 64
         assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)
@@ -294,9 +290,7 @@ class XDS110(usb_probe.Probe):
         Bulk read n aligned 32-bit values.  Must not cross a page boundary.
         '''
         assert addr % 4 == 0
-        assert n < 65536//4
-        if not n:
-            return bytes(b'')
+        assert n > 0
         assert (addr & 0xFFFFFC00) == ((addr + n*4 - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)

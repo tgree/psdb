@@ -154,9 +154,7 @@ class STLink(usb_probe.Probe):
         '''
         Reads a consecutive number of bytes from the specified address.
         '''
-        assert n <= self.max_rw8
-        if not n:
-            return bytes(b'')
+        assert 0 < n <= self.max_rw8
         return self._exec_cdb(cdb.BulkRead8(addr, n, ap_num))
 
     def _bulk_read_16(self, addr, n, ap_num=0):
@@ -165,16 +163,14 @@ class STLink(usb_probe.Probe):
         addr.
         '''
         assert self.features & FEATURE_BULK_READ_16
-        if not n:
-            return bytes(b'')
+        assert n > 0
         return self._exec_cdb(cdb.BulkRead16(addr, n, ap_num))
 
     def _bulk_read_32(self, addr, n, ap_num=0):
         '''
         Reads a consecutive number of 32-bit words from the 32-bit aligned addr.
         '''
-        if not n:
-            return bytes(b'')
+        assert n > 0
         return self._exec_cdb(cdb.BulkRead32(addr, n, ap_num))
 
     def _bulk_write_8(self, data, addr, ap_num=0):
