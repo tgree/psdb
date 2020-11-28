@@ -37,15 +37,16 @@ def write_pattern_16(rv, rd, offset, pattern):
     assert rd.ap.db._bulk_read_16(rd.dev_base + offset, len(pattern) // 2,
                                   rd.ap.ap_num) == pattern
     for i in range(len(pattern) // 2):
-        assert (rd.ap.read_16(rd.dev_base + offset + i*2) == 
+        assert (rd.ap.read_16(rd.dev_base + offset + i*2) ==
                 unpack_from('<H', pattern, i*2)[0])
+
 
 def write_pattern_32(rv, rd, offset, pattern):
     rd.ap.db._bulk_write_32(pattern, rd.dev_base + offset, rd.ap.ap_num)
     assert rd.ap.db._bulk_read_32(rd.dev_base + offset, len(pattern) // 4,
                                   rd.ap.ap_num) == pattern
     for i in range(len(pattern) // 4):
-        assert (rd.ap.read_32(rd.dev_base + offset + i*4) == 
+        assert (rd.ap.read_32(rd.dev_base + offset + i*4) ==
                 unpack_from('<I', pattern, i*4)[0])
 
 
