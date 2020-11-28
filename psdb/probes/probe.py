@@ -39,7 +39,7 @@ class Probe(object):
         return unpack('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
 
     def write_32(self, v, addr, ap_num=0):
-        raise NotImplementedError
+        self._bulk_write_32(pack('<I', v), addr, ap_num=ap_num)
 
     def write_16(self, v, addr, ap_num=0):
         self._bulk_write_16(pack('<H', v), addr, ap_num=ap_num)
