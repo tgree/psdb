@@ -526,8 +526,8 @@ class BulkRead16(STLinkCommand):
     the transfer status since it is not encoded in the response.  The read
     should not cross a 1K page boundary and the address must be 2-byte aligned.
 
-    Note that the API takes a count of N halfwords, but the CDB itself takes a
-    count of N*2 bytes.
+    Note that the API takes a count of n halfwords, but the CDB itself takes a
+    count of N = n*2 bytes.
 
     Availability: V3+ and V2 with J >= 26.
 
@@ -569,8 +569,8 @@ class BulkRead32(STLinkCommand):
     the transfer status since it is not encoded in the response.  The read
     should not cross a 1K page boundary and the address must be 4-byte aligned.
 
-    Note that the API takes a count of N words, but the CDB itself takes a
-    count of N*4 bytes.
+    Note that the API takes a count of n words, but the CDB itself takes a
+    count of N = n*4 bytes.
 
     Availability: All.
 
