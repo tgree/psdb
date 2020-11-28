@@ -154,8 +154,13 @@ class STLink(usb_probe.Probe):
         '''
         Reads a consecutive number of bytes from the specified address.
         '''
-        assert 0 < n <= self.max_rw8
-        return self._exec_cdb(cdb.BulkRead8(addr, n, ap_num))
+        data = bytes(b'')
+        while n:
+            size  = min(n, self.max_rw8)
+            data += self._exec_cdb(cdb.BulkRead8(addr, size, ap_num))
+            addr += size
+            n    -= size
+        return data
 
     def _bulk_read_16(self, addr, n, ap_num=0):
         '''
@@ -177,10 +182,11 @@ class STLink(usb_probe.Probe):
         '''
         Writes a consecutive number of bytes to the specified address.
         '''
-        assert len(data) <= self.max_rw8
-        if not data:
-            return
-        self._exec_cdb(cdb.BulkWrite8(data, addr, ap_num))
+        while data:
+            size = min(len(data), self.max_rw8)
+            self._exec_cdb(cdb.BulkWrite8(data[:size], addr, ap_num))
+            addr += size
+            data  = data[size:]
 
     def _bulk_write_16(self, data, addr, ap_num=0):
         '''
