@@ -253,12 +253,6 @@ class STLink(usb_probe.Probe):
         '''
         self._bulk_write_16(pack('<H', v), addr, ap_num)
 
-    def write_8(self, v, addr, ap_num=0):
-        '''
-        Writes an 8-bit value using the 8-bit bulk read command.
-        '''
-        self._bulk_write_8(pack('<B', v), addr, ap_num)
-
     def connect(self):
         self._swd_connect()
         self.dpidr = self._read_dpidr()

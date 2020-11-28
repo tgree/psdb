@@ -406,9 +406,6 @@ class XDS110(usb_probe.Probe):
         reqs += self._make_dp_write_request((ap_num << 24), 0x08)
         self.ocd_dap_request(reqs, 0)
 
-    def write_8(self, v, addr, ap_num=0):
-        self._bulk_write_8(bytes([v]), addr, ap_num)
-
     def connect(self):
         # Deassert SRST in case someone left it asserted.
         self.deassert_srst()
