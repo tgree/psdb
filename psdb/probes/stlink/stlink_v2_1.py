@@ -5,17 +5,6 @@ from . import cdb
 import psdb
 
 
-# Unknown commands sniffed via debugger:
-# --------------------------------------------------------
-#   Req: f2 4b 00 01 00 00 00 00 00 00 00 00 00 00 00 00
-#              AP
-#   Rsp: 80 00
-# --------------------------------------------------------
-#   Req: f2 4c 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-#              AP
-#   Rsp: 80 00
-# --------------------------------------------------------
-
 class STLinkV2_1(stlink.STLink):
     '''
     STLink V2.1 debug probe.  This can be found on the Nucleo 144 board we have
@@ -23,7 +12,7 @@ class STLinkV2_1(stlink.STLink):
     debug probe as a virtual COM port.
     '''
     def __init__(self, usb_dev):
-        super(STLinkV2_1, self).__init__(usb_dev, 'STLinkV2.1')
+        super().__init__(usb_dev, 'STLinkV2.1')
         self._usb_version()
         assert self.ver_stlink == 2
 
@@ -92,7 +81,7 @@ class STLinkV2_1(stlink.STLink):
         raise psdb.ProbeException('Frequency %s too low!' % freq_hz)
 
     def show_info(self):
-        super(STLinkV2_1, self).show_info()
+        super().show_info()
         print(' Firmware Ver: V%uJ%uS%u' % (self.ver_stlink, self.ver_jtag,
                                             self.ver_swim))
 

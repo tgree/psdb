@@ -5,7 +5,7 @@ import psdb
 
 class Probe(probe.Probe):
     def __init__(self, usb_dev, name, usb_reset=False):
-        super(Probe, self).__init__(name)
+        super().__init__(name)
         self.usb_dev = usb_dev
         try:
             self.serial_num = usb_dev.serial_number

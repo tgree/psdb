@@ -1,8 +1,30 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 import psdb
-from psdb.devices import MemDevice, stm32h7
+from psdb.devices import MemDevice, RAMDevice, stm32h7
 from psdb.targets import Target
 from . import dbgmcu
+
+
+# AP0 devices are ones that we access via the M7 core.
+AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
+           (RAMDevice,          'M7 DTCM',      0x20000000, 0x00020000),
+           (RAMDevice,          'AXI SRAM',     0x24000000, 0x00080000),
+           (RAMDevice,          'SRAM1',        0x30000000, 0x00020000),
+           (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
+           (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
+           (stm32h7.FLASH_UP,   'FLASH',        0x52002000, 0x08000000,
+                                                3300000),  # noqa: E127
+           ]
+
+# AP1 devices are ones accessible in the D3 domain; we can access these via AP1
+# even if both CPU cores are down.
+AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
+           (RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
+           ]
+
+# AP2 devices are accessible over the System Debug Bus.  This is mainly for the
+# DBGMCU and other debug devices such as the breakpoint and trace units.
+AP2DEVS = []
 
 
 class STM32H7(Target):
@@ -13,8 +35,18 @@ class STM32H7(Target):
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
         self.mcu_idcode = dbgmcu.read_idc(db)
-        self.flash      = stm32h7.FLASH_UP(self, self.ahb_ap, 'FLASH',
-                                           0x52002000, 0x08000000, 3300000)
+
+        for i, dl in enumerate((AP0DEVS, AP1DEVS, AP2DEVS)):
+            ap = self.db.aps[i]
+
+            for d in dl:
+                cls  = d[0]
+                name = d[1]
+                addr = d[2]
+                args = d[3:]
+                cls(self, ap, name, addr, *args)
+
+        self.flash = self.devs['FLASH']
         MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
                   self.flash.flash_size)
 

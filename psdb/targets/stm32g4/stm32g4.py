@@ -1,14 +1,14 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
 import psdb
-from psdb.devices import MemDevice, stm32, stm32g4
+from psdb.devices import MemDevice, RAMDevice, stm32, stm32g4
 from psdb.targets import Target
 from . import dbgmcu
 
 
-DEVICES_2 = [(MemDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
-             (MemDevice,       'SRAM1',       0x20000000, 0x00004000),
-             (MemDevice,       'SRAM2',       0x20004000, 0x00001800),
-             (MemDevice,       'CCM SRAM S',  0x20005800, 0x00002800),
+DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
+             (RAMDevice,       'SRAM1',       0x20000000, 0x00004000),
+             (RAMDevice,       'SRAM2',       0x20004000, 0x00001800),
+             (RAMDevice,       'CCM SRAM S',  0x20005800, 0x00002800),
              (stm32.GPT32,     'TIM2',        0x40000000),
              (stm32.GPT16x4,   'TIM3',        0x40000400),
              (stm32.GPT16x4,   'TIM4',        0x40000800),
@@ -43,10 +43,10 @@ DEVICES_2 = [(MemDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              (stm32g4.DBGMCU,  'DBGMCU',      0xE0042000),
              ]
 
-DEVICES_3 = [(MemDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
-             (MemDevice,       'SRAM1',       0x20000000, 0x00014000),
-             (MemDevice,       'SRAM2',       0x20014000, 0x00004000),
-             (MemDevice,       'CCM SRAM S',  0x20018000, 0x00008000),
+DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
+             (RAMDevice,       'SRAM1',       0x20000000, 0x00014000),
+             (RAMDevice,       'SRAM2',       0x20014000, 0x00004000),
+             (RAMDevice,       'CCM SRAM S',  0x20018000, 0x00008000),
              (stm32.GPT32,     'TIM2',        0x40000000),
              (stm32.GPT16x4,   'TIM3',        0x40000400),
              (stm32.GPT16x4,   'TIM4',        0x40000800),
@@ -87,10 +87,10 @@ DEVICES_3 = [(MemDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
              ]
 
 
-DEVICES_4 = [(MemDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
-             (MemDevice,       'SRAM1',       0x20000000, 0x00014000),
-             (MemDevice,       'SRAM2',       0x20014000, 0x00004000),
-             (MemDevice,       'CCM SRAM S',  0x20018000, 0x00004000),
+DEVICES_4 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
+             (RAMDevice,       'SRAM1',       0x20000000, 0x00014000),
+             (RAMDevice,       'SRAM2',       0x20014000, 0x00004000),
+             (RAMDevice,       'CCM SRAM S',  0x20018000, 0x00004000),
              (stm32.GPT32,     'TIM2',        0x40000000),
              (stm32.GPT16x4,   'TIM3',        0x40000400),
              (stm32.GPT16x4,   'TIM4',        0x40000800),

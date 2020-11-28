@@ -29,7 +29,7 @@ def version_string(v):
 
 class XDS110VersionException(psdb.ProbeException):
     def __init__(self, fw_version, min_fw_version):
-        super(XDS110VersionException, self).__init__(
+        super().__init__(
             'Firmware version %s is too old, use Code Composer Studio to '
             'upgrade to at least %s.' % (version_string(fw_version),
                                          version_string(min_fw_version)))
@@ -39,7 +39,7 @@ class XDS110VersionException(psdb.ProbeException):
 
 class XDS110CommandException(psdb.ProbeException):
     def __init__(self, error, allowed_errs, response):
-        super(XDS110CommandException, self).__init__('XDS110 error %d' % error)
+        super().__init__('XDS110 error %d' % error)
         self.error        = error
         self.allowed_errs = allowed_errs
         self.response     = response
@@ -47,7 +47,7 @@ class XDS110CommandException(psdb.ProbeException):
 
 class XDS110(usb_probe.Probe):
     def __init__(self, usb_dev):
-        super(XDS110, self).__init__(usb_dev, 'XDS110')
+        super().__init__(usb_dev, 'XDS110')
         self.fw_version, self.hw_version = self.xds_version()
         self.csw_bases = {}
         if self.fw_version < MIN_FW_VERSION:
@@ -247,9 +247,7 @@ class XDS110(usb_probe.Probe):
         '''
         Bulk read n 8-bit values.  Must not cross a page boundary.
         '''
-        assert n <= 64
-        if not n:
-            return bytes(b'')
+        assert n > 0
         assert (addr & 0xFFFFFC00) == ((addr + n - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)
@@ -265,14 +263,34 @@ class XDS110(usb_probe.Probe):
             addr += 1
         return mem
 
+    def _bulk_read_16(self, addr, n, ap_num=0):
+        '''
+        Bulk read n aligned 16-bit values.  Must not cross a page boundary.
+        '''
+        assert addr % 2 == 0
+        assert n > 0
+        assert (addr & 0xFFFFFC00) == ((addr + n*2 - 1) & 0xFFFFFC00)
+
+        csw_base = self._get_csw_base(ap_num)
+        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
+        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x11, 0x00)
+        reqs += self._make_ap_write_request(addr, 0x04)
+        reqs += self._make_ap_read_request(0x0C)*n
+        reqs += self._make_dp_read_request(0x0C)
+        results = self.ocd_dap_request(reqs, 1 + n)
+        mem = bytes(b'')
+        for v in results[1:]:
+            mem += b'%c%c' % (((v >> (8*(addr % 4) + 0)) & 0xFF),
+                              ((v >> (8*(addr % 4) + 8)) & 0xFF))
+            addr += 2
+        return mem
+
     def _bulk_read_32(self, addr, n, ap_num=0):
         '''
         Bulk read n aligned 32-bit values.  Must not cross a page boundary.
         '''
         assert addr % 4 == 0
-        assert n < 65536//4
-        if not n:
-            return bytes(b'')
+        assert n > 0
         assert (addr & 0xFFFFFC00) == ((addr + n*4 - 1) & 0xFFFFFC00)
 
         csw_base = self._get_csw_base(ap_num)
@@ -291,7 +309,6 @@ class XDS110(usb_probe.Probe):
         return r
 
     def _bulk_write_8(self, data, addr, ap_num=0):
-        assert len(data) <= 64
         if not data:
             return
         assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
@@ -301,8 +318,26 @@ class XDS110(usb_probe.Probe):
         reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x10, 0x00)
         reqs += self._make_ap_write_request(addr, 0x04)
         for v in data:
-            reqs += self._make_ap_write_request((ord(v) << 8*(addr % 4)), 0x0C)
+            reqs += self._make_ap_write_request((v << 8*(addr % 4)), 0x0C)
             addr += 1
+        reqs += self._make_dp_write_request((ap_num << 24), 0x08)
+        self.ocd_dap_request(reqs, 0)
+
+    def _bulk_write_16(self, data, addr, ap_num=0):
+        assert addr % 2 == 0
+        assert len(data) % 2 == 0
+        if not data:
+            return
+        assert (addr & 0xFFFFFC00) == ((addr + len(data) - 1) & 0xFFFFFC00)
+
+        csw_base = self._get_csw_base(ap_num)
+        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
+        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x11, 0x00)
+        reqs += self._make_ap_write_request(addr, 0x04)
+        for i in range(len(data)//2):
+            v     = unpack_from('<H', data, offset=i*2)[0]
+            reqs += self._make_ap_write_request((v << 8*(addr % 4)), 0x0C)
+            addr += 2
         reqs += self._make_dp_write_request((ap_num << 24), 0x08)
         self.ocd_dap_request(reqs, 0)
 
@@ -358,23 +393,6 @@ class XDS110(usb_probe.Probe):
         '''Write a 32-bit register in the AP address space.'''
         self.cmapi_write_dap_reg(0, apsel, addr, value)
 
-    def read_32(self, addr, ap_num=0):
-        return unpack('<I', self._bulk_read_32(addr, 1, ap_num))[0]
-
-    def read_16(self, addr, ap_num=0):
-        csw_base = self._get_csw_base(ap_num)
-        reqs  = self._make_dp_write_request((ap_num << 24), 0x08)
-        reqs += self._make_ap_write_request((csw_base & ~0x37) | 0x01, 0x00)
-        reqs += self._make_ap_write_request(addr, 0x04)
-        reqs += self._make_ap_read_request(0x0C)
-        reqs += self._make_dp_read_request(0x0C)
-        results = self.ocd_dap_request(reqs, 2)
-        v = results[1]
-        return ((v >> 8*(addr % 4)) & 0xFFFF)
-
-    def read_8(self, addr, ap_num=0):
-        return ord(self._bulk_read_8(addr, 1, ap_num))
-
     def write_32(self, v, addr, ap_num=0):
         self._bulk_write_32(pack('<I', v), addr, ap_num)
 
@@ -387,10 +405,7 @@ class XDS110(usb_probe.Probe):
         reqs += self._make_dp_write_request((ap_num << 24), 0x08)
         self.ocd_dap_request(reqs, 0)
 
-    def write_8(self, v, addr, ap_num=0):
-        self._bulk_write_8(bytes([v]), addr, ap_num)
-
-    def probe(self, **kwargs):
+    def connect(self):
         # Deassert SRST in case someone left it asserted.
         self.deassert_srst()
 
@@ -405,11 +420,9 @@ class XDS110(usb_probe.Probe):
             assert err == 0
         self.cmapi_acquire()
 
-        # Probe the target.
-        return super(XDS110, self).probe(**kwargs)
 
     def show_info(self):
-        super(XDS110, self).show_info()
+        super().show_info()
         print(' Hardware Ver: 0x%04X' % self.hw_version)
         print(' Firmware Ver: %s' % version_string(self.fw_version))
 

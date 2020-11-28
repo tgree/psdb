@@ -4,7 +4,7 @@ from . import cdb
 from . import errors
 import psdb
 
-from struct import pack, unpack_from
+from struct import pack, unpack
 from builtins import bytes, range
 import time
 
@@ -53,7 +53,7 @@ class STLink(usb_probe.Probe):
     debug probe as a virtual COM port.
     '''
     def __init__(self, usb_dev, name):
-        super(STLink, self).__init__(usb_dev, name)
+        super().__init__(usb_dev, name)
         self.dpidr    = None
         self.features = 0
 
@@ -154,10 +154,13 @@ class STLink(usb_probe.Probe):
         '''
         Reads a consecutive number of bytes from the specified address.
         '''
-        assert n <= self.max_rw8
-        if not n:
-            return bytes(b'')
-        return self._exec_cdb(cdb.BulkRead8(addr, n, ap_num))
+        data = bytes(b'')
+        while n:
+            size  = min(n, self.max_rw8)
+            data += self._exec_cdb(cdb.BulkRead8(addr, size, ap_num))
+            addr += size
+            n    -= size
+        return data
 
     def _bulk_read_16(self, addr, n, ap_num=0):
         '''
@@ -165,32 +168,32 @@ class STLink(usb_probe.Probe):
         addr.
         '''
         assert self.features & FEATURE_BULK_READ_16
-        if not n:
-            return bytes(b'')
+        assert n > 0
         return self._exec_cdb(cdb.BulkRead16(addr, n, ap_num))
 
     def _bulk_read_32(self, addr, n, ap_num=0):
         '''
         Reads a consecutive number of 32-bit words from the 32-bit aligned addr.
         '''
-        if not n:
-            return bytes(b'')
+        assert n > 0
         return self._exec_cdb(cdb.BulkRead32(addr, n, ap_num))
 
     def _bulk_write_8(self, data, addr, ap_num=0):
         '''
         Writes a consecutive number of bytes to the specified address.
         '''
-        assert len(data) <= self.max_rw8
-        if not data:
-            return
-        self._exec_cdb(cdb.BulkWrite8(data, addr, ap_num))
+        while data:
+            size = min(len(data), self.max_rw8)
+            self._exec_cdb(cdb.BulkWrite8(data[:size], addr, ap_num))
+            addr += size
+            data  = data[size:]
 
     def _bulk_write_16(self, data, addr, ap_num=0):
         '''
         Writes a consecutive number of 16-bit halfwords to the 16-bit aligned
         addr.
         '''
+        assert self.features & FEATURE_BULK_WRITE_16
         if not data:
             return
         self._exec_cdb(cdb.BulkWrite16(data, addr, ap_num))
@@ -202,20 +205,6 @@ class STLink(usb_probe.Probe):
         if not data:
             return
         self._exec_cdb(cdb.BulkWrite32(data, addr, ap_num))
-
-    def _should_offload_ap(self, ap_num):
-        '''
-        Decide whether or not we should offload AP accesses to the debug probe.
-        If there is no populated AP then we have to offload since we don't have
-        a class instance to maintain the AP state; otherwise, if there is an AP
-        and we've detected it to be an AHBAP then it's safe to offload to the
-        probe.  For other types of AP, the debug probe will clobber the upper
-        bits of the CSW register and this can have bad side effects such as
-        preventing the CPU from accessing debug hardware (i.e. by clearing
-        CSW.DbgSwEnable).
-        '''
-        ap = self.aps.get(ap_num)
-        return ap and isinstance(ap, psdb.access_port.AHBAP)
 
     def assert_srst(self):
         '''Holds the target in reset.'''
@@ -229,6 +218,14 @@ class STLink(usb_probe.Probe):
         '''Prepares the AP for use.'''
         if self.features & FEATURE_OPEN_AP:
             self._cmd_allow_retry(cdb.OpenAP(apsel))
+
+    def read_dp_reg(self, addr):
+        '''Read a 32-bit register from the DP address space. '''
+        return self.read_ap_reg(0xFFFF, addr)
+
+    def write_dp_reg(self, addr, value):
+        '''Write a 32-bit register in the DP address space. '''
+        return self.write_ap_reg(0xFFFF, addr, value)
 
     def read_ap_reg(self, apsel, addr):
         '''Read a 32-bit register from the AP address space.'''
@@ -246,42 +243,7 @@ class STLink(usb_probe.Probe):
         efficient than using _bulk_read_32() since the error is returned
         atomically in the same transaction.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_32(addr)
-
         return self._cmd_allow_retry(cdb.Read32(addr, ap_num))
-
-    def read_16(self, addr, ap_num=0):
-        '''
-        Reads a 16-bit word using the 16-bit bulk read command.
-        For this to make much sense you'll probably want to use a 16-bit
-        aligned address.  Not tested across 32-bit word boundaries.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_16(addr)
-        return unpack_from('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
-
-    def read_8(self, addr, ap_num=0):
-        '''
-        Reads an 8-bit value using the 8-bit bulk read command.  Unclear
-        whether or not this actually performs a single 8-bit access since the
-        8-bit bulk read actually returns 2 bytes if you do a single-byte read.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_8(addr)
-        u16 = self._bulk_read_8(addr, 1, ap_num=ap_num)
-        return unpack_from('<H', u16)[0] & 0xFF
-
-    def read_bulk(self, addr, size, ap_num=0):
-        '''
-        Do a bulk read operation from the specified address.  If the start or
-        end addresses are not word-aligned then multiple transactions will take
-        place.  If the address range crosses a 1K page boundary, multiple
-        transactions will take place to handle the TAR auto-increment issue.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._read_bulk(addr, size)
-        return super(STLink, self).read_bulk(addr, size, ap_num)
 
     def write_32(self, v, addr, ap_num=0):
         '''
@@ -289,37 +251,14 @@ class STLink(usb_probe.Probe):
         efficient than using _bulk_write_32() since it requires fewer USB
         transactions.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_32(v, addr)
-
         self._cmd_allow_retry(cdb.Write32(addr, v, ap_num))
 
     def write_16(self, v, addr, ap_num=0):
         '''
         Writes a 16-bit value using the 16-bit bulk write command.
         '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_16(v, addr)
         self._bulk_write_16(pack('<H', v), addr, ap_num)
 
-    def write_8(self, v, addr, ap_num=0):
-        '''
-        Writes an 8-bit value using the 8-bit bulk read command.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_8(v, addr)
-        self._bulk_write_8(chr(v), addr, ap_num)
-
-    def write_bulk(self, data, addr, ap_num=0):
-        '''
-        Bulk-writes memory by offloading it to the debug probe.  Currently only
-        aligned 32-bit accesses are allowed.
-        '''
-        if not self._should_offload_ap(ap_num):
-            return self.aps[ap_num]._write_bulk(data, addr)
-        super(STLink, self).write_bulk(data, addr, ap_num)
-
-    def probe(self, **kwargs):
+    def connect(self):
         self._swd_connect()
         self.dpidr = self._read_dpidr()
-        return super(STLink, self).probe(**kwargs)

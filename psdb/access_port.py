@@ -406,8 +406,8 @@ def probe_ap(db, ap_num, verbose=False):
             continue
 
         if verbose:
-            print('  Found %s with IDR 0x%08X (BASE 0x%08X)' % (
-                    ap, idr, ap._read_base()))
+            print('  Found %s with IDR 0x%08X (CSW 0x%08X, BASE 0x%08X)' % (
+                    ap, idr, ap._read_csw(), ap._read_base()))
         return ap
 
     if verbose:

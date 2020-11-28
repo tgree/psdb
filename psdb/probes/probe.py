@@ -4,6 +4,7 @@ import psdb.targets
 
 import time
 from builtins import range
+from struct import pack, unpack
 
 
 class Probe(object):
@@ -25,14 +26,26 @@ class Probe(object):
     def open_ap(self, ap_num):
         raise NotImplementedError
 
-    def read_32(self, addr, ap_num=0):
+    def _bulk_read_8(self, addr, n, ap_num=0):
         raise NotImplementedError
+
+    def read_32(self, addr, ap_num=0):
+        return unpack('<I', self._bulk_read_32(addr, 1, ap_num=ap_num))[0]
 
     def read_16(self, addr, ap_num=0):
-        raise NotImplementedError
+        return unpack('<H', self._bulk_read_16(addr, 1, ap_num=ap_num))[0]
 
     def read_8(self, addr, ap_num=0):
+        return unpack('<B', self._bulk_read_8(addr, 1, ap_num=ap_num))[0]
+
+    def write_32(self, v, addr, ap_num=0):
         raise NotImplementedError
+
+    def write_16(self, v, addr, ap_num=0):
+        raise NotImplementedError
+
+    def write_8(self, v, addr, ap_num=0):
+        self._bulk_write_8(pack('<B', v), addr, ap_num=ap_num)
 
     def read_bulk(self, addr, size, ap_num=0):
         '''
@@ -45,6 +58,10 @@ class Probe(object):
         _bulk_read_32() methods.  The probe should override this method if it
         needs to do a different type of offload.
         '''
+        # Handle empty transfers.
+        if not size:
+            return bytes(b'')
+
         # For short misaligned transfers, just do a single 8-bit access
         # transaction.
         if ((addr % 4) or (size % 4)) and size <= 64:
@@ -52,38 +69,29 @@ class Probe(object):
 
         # For long transfers, align with 8-bit, then do 32-bit, then do 8-bit
         # for the tail.
+        mem         = bytes(b'')
         align_count = (4 - addr) & 3
         count       = min(align_count, size)
-        mem         = self._bulk_read_8(addr, count, ap_num)
-        addr       += count
-        size       -= count
+        if count:
+            mem  += self._bulk_read_8(addr, count, ap_num)
+            addr += count
+            size -= count
         while size >= 4:
             count = min(size, 0x400 - (addr & 0x3FF))//4
             mem  += self._bulk_read_32(addr, count, ap_num)
             addr += count*4
             size -= count*4
-        mem += self._bulk_read_8(addr, size, ap_num)
+        if size:
+            mem += self._bulk_read_8(addr, size, ap_num)
         return mem
-
-    def write_32(self, v, addr, ap_num=0):
-        raise NotImplementedError
-
-    def write_16(self, v, addr, ap_num=0):
-        raise NotImplementedError
-
-    def write_8(self, v, addr, ap_num=0):
-        raise NotImplementedError
 
     def write_bulk(self, data, addr, ap_num=0):
         '''
-        Bulk-writes memory by offloading it to the debug probe.  Currently only
-        aligned 32-bit accesses are allowed.
-
         Note: this helper relies on the probe implementing _bulk_write_8() and
         _bulk_write_32() methods.  The probe should override this method if it
         needs to do a different type of offload.
         '''
-        # For short misaligned transfers, just do a single 8-bit access
+        # For short misaligned transfers, just do a single 8-bit bulk
         # transaction.
         if ((addr % 4) or (len(data) % 4)) and len(data) <= 64:
             return self._bulk_write_8(data, addr, ap_num)
@@ -135,6 +143,8 @@ class Probe(object):
         '''
         if connect_under_reset:
             self.assert_srst()
+
+        self.connect()
 
         dpver = ((self.dpidr & 0x0000F000) >> 12)
         if dpver == 1:

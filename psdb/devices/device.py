@@ -162,7 +162,7 @@ class Device(object):
 
 class MemDevice(Device):
     '''
-    Base class for memory-type devices (SRAM, Flash, etc.).
+    Base class for memory-type devices.
     '''
     def __init__(self, target, ap, name, addr, size, **kwargs):
         super(MemDevice, self).__init__(target, ap, addr, name, [], **kwargs)
@@ -170,3 +170,15 @@ class MemDevice(Device):
 
     def read_mem_block(self, addr, size):
         return self.ap.read_bulk(addr, size)
+
+
+class RAMDevice(MemDevice):
+    '''
+    Base class for RAM-style devices.
+    '''
+    def __init__(self, target, ap, name, addr, size, **kwargs):
+        super().__init__(target, ap, name, addr, size, **kwargs)
+        self.owner.ram_devs[self.name] = self
+
+    def write_mem_block(self, data, addr):
+        self.ap.write_bulk(data, addr)

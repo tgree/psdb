@@ -17,6 +17,7 @@ class Target(object):
         self.max_tck_freq = max_tck_freq
         self.cpus         = self.db.cpus
         self.devs         = collections.OrderedDict()
+        self.ram_devs     = collections.OrderedDict()
 
     @staticmethod
     def pre_probe(db, verbose):
