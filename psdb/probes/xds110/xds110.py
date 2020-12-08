@@ -391,9 +391,6 @@ class XDS110(usb_probe.Probe):
         self.cmapi_write_dap_reg(0, apsel, addr, value)
 
     def connect(self):
-        # Deassert SRST in case someone left it asserted.
-        self.deassert_srst()
-
         # Switch to Serial-Wire debug and connect.  The cmapi_connect() call
         # fails if somebody left DPBANKSEL != 0, so nuke it if we get an error
         # and retry.
