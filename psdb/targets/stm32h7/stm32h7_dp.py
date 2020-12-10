@@ -9,14 +9,14 @@ from . import dbgmcu
 
 # AP0 devices are ones that we access via the M7 core.
 AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
-           (RAMDevice,          'SRAM1 ID',     0x10000000, 0x00020000),
-           (RAMDevice,          'SRAM2 ID',     0x10020000, 0x00020000),
-           (RAMDevice,          'SRAM3 ID',     0x10040000, 0x00008000),
+           (RAMDevice,          'SRAM1 ID M7',  0x10000000, 0x00020000),
+           (RAMDevice,          'SRAM2 ID M7',  0x10020000, 0x00020000),
+           (RAMDevice,          'SRAM3 ID M7',  0x10040000, 0x00008000),
            (RAMDevice,          'M7 DTCM',      0x20000000, 0x00020000),
-           (RAMDevice,          'AXI SRAM',     0x24000000, 0x00080000),
-           (RAMDevice,          'SRAM1',        0x30000000, 0x00020000),
-           (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
-           (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
+           (RAMDevice,          'AXI SRAM M7',  0x24000000, 0x00080000),
+           (RAMDevice,          'SRAM1 M7',     0x30000000, 0x00020000),
+           (RAMDevice,          'SRAM2 M7',     0x30020000, 0x00020000),
+           (RAMDevice,          'SRAM3 M7',     0x30040000, 0x00008000),
            (stm32h7.TIM6,       'TIM6',         0x40001000),
            (stm32h7.TIM7,       'TIM7',         0x40001400),
            (stm32.DAC,          'DAC1',         0x40007400),
@@ -127,7 +127,7 @@ class STM32H7_DP(Target):
         dmamux1 = self.devs['DMAMUX1']
         dma1    = self.devs['DMA1']
         tim17   = self.devs['TIM17']
-        sram1   = self.devs['SRAM1']
+        sram1   = self.devs['SRAM1 M7']
 
         # We must not be using HSE_1MHZ to drive the RTC.
         assert rcc._BDCR.RTCSEL != 3
