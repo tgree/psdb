@@ -7,11 +7,13 @@ from .tim6 import TIM6
 from .tim15 import TIM15
 from .tim17 import TIM17
 from .syscfg import SYSCFG
+from .art import ART
 
 TIM7 = TIM6
 
 
-__all__ = ['FLASH_DP',
+__all__ = ['ART',
+           'FLASH_DP',
            'FLASH_UP',
            'PWR',
            'RCC',
