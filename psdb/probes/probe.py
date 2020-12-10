@@ -187,7 +187,16 @@ class Probe(object):
 
             self.deassert_srst()
 
-        self.halt()
+            for c in self.cpus:
+                c.inval_halted_state()
+                while not c.is_halted():
+                    pass
+
+            for c in self.cpus:
+                c.disable_reset_vector_catch()
+        else:
+            self.halt()
+
         self.target = psdb.targets.probe(self)
         assert self.target
 
