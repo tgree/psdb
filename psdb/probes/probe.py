@@ -146,9 +146,23 @@ class Probe(object):
         After components have been matched, the target must be halted before it
         is further probed.  When we return, the target remains in the halted
         state and Target.resume() must be invoked if it is to continue running.
+
+        If connect_under_reset is True, the SRST line will be asserted and then
+        both the connection process and the component probing will take place
+        while the MCU is held in SRST.  Reset vector catch will then be
+        configured, SRST will be released and the MCU will then end up halted
+        right in the reset vector and we return
+
+        If connect_under_reset is False, the SRST line will be deasserted (in
+        case it had been previously asserted - we assume that the MCU does not
+        support probing under SRST) and then component probing will take place
+        *while the MCU is running*.  Finally, the MCU will be halted wherever
+        it happens to be running and we return.
         '''
         if connect_under_reset:
             self.assert_srst()
+        else:
+            self.deassert_srst()
 
         self.connect()
 
@@ -173,7 +187,16 @@ class Probe(object):
 
             self.deassert_srst()
 
-        self.halt()
+            for c in self.cpus:
+                c.inval_halted_state()
+                while not c.is_halted():
+                    pass
+
+            for c in self.cpus:
+                c.disable_reset_vector_catch()
+        else:
+            self.halt()
+
         self.target = psdb.targets.probe(self)
         assert self.target
 
