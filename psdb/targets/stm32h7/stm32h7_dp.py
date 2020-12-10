@@ -57,7 +57,8 @@ AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
 AP2DEVS = []
 
 # AP3 devices are ones that we access via the M4 core.
-AP3DEVS = [(stm32h7.RCC,        'RCC_M4',       0x58024400),
+AP3DEVS = [(stm32h7.ART,        'ART',          0x40024400),
+           (stm32h7.RCC,        'RCC_M4',       0x58024400),
            ]
 
 
