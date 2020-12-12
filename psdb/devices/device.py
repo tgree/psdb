@@ -2,8 +2,9 @@
 
 
 class Reg(object):
-    READABLE  = (1 << 0)
-    WRITEABLE = (1 << 1)
+    READABLE     = (1 << 0)
+    WRITEABLE    = (1 << 1)
+    SIDE_EFFECTS = (1 << 2)
 
     def __init__(self, name, offset, size, flags, fields):
         self.name   = name
@@ -56,6 +57,15 @@ class Reg32W(Reg):
 
     def write(self, dev, v):
         dev._write_32(v, self.offset)
+
+
+class Reg32RS(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 4, Reg.READABLE | Reg.SIDE_EFFECTS,
+                         fields)
+
+    def read(self, dev):
+        return dev._read_32(self.offset)
 
 
 class RDCapture(object):
