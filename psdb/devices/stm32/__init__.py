@@ -12,6 +12,7 @@ from .general_purpose_timer_16x2 import GPT16x2
 from .general_purpose_timer_16x4 import GPT16x4
 from .general_purpose_timer_32 import GPT32
 from .usb import USB
+from .usb_hs import USB_HS
 from . import flash_type1
 
 
@@ -31,4 +32,5 @@ __all__ = ['ACT',
            'GPT16x4',
            'GPT32',
            'USB',
+           'USB_HS',
            ]
