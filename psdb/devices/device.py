@@ -28,13 +28,12 @@ class Reg(object):
 
 class RegDiv(Reg):
     def __init__(self, name):
-        super(RegDiv, self).__init__(name, None, None, 0, [])
+        super().__init__(name, None, None, 0, [])
 
 
 class Reg32(Reg):
     def __init__(self, name, offset, fields=[]):
-        super(Reg32, self).__init__(name, offset, 4,
-                                    Reg.READABLE | Reg.WRITEABLE, fields)
+        super().__init__(name, offset, 4, Reg.READABLE | Reg.WRITEABLE, fields)
 
     def read(self, dev):
         return dev._read_32(self.offset)
@@ -45,7 +44,7 @@ class Reg32(Reg):
 
 class Reg32R(Reg):
     def __init__(self, name, offset, fields=[]):
-        super(Reg32R, self).__init__(name, offset, 4, Reg.READABLE, fields)
+        super().__init__(name, offset, 4, Reg.READABLE, fields)
 
     def read(self, dev):
         return dev._read_32(self.offset)
@@ -53,7 +52,7 @@ class Reg32R(Reg):
 
 class Reg32W(Reg):
     def __init__(self, name, offset, fields=[]):
-        super(Reg32W, self).__init__(name, offset, 4, Reg.WRITEABLE, fields)
+        super().__init__(name, offset, 4, Reg.WRITEABLE, fields)
 
     def write(self, dev, v):
         dev._write_32(v, self.offset)
