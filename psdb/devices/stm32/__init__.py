@@ -13,12 +13,14 @@ from .general_purpose_timer_16x4 import GPT16x4
 from .general_purpose_timer_32 import GPT32
 from .usb import USB
 from .usb_hs import USB_HS
+from .crs import CRS
 from . import flash_type1
 
 
 __all__ = ['ACT',
            'ADC',
            'BT',
+           'CRS',
            'DAC',
            'DAC_Saw',
            'VREF',
