@@ -717,7 +717,7 @@ class RCC(Device):
                                             ('ETH1MACLPEN',         1),
                                             ('ETH1TXLPEN',          1),
                                             ('ETH1RXLPEN',          1),
-                                            ('',                    8),
+                                            ('',                    7),
                                             ('USB1OTGLPEN',         1),
                                             ('USB1OTGHSULPILPEN',   1),
                                             ('USB2OTGLPEN',         1),

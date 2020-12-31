@@ -1,9 +1,51 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 
 
+def convert_positional_to_adjacency(fields):
+    '''
+    Converts a set of fields of the form:
+
+        ('NAME', bit_pos_0, bit_pos_1)
+
+    or:
+
+        ('NAME', bit_pos)
+
+    into the adjacency format expected by the Reg constructor, including
+    inserting padding fields as necessary.
+    '''
+    sorted_fields    = sorted(fields, key=lambda f: f[1])
+    pos              = 0
+    generated_fields = []
+    for f in sorted_fields:
+        # Sanity that the start is ordered properly.
+        assert pos <= f[1]
+
+        # Convert 1-bit fields to N-bit fields.
+        if len(f) == 2:
+            f = (f[0], f[1], f[1])
+
+        # Sanity that the bounds are ordered properly.
+        assert f[2] >= f[1]
+
+        # Eat any unused bits.
+        if pos < f[1]:
+            generated_fields.append(('', f[1] - pos))
+            pos = f[1]
+
+        # Generate the field.
+        generated_fields.append((f[0], f[2] - f[1] + 1))
+
+        # Advance the position.
+        pos = f[2] + 1
+
+    return generated_fields
+
+
 class Reg(object):
-    READABLE  = (1 << 0)
-    WRITEABLE = (1 << 1)
+    READABLE     = (1 << 0)
+    WRITEABLE    = (1 << 1)
+    SIDE_EFFECTS = (1 << 2)
 
     def __init__(self, name, offset, size, flags, fields):
         self.name   = name
@@ -28,13 +70,12 @@ class Reg(object):
 
 class RegDiv(Reg):
     def __init__(self, name):
-        super(RegDiv, self).__init__(name, None, None, 0, [])
+        super().__init__(name, None, None, 0, [])
 
 
 class Reg32(Reg):
     def __init__(self, name, offset, fields=[]):
-        super(Reg32, self).__init__(name, offset, 4,
-                                    Reg.READABLE | Reg.WRITEABLE, fields)
+        super().__init__(name, offset, 4, Reg.READABLE | Reg.WRITEABLE, fields)
 
     def read(self, dev):
         return dev._read_32(self.offset)
@@ -45,7 +86,7 @@ class Reg32(Reg):
 
 class Reg32R(Reg):
     def __init__(self, name, offset, fields=[]):
-        super(Reg32R, self).__init__(name, offset, 4, Reg.READABLE, fields)
+        super().__init__(name, offset, 4, Reg.READABLE, fields)
 
     def read(self, dev):
         return dev._read_32(self.offset)
@@ -53,10 +94,51 @@ class Reg32R(Reg):
 
 class Reg32W(Reg):
     def __init__(self, name, offset, fields=[]):
-        super(Reg32W, self).__init__(name, offset, 4, Reg.WRITEABLE, fields)
+        super().__init__(name, offset, 4, Reg.WRITEABLE, fields)
 
     def write(self, dev, v):
         dev._write_32(v, self.offset)
+
+
+class Reg32RS(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 4, Reg.READABLE | Reg.SIDE_EFFECTS,
+                         fields)
+
+    def read(self, dev):
+        return dev._read_32(self.offset)
+
+
+class AReg32(Reg32):
+    '''
+    Same as Reg32 but uses first and last bit positions rather than length.
+    '''
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, convert_positional_to_adjacency(fields))
+
+
+class AReg32R(Reg32R):
+    '''
+    Same as Reg32R but uses first and last bit positions rather than length.
+    '''
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, convert_positional_to_adjacency(fields))
+
+
+class AReg32W(Reg32W):
+    '''
+    Same as Reg32W but uses first and last bit positions rather than length.
+    '''
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, convert_positional_to_adjacency(fields))
+
+
+class AReg32RS(Reg32RS):
+    '''
+    Same as Reg32RS but uses first and last bit positions rather than length.
+    '''
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
 class RDCapture(object):
