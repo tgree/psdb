@@ -4,9 +4,8 @@ from .component import Component
 import struct
 
 
-class AP(object):
+class AP:
     def __init__(self, db, ap_num, idr):
-        super(AP, self).__init__()
         self.db      = db
         self.ap_num  = ap_num
         self.idr     = idr
@@ -40,7 +39,7 @@ class MemAP(AP):
             }
 
     def __init__(self, db, ap_num, idr, csw_base, typ='MEM'):
-        super(MemAP, self).__init__(db, ap_num, idr)
+        super().__init__(db, ap_num, idr)
         self.typ            = typ
         self.flags          = MemAP.FLAG_SIZE_32
         assert ((self.idr >> 13) & 0xF) == 0x8
@@ -352,7 +351,7 @@ class AHBAP(MemAP):
     to access memory through the AP otherwise we get fault errors.
     '''
     def __init__(self, db, ap_num, idr, csw_base):
-        super(AHBAP, self).__init__(db, ap_num, idr, csw_base, 'AHB')
+        super().__init__(db, ap_num, idr, csw_base, 'AHB')
 
 
 class APBAP(MemAP):
@@ -361,34 +360,34 @@ class APBAP(MemAP):
     that the CPU can continue to access debug components via the APB mux.
     '''
     def __init__(self, db, ap_num, idr, csw_base):
-        super(APBAP, self).__init__(db, ap_num, idr, csw_base, 'APB')
+        super().__init__(db, ap_num, idr, csw_base, 'APB')
 
 
 class IDRMapper(object):
     PROBE_SIZES = (1<<0)
 
-    def __init__(self, idr, mask, factory, csw_base, flags):
+    def __init__(self, idr, mask, factory, flags, *args):
         self.idr      = idr
         self.mask     = mask
         self.factory  = factory
-        self.csw_base = csw_base
+        self.args     = args
         self.flags    = flags
 
     def probe(self, idr, db, ap_num):
         if (idr & self.mask) != self.idr:
             return None
 
-        ap = self.factory(db, ap_num, idr, self.csw_base)
+        ap = self.factory(db, ap_num, idr, *self.args)
         if self.flags & IDRMapper.PROBE_SIZES:
             ap._probe_sizes()
         return ap
 
 
 IDR_MAPPERS = [
-    IDRMapper(0x04770001, 0x0FFFE00F, AHBAP, 0x23000040, IDRMapper.PROBE_SIZES),
-    IDRMapper(0x04770002, 0x0FFFE00F, APBAP, 0x80000040, IDRMapper.PROBE_SIZES),
-    IDRMapper(0x00010000, 0x0001E000, MemAP, None,       0),
-    IDRMapper(0x00000000, 0x00000000, AP,    None,       0),
+    IDRMapper(0x04770001, 0x0FFFE00F, AHBAP, IDRMapper.PROBE_SIZES, 0x23000040),
+    IDRMapper(0x04770002, 0x0FFFE00F, APBAP, IDRMapper.PROBE_SIZES, 0x80000040),
+    IDRMapper(0x00010000, 0x0001E000, MemAP, 0,                     None),
+    IDRMapper(0x00000000, 0x00000000, AP,    0),
     ]
 
 
