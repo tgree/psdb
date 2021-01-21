@@ -81,7 +81,7 @@ class XDS110(usb_probe.Probe):
             rsp  += buf
             size -= len(buf)
 
-        s = rsp.tostring()
+        s = rsp.tobytes()
         err = unpack_from('i', s)[0]
         if err not in allowed_errs:
             raise XDS110CommandException(err, allowed_errs, s)
