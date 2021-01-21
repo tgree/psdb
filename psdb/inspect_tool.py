@@ -64,6 +64,8 @@ def draw_decode(reg_win, decode_win, dev):  # noqa: C901
 
     decode_win.show()
     decode_win.content.erase()
+    decode_win.content.addchs('Address: 0x%08X' % (dev.dev_base + r.offset),
+                              pos=(0, 0))
     chars  = [curses.ACS_ULCORNER,
               curses.ACS_HLINE, curses.ACS_TTEE,
               curses.ACS_HLINE, curses.ACS_TTEE,
@@ -72,9 +74,9 @@ def draw_decode(reg_win, decode_win, dev):  # noqa: C901
               curses.ACS_URCORNER,
               ord(' '),
               ]*8
-    decode_win.content.addchs(chars, pos=(0, 0))
+    decode_win.content.addchs(chars, pos=(1, 0))
 
-    decode_win.content.move(1, 0)
+    decode_win.content.move(2, 0)
     bit = r.size*8 - 1
     field_vals = []
     for f in reversed(r.fields):
@@ -130,23 +132,23 @@ def draw_decode(reg_win, decode_win, dev):  # noqa: C901
               curses.ACS_LRCORNER,
               ord(' '),
               ]*8
-    decode_win.content.addchs(chars, pos=(2, 0))
+    decode_win.content.addchs(chars, pos=(3, 0))
 
     for i in range(r.size*2):
         decode_win.content.addstr('%X' % ((rv >> (28-4*i)) & 0xF),
-                                  pos=(3, 4+i*10))
+                                  pos=(4, 4+i*10))
 
     if len(field_vals) > 0:
         w = max(len(fv[0]) for fv in field_vals[:16])
         for i, fv in enumerate(field_vals[:16]):
-            decode_win.content.addstr('%*s: ' % (w, fv[0]), pos=(4+i, 1),
+            decode_win.content.addstr('%*s: ' % (w, fv[0]), pos=(5+i, 1),
                                       attr=curses.A_BOLD)
             decode_win.content.addstr('0x%X' % fv[1])
 
     if len(field_vals) > 16:
         w = max(len(fv[0]) for fv in field_vals[16:])
         for i, fv in enumerate(field_vals[16:]):
-            decode_win.content.addstr('%*s: ' % (w, fv[0]), pos=(4+i, 41),
+            decode_win.content.addstr('%*s: ' % (w, fv[0]), pos=(5+i, 41),
                                       attr=curses.A_BOLD)
             decode_win.content.addstr('0x%X' % fv[1])
 
@@ -290,7 +292,7 @@ def main(screen, args):  # noqa: C901
             'Decode',
             left_anchor=reg_win.frame.right_anchor(),
             top_anchor=ws.canvas.frame.top_anchor(),
-            w=81, h=22)
+            w=81, h=23)
 
     # Add a memory window.
     mem_win = ws.make_anchored_window(
