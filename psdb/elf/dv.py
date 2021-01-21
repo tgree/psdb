@@ -33,6 +33,7 @@ def merge_dvs(lhs, rhs):
     '''
     dv = lhs[:]
     for alp in rhs:
-        assert not dv_overlaps_region(dv, alp[0], len(alp[1]))
+        if dv_overlaps_region(dv, alp[0], len(alp[1])):
+            raise Exception('ALP(0x%08X, %u) overlaps!' % (alp[0], len(alp[1])))
         dv.append(alp)
     return dv
