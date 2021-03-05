@@ -83,11 +83,14 @@ class FLASH_DP(FLASH):
         Returns the set of currently-active options from the OPTSR_CUR register.
         '''
         optsr_cur = self._OPTSR_CUR.read()
-        return {name.lower() : ((optsr_cur >> shift) & ((1 << width) - 1))
-                for name, (width, shift) in
-                self._OPTSR_PRG.reg.fields_map.items()}
+        options = {name.lower() : ((optsr_cur >> shift) & ((1 << width) - 1))
+                                  for name, (width, shift) in
+                                  self._OPTSR_PRG.reg.fields_map.items()}
+        options['boot7'] = self._BOOT7_CURR.read()
+        options['boot4'] = self._BOOT4_CURR.read()
+        return options
 
-    def _flash_options(self, new_optsr_prg, verbose=True):
+    def _flash_options(self, new_optsr_prg, new_boot7, new_boot4, verbose=True):
         '''Records the new options values in flash.'''
         assert self.target.is_halted()
         old_optsr_cur = self._OPTSR_CUR.read()
@@ -95,7 +98,11 @@ class FLASH_DP(FLASH):
             print('Flashing options (Old OPTSR_CUR=0x%08X, Target '
                   'OPTSR_PRG=0x%08X)' % (old_optsr_cur, new_optsr_prg))
         with self._options_unlocked():
-            self._OPTSR_PRG      = new_optsr_prg
+            self._OPTSR_PRG = new_optsr_prg
+            if new_boot7 is not None:
+                self._BOOT7_PRGR = new_boot7
+            if new_boot4 is not None:
+                self._BOOT4_PRGR = new_boot4
             self._OPTCR.OPTSTART = 1
             while self._OPTSR_CUR.OPT_BUSY:
                 pass
@@ -112,6 +119,13 @@ class FLASH_DP(FLASH):
 
             target = target.flash.set_options({...})
         '''
+        boot7_prg = options.get('boot7', None)
+        if boot7_prg is not None:
+            del options['boot7']
+        boot4_prg = options.get('boot4', None)
+        if boot4_prg is not None:
+            del options['boot4']
+
         optsr_prg = self._OPTSR_PRG.read()
         for name, (width, shift) in self._OPTSR_PRG.reg.fields_map.items():
             value = options.get(name.lower(), None)
@@ -126,5 +140,5 @@ class FLASH_DP(FLASH):
         if options:
             raise Exception('Invalid options: %s' % options)
 
-        self._flash_options(optsr_prg)
+        self._flash_options(optsr_prg, boot7_prg, boot4_prg)
         return self.target
