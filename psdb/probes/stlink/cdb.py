@@ -320,7 +320,9 @@ class SWDConnect(STLinkCommand):
     '''
     Connect to the target using SWD mode.  Note that the debug interface clock
     speed should be set before connecting since this command starts clocking
-    the target.
+    the target.  If the probe is already in debug mode, SWDConnect can be
+    re-issued without leaving debug mode to reconnect to a target that has
+    been power cycled.
 
     Availability: All.
 
