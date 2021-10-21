@@ -276,6 +276,10 @@ class LeaveDebugMode(STLinkCommand):
     '''
     Leaves Debug mode.
 
+    Note: This will deassert SRST if it had previously been asserted via a
+          SetSRST command - even if SRST was asserted before we entered debug
+          mode.
+
     Availability: All.
 
     TX_EP (CDB):
