@@ -119,7 +119,7 @@ def main(rv):
 
     # If bank-swapping was requested, do it now.
     if rv.swap_banks:
-        target = target.flash.swap_banks_and_reset()
+        target = target.flash.swap_banks_and_reset(connect_under_reset=True)
 
     # Resume if halt wasn't requested.
     if not rv.halt:
