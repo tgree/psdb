@@ -114,15 +114,8 @@ class FLASH_3(flash_type1.FLASH):
 
         # In dual-bank mode, do the right thing.
         if self.sector_size == 2048:
-            syscfg  = self.target.devs['SYSCFG']
-            fb_mode = bool(syscfg._MEMRMP.FB_MODE)
-            if not fb_mode and n >= 128:
-                bker = (1 << 11)
-            elif fb_mode and n < 128:
-                bker = (1 << 11)
-            else:
-                bker = 0
-            n = (n % 128)
+            bker = (((n >= 128) ^ self.target.fb_mode) << 11)
+            n    = (n % 128)
 
         with self._flash_unlocked():
             self._clear_errors()
