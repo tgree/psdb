@@ -88,7 +88,7 @@ class Target(object):
         for c in cpus:
             c.resume()
 
-    def wait_reset_and_reprobe(self, **kwargs):
+    def wait_reset(self):
         # Wait for the initial disconnect.
         try:
             while True:
@@ -97,6 +97,8 @@ class Target(object):
         except psdb.ProbeException:
             time.sleep(0.1)
 
+    def wait_reset_and_reprobe(self, **kwargs):
+        self.wait_reset()
         return self.reprobe(**kwargs)
 
     def reprobe(self, **kwargs):
