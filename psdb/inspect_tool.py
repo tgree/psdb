@@ -366,6 +366,7 @@ def _main():
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--srst', action='store_true')
+    parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--resume', '-r', action='store_true')
     args = parser.parse_args()
 
@@ -384,7 +385,8 @@ def _main():
         args.probe.srst_target()
 
     # Probe the target platform.
-    args.target = args.probe.probe(verbose=args.verbose)
+    args.target = args.probe.probe(verbose=args.verbose,
+                                   connect_under_reset=args.connect_under_reset)
 
     # Set the max clock frequency.
     args.target.set_max_tck_freq()
