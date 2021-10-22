@@ -83,9 +83,10 @@ class FLASH_DP(FLASH):
         Returns the set of currently-active options from the OPTSR_CUR register.
         '''
         optsr_cur = self._OPTSR_CUR.read()
-        options = {name.lower() : ((optsr_cur >> shift) & ((1 << width) - 1))
-                                  for name, (width, shift) in
-                                  self._OPTSR_PRG.reg.fields_map.items()}
+        options = {
+            name.lower() : ((optsr_cur >> shift) & ((1 << width) - 1))
+            for name, (width, shift) in self._OPTSR_PRG.reg.fields_map.items()
+        }
         options['boot7'] = self._BOOT7_CURR.read()
         options['boot4'] = self._BOOT4_CURR.read()
         return options
