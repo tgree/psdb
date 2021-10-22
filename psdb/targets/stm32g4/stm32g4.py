@@ -190,7 +190,7 @@ class STM32G4(Target):
         syscfgen               = rcc._APB2ENR.SYSCFGEN
         rcc._APB2ENR.SYSCFGEN  = 1
         syscfg._MEMRMP.FB_MODE = v
-        #rcc._APB2ENR.SYSCFGEN  = syscfgen
+        rcc._APB2ENR.SYSCFGEN  = syscfgen
 
     def _get_fb_mode(self):
         rcc                    = self.devs['RCC']
@@ -198,7 +198,7 @@ class STM32G4(Target):
         syscfgen               = rcc._APB2ENR.SYSCFGEN
         rcc._APB2ENR.SYSCFGEN  = 1
         fb_mode                = syscfg._MEMRMP.FB_MODE
-        #rcc._APB2ENR.SYSCFGEN  = syscfgen
+        rcc._APB2ENR.SYSCFGEN  = syscfgen
         return fb_mode
 
     def _synchronize_fb_mode(self):
