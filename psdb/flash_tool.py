@@ -123,6 +123,15 @@ def main(rv):
         target.flash.swap_banks_and_reset_no_connect()
         if rv.halt:
             target = target.reprobe(connect_under_reset=True)
+        if not rv.flash_inactive:
+            if rv.flash or rv.write_raw_binary:
+                print('*****************************************************')
+                print('Warning: --flash-inactive should be used when trying')
+                print('to write to the peer bank and activate it.')
+                print('You just wrote to what was the currently-active bank')
+                print('and then activated the previously-inactive bank which')
+                print('probably isn\'t what you wanted.')
+                print('*****************************************************')
     elif not rv.halt:
         target.resume()
 
