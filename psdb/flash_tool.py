@@ -117,12 +117,22 @@ def main(rv):
         mem          = target.cpus[0].read_bulk(base, length)
         psdb.hexdump(mem, addr=base)
 
-    # If bank-swapping was requested, do it now.
+    # If bank-swapping was requested, do it now.  Otherwise, resume if
+    # requested.
     if rv.swap_banks:
-        target = target.flash.swap_banks_and_reset()
-
-    # Resume if halt wasn't requested.
-    if not rv.halt:
+        target.flash.swap_banks_and_reset_no_connect()
+        if rv.halt:
+            target = target.reprobe(connect_under_reset=True)
+        if not rv.flash_inactive:
+            if rv.flash or rv.write_raw_binary:
+                print('*****************************************************')
+                print('Warning: --flash-inactive should be used when trying')
+                print('to write to the peer bank and activate it.')
+                print('You just wrote to what was the currently-active bank')
+                print('and then activated the previously-inactive bank which')
+                print('probably isn\'t what you wanted.')
+                print('*****************************************************')
+    elif not rv.halt:
         target.resume()
 
 

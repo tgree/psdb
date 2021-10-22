@@ -14,6 +14,7 @@ DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              (stm32.GPT16x4,   'TIM4',        0x40000800),
              (stm32.BT,        'TIM6',        0x40001000),
              (stm32.BT,        'TIM7',        0x40001400),
+             (stm32g4.RTC,     'RTC',         0x40002800),
              (stm32g4.PWR,     'PWR',         0x40007000),
              (stm32g4.SYSCFG,  'SYSCFG',      0x40010000),
              (stm32.VREF,      'VREF',        0x40010030),
@@ -53,6 +54,7 @@ DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
              (stm32.GPT32,     'TIM5',        0x40000C00),
              (stm32.BT,        'TIM6',        0x40001000),
              (stm32.BT,        'TIM7',        0x40001400),
+             (stm32g4.RTC,     'RTC',         0x40002800),
              (stm32g4.PWR,     'PWR',         0x40007000),
              (stm32g4.SYSCFG,  'SYSCFG',      0x40010000),
              (stm32.VREF,      'VREF',        0x40010030),
@@ -96,6 +98,7 @@ DEVICES_4 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
              (stm32.GPT16x4,   'TIM4',        0x40000800),
              (stm32.BT,        'TIM6',        0x40001000),
              (stm32.BT,        'TIM7',        0x40001400),
+             (stm32g4.RTC,     'RTC',         0x40002800),
              (stm32g4.PWR,     'PWR',         0x40007000),
              (stm32g4.SYSCFG,  'SYSCFG',      0x40010000),
              (stm32.VREF,      'VREF',        0x40010030),
@@ -161,8 +164,64 @@ class STM32G4(Target):
         MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
                   self.flash.otp_len)
 
+        self.orig_fb_mode = self._get_fb_mode()
+        self.fb_mode      = self._synchronize_fb_mode()
+
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
+
+    def halt(self):
+        super().halt()
+        self._set_fb_mode(self.fb_mode)
+
+    def reset_halt(self):
+        super().reset_halt()
+        self.orig_fb_mode = self._get_fb_mode()
+        self.fb_mode      = self._synchronize_fb_mode()
+
+    def resume(self):
+        print('Setting fb_mode=%s' % self.orig_fb_mode)
+        self._set_fb_mode(self.orig_fb_mode)
+        super().resume()
+
+    def _set_fb_mode(self, v):
+        rcc                    = self.devs['RCC']
+        syscfg                 = self.devs['SYSCFG']
+        syscfgen               = rcc._APB2ENR.SYSCFGEN
+        rcc._APB2ENR.SYSCFGEN  = 1
+        syscfg._MEMRMP.FB_MODE = v
+        #rcc._APB2ENR.SYSCFGEN  = syscfgen
+
+    def _get_fb_mode(self):
+        rcc                    = self.devs['RCC']
+        syscfg                 = self.devs['SYSCFG']
+        syscfgen               = rcc._APB2ENR.SYSCFGEN
+        rcc._APB2ENR.SYSCFGEN  = 1
+        fb_mode                = syscfg._MEMRMP.FB_MODE
+        #rcc._APB2ENR.SYSCFGEN  = syscfgen
+        return fb_mode
+
+    def _synchronize_fb_mode(self):
+        '''
+        Ensure FB_MODE matches BFB2 (not the case when we halt out of reset
+        with BFB2=1).  This is critical for just about anything that touches
+        flash.
+        '''
+        bfb2 = self.flash.get_options()['bfb2']
+        self._set_fb_mode(bfb2)
+        return bfb2
+
+    def enable_rtc(self, rtcsel=1):
+        rcc = self.devs['RCC']
+        pwr = self.devs['PWR']
+        rtc = self.devs['RTC']
+        rcc.enable_device('PWR')
+        pwr.enable_backup_domain()
+        rcc.set_lse_drive_capability(0)
+        rcc.enable_lse()
+        rcc.set_rtcclock_source(rtcsel)
+        rcc.enable_rtc()
+        rtc.init()
 
     @staticmethod
     def is_mcu(db):

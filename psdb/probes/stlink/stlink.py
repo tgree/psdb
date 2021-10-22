@@ -145,7 +145,9 @@ class STLink(usb_probe.Probe):
         '''
         Enters SWD mode.
         '''
-        self._leave_current_mode()
+        mode = self._current_mode()
+        if mode != cdb.MODE_DEBUG:
+            self._mode_leave(mode)
         self._cmd_allow_retry(cdb.SWDConnect())
         assert self._current_mode() == cdb.MODE_DEBUG
 

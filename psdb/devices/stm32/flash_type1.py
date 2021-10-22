@@ -186,25 +186,23 @@ class FLASH(Device, Flash):
 
     def _trigger_obl_launch(self, **kwargs):
         '''
-        Set OBL_LAUNCH to trigger a reset of the device using the new options.
-        This reset triggers a disconnect of the debug probe, so a full
-        target.reprobe() sequence is required.  The correct idiom for use of
-        _trigger_obl_launch() is:
-
-            target = target.flash._trigger_obl_launch()
+        Set OBL_LAUNCH to trigger an uncatchable reset of the device using the
+        new options.  This reset triggers a disconnect of the debug probe, and
+        the current target object becomes unusable.  A target reprobe() is
+        required if it is desired to reconnect after the reset completes.
         '''
         UnlockedContextManager(self).__enter__()
         UnlockedOptionsContextManager(self).__enter__()
 
         # Set OBL_LAUNCH to trigger a reset and load of the new settings.  This
-        # causes an exception with the XDS110 (and possibly the ST-Link), so
-        # catch it and exit cleanly.
+        # causes an exception with the XDS110 and the ST-Link, so catch it and
+        # exit cleanly.
         try:
             self._CR = (1 << 27)
         except Exception:
             pass
 
-        return self.target.wait_reset_and_reprobe(**kwargs)
+        self.target.wait_reset()
 
     def get_options_reg(self):
         '''Returns the contents of the options register.'''
@@ -221,14 +219,13 @@ class FLASH(Device, Flash):
         return {name.lower() : ((optr >> shift) & ((1 << width) - 1))
                 for name, (width, shift) in self._OPTR.reg.fields_map.items()}
 
-    def set_options(self, options, verbose=True, connect_under_reset=False):
+    def set_options_no_connect(self, options, verbose=True):
         '''
         This sets the specified option bits in the OPTR register and then
-        triggers an option-byte load reset of the MCU.  When the MCU comes back
-        up, the new options will be in effect.  This reset invalidates the
-        probe's connection to the target, so the correct idiom for use is:
-
-            target = target.flash.set_options({...})
+        triggers an option-byte load reset of the MCU.  The MCU is not re-
+        probed and the previous target object becomes unusable.  This is
+        useful for setting the options as the last step before restarting the
+        MCU to let it run autonomously.
         '''
         optr = self._OPTR.read()
         for name, (width, shift) in self._OPTR.reg.fields_map.items():
@@ -245,5 +242,17 @@ class FLASH(Device, Flash):
             raise Exception('Invalid options: %s' % options)
 
         self._flash_optr(optr, verbose=verbose)
-        return self._trigger_obl_launch(verbose=verbose,
-                                        connect_under_reset=connect_under_reset)
+        self._trigger_obl_launch(verbose=verbose)
+
+    def set_options(self, options, verbose=True, connect_under_reset=False):
+        '''
+        This sets the specified option bits in the OPTR register and then
+        triggers an option-byte load reset of the MCU.  When the MCU comes back
+        up, the new options will be in effect.  This reset invalidates the
+        probe's connection to the target, so the correct idiom for use is:
+
+            target = target.flash.set_options({...})
+        '''
+        self.set_options_no_connect(options, verbose=verbose)
+        return self.target.reprobe(verbose=verbose,
+                                   connect_under_reset=connect_under_reset)

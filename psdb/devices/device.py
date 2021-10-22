@@ -12,7 +12,8 @@ def convert_positional_to_adjacency(fields):
         ('NAME', bit_pos)
 
     into the adjacency format expected by the Reg constructor, including
-    inserting padding fields as necessary.
+    inserting padding fields as necessary.  Note that bit_pos_0 <= bit_pos_1,
+    i.e. the lower-numbered bit comes first.
     '''
     sorted_fields    = sorted(fields, key=lambda f: f[1])
     pos              = 0

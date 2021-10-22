@@ -493,6 +493,21 @@ class RCC(Device):
         while self._CR.HSERDY == 0:
             time.sleep(0.01)
 
+    def enable_lse(self):
+        self._BDCR.LSEON = 1
+        while self._BDCR.LSERDY == 0:
+            time.sleep(0.01)
+
+    def enable_rtc(self):
+        self._BDCR.RTCEN = 1
+
+    def set_lse_drive_capability(self, val):
+        self._BDCR.LSEDRV = val
+
+    def reset_backup_domain(self):
+        self._BDCR.BDRST = 1
+        self._BDCR.BDRST = 0
+
     def set_hpre(self, divider):
         '''
         Sets the CPU1 HPRE divider (HCLK1).  Valid values are:
@@ -518,3 +533,21 @@ class RCC(Device):
         self._CFGR.SW = sw
         while self._CFGR.SWS != sw:
             time.sleep(0.01)
+
+    def set_rtcclock_source(self, rtcsel):
+        '''
+        Selects the RTC clock source as follows:
+
+                RTCSEL | Source
+                -------+-------
+                0      | None
+                1      | LSE
+                2      | LSI
+                3      | HSE/32
+                -------+-------
+
+        Note that the backup domain must be reset to change the RTCSEL value
+        from anything other than "None".
+        '''
+        assert self._BDCR.RTCSEL == 0
+        self._BDCR.RTCSEL = rtcsel
