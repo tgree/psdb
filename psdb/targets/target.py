@@ -64,9 +64,7 @@ class Target(object):
         This should handle both cases (where SYSRESETREQ is local or global).
         '''
         # Enable reset vector catch and halt all CPUs.
-        for c in self.cpus:
-            c.halt()
-            c.enable_reset_vector_catch()
+        self.enable_reset_vector_catch()
 
         # Trigger a reset on all CPUs, waiting for all CPUs to halt before
         # continuing on to the next one.  This ensures that we don't trigger
@@ -80,13 +78,21 @@ class Target(object):
                     pass
 
         # Disable reset vector catch.
-        for c in self.cpus:
-            c.disable_reset_vector_catch()
+        self.disable_reset_vector_catch()
 
     def resume(self, cpus=None):
         cpus = cpus or self.cpus
         for c in cpus:
             c.resume()
+
+    def enable_reset_vector_catch(self):
+        for c in self.cpus:
+            c.halt()
+            c.enable_reset_vector_catch()
+
+    def disable_reset_vector_catch(self):
+        for c in self.cpus:
+            c.disable_reset_vector_catch()
 
     def wait_reset(self):
         # Wait for the initial disconnect.
