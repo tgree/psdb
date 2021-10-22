@@ -117,12 +117,13 @@ def main(rv):
         mem          = target.cpus[0].read_bulk(base, length)
         psdb.hexdump(mem, addr=base)
 
-    # If bank-swapping was requested, do it now.
+    # If bank-swapping was requested, do it now.  Otherwise, resume if
+    # requested.
     if rv.swap_banks:
-        target = target.flash.swap_banks_and_reset(connect_under_reset=True)
-
-    # Resume if halt wasn't requested.
-    if not rv.halt:
+        target.flash.swap_banks_and_reset_no_connect()
+        if rv.halt:
+            target = target.reprobe(connect_under_reset=True)
+    elif not rv.halt:
         target.resume()
 
 

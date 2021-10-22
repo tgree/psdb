@@ -132,14 +132,11 @@ class FLASH_3(flash_type1.FLASH):
             self._check_errors()
             self._CR = 0
 
-    def swap_banks_and_reset(self, connect_under_reset=False):
+    def swap_banks_and_reset_no_connect(self):
         '''
-        Swap the flash banks in dual-bank mode.  This also triggers a reset.
-        Since the reset invalidates the probe's connection to the target, the
-        correct idiom for use is:
-
-            target = target.flash.swap_banks_and_reset()
+        Swap the flash banks in dual-bank mode.  This also triggers a reset,
+        which invalidates the probe's connection to the target.  The target is
+        not halted and the target object becomes unusable.
         '''
         options = self.get_options()
-        return self.set_options({'bfb2' : (options['bfb2'] ^ 1)},
-                                connect_under_reset=connect_under_reset)
+        self.set_options_no_connect({'bfb2' : (options['bfb2'] ^ 1)})
