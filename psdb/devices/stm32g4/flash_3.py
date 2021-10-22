@@ -116,6 +116,8 @@ class FLASH_3(flash_type1.FLASH):
         if self.sector_size == 2048:
             bker = (((n >= 128) ^ self.target.fb_mode) << 11)
             n    = (n % 128)
+        else:
+            bker = 0
 
         with self._flash_unlocked():
             self._clear_errors()
