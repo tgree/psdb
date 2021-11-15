@@ -96,12 +96,12 @@ class InspectTool:
             if c == ord('q'):
                 break
             elif c == ord('\t'):
-                f = self.focus_list.pop(0)
-                f.focus_lost()
-                self.focus_list.append(f)
+                self.focus_list[0].focus_lost()
 
-                while not self.focus_list[0].is_visible():
+                while True:
                     self.focus_list.append(self.focus_list.pop(0))
+                    if self.focus_list[0].is_visible():
+                        break
 
                 self.focus_list[0].focus_gained()
             else:
