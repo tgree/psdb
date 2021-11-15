@@ -2,6 +2,8 @@
 # Copyright (c) 2018-2021 Phase Advanced Sensor Systems, Inc.
 import argparse
 import sys
+import time
+import curses
 
 import psdb.probes
 import tgcurses
@@ -12,6 +14,8 @@ from .device_register_window import DeviceRegisterWindow
 from .memory_window import MemoryWindow
 from .device_selector_window import DeviceSelectorWindow
 
+
+STATUS_TIMEOUT = 1
 
 DEV_TYPE_REGISTER = 0
 DEV_TYPE_MEMORY   = 1
@@ -27,8 +31,9 @@ def get_dev_type(dev):
 
 class InspectTool:
     def __init__(self, target, workspace):
-        self.target    = target
-        self.workspace = workspace
+        self.target      = target
+        self.workspace   = workspace
+        self.status_time = None
 
         # Build the device list, including global devices and per-CPU devices
         # and then sort it by address.
@@ -64,6 +69,15 @@ class InspectTool:
         # Focus handling.
         self.focus_list = [self.dev_win, self.reg_win, self.mem_win]
 
+    def status(self, s):
+        y = self.workspace.canvas.height - 1
+        self.workspace.canvas.clrline(y)
+        if s:
+            self.workspace.canvas.addstr('%s' % s, pos=(y, 1),
+                                         attr=curses.A_REVERSE)
+            self.status_time = time.time()
+        self.workspace.canvas.noutrefresh()
+
     def handle_device_selected(self, d):
         dt = get_dev_type(d)
         if dt == DEV_TYPE_REGISTER:
@@ -82,6 +96,11 @@ class InspectTool:
         self.workspace.canvas.timeout(100)
         self.workspace.canvas.keypad(1)
         while True:
+            # Clear status text if it has expired.
+            if self.status_time is not None:
+                if time.time() - self.status_time >= STATUS_TIMEOUT:
+                    self.status(None)
+
             # Draw the current device contents.
             if self.mem_win.is_visible():
                 self.mem_win.draw()
