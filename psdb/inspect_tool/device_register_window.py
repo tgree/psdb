@@ -74,6 +74,9 @@ class DeviceRegisterWindow:
         self.decode_win.draw(self.dev, self.dev.regs[self.selection],
                              self.reg_vals[self.selection])
 
+    def can_focus(self):
+        return True
+
     def focus_lost(self):
         tgcurses.ui.curs_set(0)
 

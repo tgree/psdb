@@ -122,7 +122,8 @@ class InspectTool:
 
                 while True:
                     self.focus_list.append(self.focus_list.pop(0))
-                    if self.focus_list[0].is_visible():
+                    if (self.focus_list[0].is_visible() and
+                            self.focus_list[0].can_focus()):
                         break
 
                 self.focus_list[0].focus_gained()

@@ -21,6 +21,9 @@ class DeviceSelectorWindow:
     def is_visible(self):
         return self.window.visible
 
+    def can_focus(self):
+        return True
+
     def focus_lost(self):
         pass
 

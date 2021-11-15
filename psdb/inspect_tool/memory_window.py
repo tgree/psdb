@@ -63,6 +63,9 @@ class MemoryWindow:
             self.window.content.addstr('%s' % chars, pos=(i, 110))
         self.window.content.noutrefresh()
 
+    def can_focus(self):
+        return True
+
     def focus_lost(self):
         pass
 
