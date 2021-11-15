@@ -26,6 +26,15 @@ class DeviceRegisterWindow:
     def is_visible(self):
         return self.window.visible
 
+    def get_decode_info(self):
+        r = self.get_selected_reg()
+        if self.edit_val is not None:
+            v = self.edit_val
+        else:
+            v = self.get_selected_reg_val()
+
+        return r, v
+
     def get_selected_reg(self):
         return self.dev.regs[self.selection]
 
