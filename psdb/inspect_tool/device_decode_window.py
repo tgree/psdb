@@ -122,6 +122,10 @@ class DeviceDecodeWindow:
                                        pos=(4, 4+i*10))
 
         if self.named_fields:
+            if self.reg_win.edit_val is not None:
+                hattr = curses.A_UNDERLINE
+            else:
+                hattr = 0
             for i, f in enumerate(self.named_fields):
                 x = 1 if i < 16 else 41
                 y = i % 16
@@ -129,7 +133,7 @@ class DeviceDecodeWindow:
                     '%*s: ' % (self.max_field_len, f.name), pos=(6+y, x),
                     attr=curses.A_BOLD)
                 self.window.content.addstr(
-                    '%0*X' % (f.nnibbles, f.extract(reg_val)))
+                    '%0*X' % (f.nnibbles, f.extract(reg_val)), attr=hattr)
 
         self.window.content.noutrefresh()
 
