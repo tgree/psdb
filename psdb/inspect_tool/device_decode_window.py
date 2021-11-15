@@ -11,6 +11,17 @@ class DeviceDecodeWindow:
             left_anchor=left_elem.frame.right_anchor(),
             top_anchor=it.workspace.canvas.frame.top_anchor())
 
+    def draw_32bit_border(self, lcorner, tick, rcorner, y):
+        chars  = [lcorner,
+                  curses.ACS_HLINE, tick,
+                  curses.ACS_HLINE, tick,
+                  curses.ACS_HLINE, tick,
+                  curses.ACS_HLINE,
+                  rcorner,
+                  ord(' '),
+                  ]*8
+        self.window.content.addchs(chars, pos=(y, 0))
+
     def draw(self, dev, reg, reg_val):  # noqa: C901
         if reg_val is None:
             self.window.hide()
@@ -21,15 +32,8 @@ class DeviceDecodeWindow:
         self.window.content.addstr(
             'Address: 0x%08X' % (dev.dev_base + reg.offset), pos=(0, 0))
 
-        chars  = [curses.ACS_ULCORNER,
-                  curses.ACS_HLINE, curses.ACS_TTEE,
-                  curses.ACS_HLINE, curses.ACS_TTEE,
-                  curses.ACS_HLINE, curses.ACS_TTEE,
-                  curses.ACS_HLINE,
-                  curses.ACS_URCORNER,
-                  ord(' '),
-                  ]*8
-        self.window.content.addchs(chars, pos=(1, 0))
+        self.draw_32bit_border(curses.ACS_ULCORNER, curses.ACS_TTEE,
+                               curses.ACS_URCORNER, 1)
 
         self.window.content.move(2, 0)
         bit        = reg.size*8 - 1
@@ -79,15 +83,8 @@ class DeviceDecodeWindow:
                     bit -= 1
         self.window.content.addch(curses.ACS_VLINE)
 
-        chars  = [curses.ACS_LLCORNER,
-                  curses.ACS_HLINE, curses.ACS_BTEE,
-                  curses.ACS_HLINE, curses.ACS_BTEE,
-                  curses.ACS_HLINE, curses.ACS_BTEE,
-                  curses.ACS_HLINE,
-                  curses.ACS_LRCORNER,
-                  ord(' '),
-                  ]*8
-        self.window.content.addchs(chars, pos=(3, 0))
+        self.draw_32bit_border(curses.ACS_LLCORNER, curses.ACS_BTEE,
+                               curses.ACS_LRCORNER, 3)
 
         for i in range(reg.size*2):
             self.window.content.addstr('%X' % ((reg_val >> (28-4*i)) & 0xF),
