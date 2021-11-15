@@ -3,13 +3,32 @@ import curses
 
 
 class DeviceDecodeWindow:
-    def __init__(self, it, left_elem):
+    def __init__(self, it, reg_win):
         self.inspect_tool = it
+        self.reg_win      = reg_win
 
         self.window = it.workspace.make_anchored_window(
             'Decode', w=81, h=23,
-            left_anchor=left_elem.frame.right_anchor(),
+            left_anchor=reg_win.window.frame.right_anchor(),
             top_anchor=it.workspace.canvas.frame.top_anchor())
+
+    def decode(self):
+        reg, reg_val = self.reg_win.get_decode_info()
+        if reg_val is None:
+            return reg, None, [], []
+
+        shift        = 0
+        fields       = []
+        named_fields = []
+        for name, width in reg.fields:
+            mask = ((1 << width) - 1)
+            v    = ((reg_val >> shift) & mask)
+            fields.append((name, width, shift, v))
+            if name:
+                named_fields.append((name, width, shift, v))
+            shift += width
+
+        return reg, reg_val, fields, named_fields
 
     def draw_32bit_border(self, lcorner, tick, rcorner, y):
         chars  = [lcorner,
@@ -22,10 +41,12 @@ class DeviceDecodeWindow:
                   ]*8
         self.window.content.addchs(chars, pos=(y, 0))
 
-    def draw(self, dev, reg, reg_val):  # noqa: C901
+    def draw(self):
+        reg, reg_val, fields, named_fields = self.decode()
         if reg_val is None:
             self.window.hide()
             return
+        dev = self.reg_win.dev
 
         self.window.show()
         self.window.content.erase()
@@ -37,50 +58,31 @@ class DeviceDecodeWindow:
 
         self.window.content.move(2, 0)
         bit        = reg.size*8 - 1
-        field_vals = []
-        for f in reversed(reg.fields):
+        for name, width, _, v in reversed(fields):
             self.window.content.addch(curses.ACS_VLINE)
-            if f[0]:
-                fv = 0
-                for i in reversed(range(f[1])):
-                    fv <<= 1
-                    if reg_val & (1 << bit):
-                        self.window.content.addstr('1')
-                        fv |= 1
-                    else:
-                        self.window.content.addstr('0')
-
-                    if bit == 0:
-                        pass
-                    elif ((bit + 1) % 4) == 1:
-                        if i:
-                            self.window.content.addch(ord(' '))
-                        else:
-                            self.window.content.addch(curses.ACS_VLINE)
-                        self.window.content.addch(ord(' '))
-                        if i:
-                            self.window.content.addch(ord(' '))
-                    elif i:
-                        self.window.content.addstr(' ')
-                    bit -= 1
-                field_vals.append((f[0], fv))
-            else:
-                for i in reversed(range(f[1])):
+            for i in reversed(range(width)):
+                if name:
+                    self.window.content.addstr('01'[bool(v & (1 << i))])
+                    fill = ord(' ')
+                else:
                     self.window.content.addch(curses.ACS_BULLET)
-                    if bit == 0:
-                        pass
-                    elif ((bit + 1) % 4) == 1:
-                        if i:
-                            self.window.content.addch(curses.ACS_BULLET)
-                            self.window.content.addch(curses.ACS_BULLET)
-                        else:
-                            self.window.content.addch(curses.ACS_VLINE)
-                            self.window.content.addch(ord(' '))
-                        if i:
-                            self.window.content.addch(curses.ACS_BULLET)
-                    elif i:
-                        self.window.content.addch(curses.ACS_BULLET)
-                    bit -= 1
+                    fill = curses.ACS_BULLET
+
+                if bit == 0:
+                    pass
+                elif ((bit + 1) % 4) == 1:
+                    if i:
+                        self.window.content.addch(fill)
+                        self.window.content.addch(fill)
+                    else:
+                        self.window.content.addch(curses.ACS_VLINE)
+                        self.window.content.addch(ord(' '))
+                    if i:
+                        self.window.content.addch(fill)
+                elif i:
+                    self.window.content.addch(fill)
+
+                bit -= 1
         self.window.content.addch(curses.ACS_VLINE)
 
         self.draw_32bit_border(curses.ACS_LLCORNER, curses.ACS_BTEE,
@@ -90,18 +92,13 @@ class DeviceDecodeWindow:
             self.window.content.addstr('%X' % ((reg_val >> (28-4*i)) & 0xF),
                                        pos=(4, 4+i*10))
 
-        if len(field_vals) > 0:
-            w = max(len(fv[0]) for fv in field_vals[:16])
-            for i, fv in enumerate(field_vals[:16]):
-                self.window.content.addstr('%*s: ' % (w, fv[0]), pos=(5+i, 1),
+        if named_fields:
+            w   = max(len(name) for name, _, _, _ in named_fields)
+            for i, (name, _, _, v) in enumerate(reversed(named_fields)):
+                x = 1 if i < 16 else 41
+                y = i % 16
+                self.window.content.addstr('%*s: ' % (w, name), pos=(5+y, x),
                                            attr=curses.A_BOLD)
-                self.window.content.addstr('0x%X' % fv[1])
-
-        if len(field_vals) > 16:
-            w = max(len(fv[0]) for fv in field_vals[16:])
-            for i, fv in enumerate(field_vals[16:]):
-                self.window.content.addstr('%*s: ' % (w, fv[0]), pos=(5+i, 41),
-                                           attr=curses.A_BOLD)
-                self.window.content.addstr('0x%X' % fv[1])
+                self.window.content.addstr('0x%X' % v)
 
         self.window.content.noutrefresh()

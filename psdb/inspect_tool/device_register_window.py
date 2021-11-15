@@ -21,7 +21,7 @@ class DeviceRegisterWindow:
             top_anchor=it.workspace.canvas.frame.top_anchor(),
             bottom_anchor=it.workspace.canvas.frame.bottom_anchor(dy=-1))
 
-        self.decode_win = DeviceDecodeWindow(it, self.window)
+        self.decode_win = DeviceDecodeWindow(it, self)
 
     def is_visible(self):
         return self.window.visible
@@ -80,8 +80,7 @@ class DeviceRegisterWindow:
             self.window.content.addstr('%s' % rv, attr=hattr)
         self.window.content.noutrefresh()
 
-        self.decode_win.draw(self.dev, self.dev.regs[self.selection],
-                             self.reg_vals[self.selection])
+        self.decode_win.draw()
 
     def can_focus(self):
         return True
