@@ -67,7 +67,10 @@ class InspectTool:
         self.dev_win = DeviceSelectorWindow(self)
 
         # Focus handling.
-        self.focus_list = [self.dev_win, self.reg_win, self.mem_win]
+        self.focus_list = [self.dev_win,
+                           self.reg_win,
+                           self.mem_win,
+                           ]
 
     def status(self, s):
         y = self.workspace.canvas.height - 1
