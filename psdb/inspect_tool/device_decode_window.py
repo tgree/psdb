@@ -154,6 +154,13 @@ class DeviceDecodeWindow:
                                  x + self.max_field_len + 2 + self.pos)
         self.window.content.noutrefresh()
 
+    def edit_nibble(self, v):
+        f        = self.named_fields[self.selected_field]
+        shift    = (f.nnibbles - self.pos - 1) * 4
+        width    = min(f.width - shift, 4)
+        self.pos = min(self.pos + 1, f.nnibbles - 1)
+        self.reg_win.edit_field(width, f.shift + shift, v)
+
     def handle_ch(self, c):
         if c == curses.KEY_UP:
             if self.selected_field > 0:
@@ -173,3 +180,11 @@ class DeviceDecodeWindow:
             self.pos = min(
                 self.pos + 1,
                 self.named_fields[self.selected_field].nnibbles - 1)
+        elif ord('0') <= c <= ord('9'):
+            self.edit_nibble(c - ord('0') + 0x0)
+        elif ord('a') <= c <= ord('f'):
+            self.edit_nibble(c - ord('a') + 0xA)
+        elif ord('A') <= c <= ord('F'):
+            self.edit_nibble(c - ord('A') + 0xA)
+        elif c == ord('\n'):
+            self.reg_win.handle_ch(c)
