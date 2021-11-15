@@ -17,10 +17,13 @@ class CPURegisterWindow:
         self.window.content.erase()
         regs = self.cpu.read_core_registers()
         y = 0
+        rows = self.window.content.height
         for k, v in regs.items():
             self.window.content.addstr(
                 '%*s: ' % (self.window.content.width - 11, k),
                 pos=(y, 0), attr=curses.A_BOLD)
             self.window.content.addstr('%08X' % v)
             y += 1
+            if y == rows:
+                break
         self.window.content.noutrefresh()
