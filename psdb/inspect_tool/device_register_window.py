@@ -96,6 +96,11 @@ class DeviceRegisterWindow:
         self.window.content.noutrefresh()
 
     def edit_field(self, width, shift, v):
+        mask = ((1 << width) - 1)
+        if (v & ~mask):
+            self.inspect_tool.status('Value too large for field')
+            return
+
         if self.edit_val is None:
             r = self.get_selected_reg()
             if not r.flags & Reg.WRITEABLE:
@@ -105,9 +110,6 @@ class DeviceRegisterWindow:
                 self.edit_val = r.read(self.dev)
             else:
                 self.edit_val = 0
-
-        mask = ((1 << width) - 1)
-        assert (v & ~mask) == 0
 
         mask         <<= shift
         self.edit_val &= ~mask
