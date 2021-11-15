@@ -13,6 +13,18 @@ from .memory_window import MemoryWindow
 from .device_selector_window import DeviceSelectorWindow
 
 
+DEV_TYPE_REGISTER = 0
+DEV_TYPE_MEMORY   = 1
+
+
+def get_dev_type(dev):
+    if dev.regs:
+        return DEV_TYPE_REGISTER
+    elif hasattr(dev, 'size'):
+        return DEV_TYPE_MEMORY
+    raise Exception('Unknown device type!')
+
+
 class InspectTool:
     def __init__(self, target, workspace):
         self.target    = target
@@ -52,13 +64,34 @@ class InspectTool:
         # Focus handling.
         self.focus_list = [self.dev_win, self.reg_win, self.mem_win]
 
+    def handle_device_selected(self, d):
+        dt = get_dev_type(d)
+        if dt == DEV_TYPE_REGISTER:
+            self.mem_win.hide()
+            self.reg_win.set_dev(d)
+        elif dt == DEV_TYPE_MEMORY:
+            self.reg_win.hide()
+            self.mem_win.set_mem(d)
+
     def event_loop(self):
+        # Draw the first device.
+        self.handle_device_selected(self.dev_win.get_selected_dev())
+
         # Handle user input.
         tgcurses.ui.curs_set(0)
         self.workspace.canvas.timeout(100)
         self.workspace.canvas.keypad(1)
         while True:
+            # Draw the current device contents.
+            if self.mem_win.is_visible():
+                self.mem_win.draw()
+            elif self.reg_win.is_visible():
+                self.reg_win.draw()
+
+            # Update the screen.
             tgcurses.ui.doupdate()
+
+            # Get the next command.
             c = self.workspace.canvas.getch()
             if c == ord('q'):
                 break

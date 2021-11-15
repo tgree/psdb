@@ -34,14 +34,13 @@ class DeviceRegisterWindow:
     def set_dev(self, dev):
         self.dev       = dev
         self.selection = 0
-        self.draw()
+        self.window.show()
 
     def hide(self):
         self.window.hide()
         self.decode_win.window.hide()
 
     def draw(self):
-        self.window.show()
         self.window.content.erase()
 
         regs = self.dev.regs[:self.window.content.height]
@@ -78,4 +77,3 @@ class DeviceRegisterWindow:
         elif c == curses.KEY_DOWN:
             if self.selection < len(self.reg_vals) - 1:
                 self.selection += 1
-        self.draw()

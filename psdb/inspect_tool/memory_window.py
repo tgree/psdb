@@ -25,7 +25,7 @@ class MemoryWindow:
 
         self.dev       = dev
         self.dump_addr = self.dump_addrs.get(dev, dev.dev_base)
-        self.draw()
+        self.window.show()
 
     def set_addr(self, addr):
         addr = min(self.dev.dev_base + self.dev.size - 32, addr)
@@ -37,7 +37,6 @@ class MemoryWindow:
         self.window.hide()
 
     def draw(self):
-        self.window.show()
         self.window.content.erase()
 
         rows = self.window.content.height
@@ -81,4 +80,3 @@ class MemoryWindow:
         elif c == curses.KEY_PPAGE:
             nrows = self.window.content.height
             self.set_addr(self.dump_addr - nrows*32 + 32)
-        self.draw()
