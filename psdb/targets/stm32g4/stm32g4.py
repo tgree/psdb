@@ -180,7 +180,6 @@ class STM32G4(Target):
         self.fb_mode      = self._synchronize_fb_mode()
 
     def resume(self):
-        print('Setting fb_mode=%s' % self.orig_fb_mode)
         self._set_fb_mode(self.orig_fb_mode)
         super().resume()
 

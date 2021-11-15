@@ -1,4 +1,4 @@
-PSDB_VERS := 0.9.6
+PSDB_VERS := 0.9.7
 PSDB_DEPS := \
 		setup.cfg                           \
 		setup.py							\
@@ -17,6 +17,7 @@ PSDB_DEPS := \
 		psdb/devices/stm32wb55/ipc/*.py 	\
 		psdb/elf/*.py						\
 		psdb/hexfile/*.py					\
+		psdb/inspect_tool/*.py              \
 		psdb/probes/*.py					\
 		psdb/probes/stlink/*.py				\
 		psdb/probes/xds110/*.py				\
@@ -27,6 +28,7 @@ PSDB_DEPS := \
 		psdb/targets/stm32h7/*.py			\
 		psdb/targets/stm32wb55/*.py			\
 		psdb/util/*.py
+PYTHON := python3
 
 .PHONY: all
 all: psdb
@@ -39,20 +41,20 @@ clean:
 
 .PHONY: test
 test:
-	python3 -m flake8 psdb
+	$(PYTHON) -m flake8 psdb
 
 .PHONY: psdb
 psdb: dist/psdb-$(PSDB_VERS)-py3-none-any.whl
 
 .PHONY: install
 install: psdb
-	sudo pip3 uninstall -y psdb
-	sudo pip3 install dist/psdb-$(PSDB_VERS)-py3-none-any.whl
+	sudo $(PYTHON) -m pip uninstall -y psdb
+	sudo $(PYTHON) -m pip install dist/psdb-$(PSDB_VERS)-py3-none-any.whl
 
 .PHONY: uninstall
 uninstall:
-	sudo pip3 uninstall psdb
+	sudo $(PYTHON) -m pip uninstall psdb
 
 dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS) Makefile
-	python3 setup.py --quiet sdist bdist_wheel
-	python3 -m twine check $@
+	$(PYTHON) setup.py --quiet sdist bdist_wheel
+	$(PYTHON) -m twine check $@
