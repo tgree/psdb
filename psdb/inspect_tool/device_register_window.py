@@ -1,5 +1,6 @@
 # Copyright (c) 2018-2021 Phase Advanced Sensor Systems, Inc.
 import curses
+import _curses
 import tgcurses
 from psdb.devices import Reg, RegDiv
 
@@ -9,6 +10,7 @@ from .device_decode_window import DeviceDecodeWindow
 class DeviceRegisterWindow:
     def __init__(self, it, left_elem):
         self.inspect_tool = it
+        self.top          = 0
         self.selection    = 0
         self.pos          = 0
         self.dev          = None
@@ -41,7 +43,9 @@ class DeviceRegisterWindow:
 
     def set_dev(self, dev):
         self.dev       = dev
+        self.top       = 0
         self.selection = 0
+        self.pos       = 0
         self.decode_win.select_register(self.get_selected_reg())
         self.window.show()
 
@@ -49,33 +53,58 @@ class DeviceRegisterWindow:
         self.window.hide()
         self.decode_win.window.hide()
 
+    def update_reg_vals(self):
+        self.reg_vals = []
+        for i, r in enumerate(self.dev.regs):
+            if i == self.selection and self.edit_val is not None:
+                self.reg_vals.append(self.edit_val)
+            elif r.flags & Reg.READABLE:
+                self.reg_vals.append(r.read(self.dev))
+            else:
+                self.reg_vals.append(None)
+
+    def draw_item(self, i):
+        rows = self.window.content.height
+        if i < self.top or i >= self.top + rows:
+            return
+
+        r = self.dev.regs[i]
+        if isinstance(r, RegDiv):
+            rv = '--------'
+        elif self.reg_vals[i] is not None:
+            rv = '%08X' % self.reg_vals[i]
+        else:
+            rv = '-WrOnly-'
+
+        row = i - self.top
+        if self.top > 0 and row == 0:
+            tag = '\u2191'.encode('utf-8')
+        elif self.top + rows < len(self.dev.regs) and row == rows - 1:
+            tag = '\u2193'.encode('utf-8')
+        else:
+            tag = ' '
+
+        attr  = curses.A_REVERSE if i == self.selection else 0
+        hattr = (curses.A_UNDERLINE
+                 if i == self.selection and self.edit_val is not None else 0)
+        self.window.content.addstr(
+            '%*s:' % (self.window.content.width - 11, r.name), pos=(row, 0),
+            attr=curses.A_BOLD | attr)
+        self.window.content.addstr(' ')
+        self.window.content.addstr('%s' % rv, attr=hattr)
+        try:
+            self.window.content.addstr(tag)
+        except _curses.error:
+            pass
+
+        self.window.content.noutrefresh()
+
     def draw(self):
         self.window.content.erase()
 
-        regs = self.dev.regs[:self.window.content.height]
-        self.reg_vals = [None]*len(regs)
-        for i, r in enumerate(regs):
-            attr  = curses.A_REVERSE if i == self.selection else 0
-            hattr = 0
-            if isinstance(r, RegDiv):
-                rv = '--------'
-            elif i == self.selection and self.edit_val is not None:
-                v                = self.edit_val
-                self.reg_vals[i] = v
-                rv               = '%08X' % v
-                hattr            = curses.A_UNDERLINE
-            elif r.flags & Reg.READABLE:
-                v                = r.read(self.dev)
-                self.reg_vals[i] = v
-                rv               = '%08X' % v
-            else:
-                rv = '-WrOnly-'
-            self.window.content.addstr(
-                '%*s:' % (self.window.content.width - 11, r.name), pos=(i, 0),
-                attr=curses.A_BOLD | attr)
-            self.window.content.addstr(' ')
-            self.window.content.addstr('%s' % rv, attr=hattr)
-        self.window.content.noutrefresh()
+        self.update_reg_vals()
+        for i in range(len(self.reg_vals)):
+            self.draw_item(i)
 
         self.decode_win.draw()
 
@@ -91,7 +120,7 @@ class DeviceRegisterWindow:
         tgcurses.ui.curs_set(1)
 
     def focus_draw_cursor(self):
-        self.window.content.move(self.selection,
+        self.window.content.move(self.selection - self.top,
                                  self.window.content.width - 9 + self.pos)
         self.window.content.noutrefresh()
 
@@ -126,17 +155,22 @@ class DeviceRegisterWindow:
             self.edit_val = None
             self.inspect_tool.status('Write aborted')
 
+    def select(self, index):
+        rows           = self.window.content.height
+        self.top       = min(self.top, index)
+        self.top       = max(self.top, index - rows + 1)
+        self.selection = index
+        self.decode_win.select_register(self.get_selected_reg())
+
     def handle_ch(self, c):
         if c == curses.KEY_UP:
             self.abort_write()
             if self.selection > 0:
-                self.selection -= 1
-                self.decode_win.select_register(self.get_selected_reg())
+                self.select(self.selection - 1)
         elif c == curses.KEY_DOWN:
             self.abort_write()
             if self.selection < len(self.reg_vals) - 1:
-                self.selection += 1
-                self.decode_win.select_register(self.get_selected_reg())
+                self.select(self.selection + 1)
         elif c == curses.KEY_LEFT:
             self.pos = max(self.pos - 1, 0)
         elif c == curses.KEY_RIGHT:
