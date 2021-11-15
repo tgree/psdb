@@ -107,6 +107,9 @@ class InspectTool:
             elif self.reg_win.is_visible():
                 self.reg_win.draw()
 
+            # Let the focus window draw the cursor.
+            self.focus_list[0].focus_draw_cursor()
+
             # Update the screen.
             tgcurses.ui.doupdate()
 

@@ -69,6 +69,9 @@ class MemoryWindow:
     def focus_gained(self):
         pass
 
+    def focus_draw_cursor(self):
+        pass
+
     def handle_ch(self, c):
         if c == curses.KEY_DOWN:
             self.set_addr(self.dump_addr + 32)

@@ -27,6 +27,9 @@ class DeviceSelectorWindow:
     def focus_gained(self):
         pass
 
+    def focus_draw_cursor(self):
+        pass
+
     def handle_ch(self, c):
         updated = False
         if c == curses.KEY_DOWN:
