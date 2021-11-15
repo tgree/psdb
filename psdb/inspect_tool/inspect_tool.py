@@ -121,11 +121,14 @@ class InspectTool:
             c = self.workspace.canvas.getch()
             if c == ord('q'):
                 break
-            elif c == ord('\t'):
+            elif c in (ord('\t'), curses.KEY_BTAB):
                 self.focus_list[0].focus_lost()
 
                 while True:
-                    self.focus_list.append(self.focus_list.pop(0))
+                    if c == ord('\t'):
+                        self.focus_list.append(self.focus_list.pop(0))
+                    else:
+                        self.focus_list.insert(0, self.focus_list.pop())
                     if (self.focus_list[0].is_visible() and
                             self.focus_list[0].can_focus()):
                         break
