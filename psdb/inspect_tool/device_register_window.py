@@ -87,7 +87,7 @@ class DeviceRegisterWindow:
                                  self.window.content.width - 9 + self.pos)
         self.window.content.noutrefresh()
 
-    def edit_nibble(self, v):
+    def edit_field(self, width, shift, v):
         if self.edit_val is None:
             r = self.get_selected_reg()
             if not r.flags & Reg.WRITEABLE:
@@ -98,11 +98,18 @@ class DeviceRegisterWindow:
             else:
                 self.edit_val = 0
 
-        mask           = (0xF0000000 >> (self.pos*4))
+        mask = ((1 << width) - 1)
+        assert (v & ~mask) == 0
+
+        mask         <<= shift
         self.edit_val &= ~mask
-        self.edit_val |= ((v << (28 - self.pos*4)) & mask)
-        self.pos       = min(self.pos + 1, 7)
+        self.edit_val |= ((v << shift) & mask)
         self.draw()
+
+    def edit_nibble(self, v):
+        shift    = 28 - self.pos*4
+        self.pos = min(self.pos + 1, 7)
+        self.edit_field(4, shift, v)
 
     def abort_write(self):
         if self.edit_val is not None:
