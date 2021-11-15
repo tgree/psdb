@@ -26,14 +26,10 @@ class DeviceRegisterWindow:
     def is_visible(self):
         return self.window.visible
 
-    def get_decode_info(self):
-        r = self.get_selected_reg()
+    def get_decode_val(self):
         if self.edit_val is not None:
-            v = self.edit_val
-        else:
-            v = self.get_selected_reg_val()
-
-        return r, v
+            return self.edit_val
+        return self.get_selected_reg_val()
 
     def get_selected_reg(self):
         return self.dev.regs[self.selection]
@@ -46,6 +42,7 @@ class DeviceRegisterWindow:
     def set_dev(self, dev):
         self.dev       = dev
         self.selection = 0
+        self.decode_win.select_register(self.get_selected_reg())
         self.window.show()
 
     def hide(self):
@@ -132,10 +129,12 @@ class DeviceRegisterWindow:
             self.abort_write()
             if self.selection > 0:
                 self.selection -= 1
+                self.decode_win.select_register(self.get_selected_reg())
         elif c == curses.KEY_DOWN:
             self.abort_write()
             if self.selection < len(self.reg_vals) - 1:
                 self.selection += 1
+                self.decode_win.select_register(self.get_selected_reg())
         elif c == curses.KEY_LEFT:
             self.pos = max(self.pos - 1, 0)
         elif c == curses.KEY_RIGHT:
