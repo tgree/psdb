@@ -4,16 +4,17 @@ import curses
 
 
 class MemoryWindow:
-    def __init__(self, workspace, left_anchor):
-        self.dump_addrs = {}
-        self.dump_addr  = None
-        self.dev        = None
-        self.workspace  = workspace
-        self.window     = workspace.make_anchored_window(
+    def __init__(self, it, left_elem):
+        self.inspect_tool = it
+        self.dump_addrs   = {}
+        self.dump_addr    = None
+        self.dev          = None
+
+        self.window = it.workspace.make_anchored_window(
             'Memory', w=145,
-            left_anchor=left_anchor,
-            top_anchor=workspace.canvas.frame.top_anchor(),
-            bottom_anchor=workspace.canvas.frame.bottom_anchor(dy=-1))
+            left_anchor=left_elem.frame.right_anchor(),
+            top_anchor=it.workspace.canvas.frame.top_anchor(),
+            bottom_anchor=it.workspace.canvas.frame.bottom_anchor(dy=-1))
 
     def is_visible(self):
         return self.window.visible

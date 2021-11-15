@@ -6,20 +6,19 @@ from .device_decode_window import DeviceDecodeWindow
 
 
 class DeviceRegisterWindow:
-    def __init__(self, devs, workspace, left_anchor):
-        max_reg_name = max(len(r.name) for d in devs for r in d.regs)
+    def __init__(self, it, left_elem):
+        self.inspect_tool = it
+        self.selection    = 0
+        self.dev          = None
+        self.reg_vals     = []
 
-        self.selection = 0
-        self.dev       = None
-        self.reg_vals  = []
-        self.workspace = workspace
-        self.window    = workspace.make_anchored_window(
-            'Registers', w=max_reg_name + 14,
-            left_anchor=left_anchor,
-            top_anchor=workspace.canvas.frame.top_anchor(),
-            bottom_anchor=workspace.canvas.frame.bottom_anchor(dy=-1))
-        self.reg_win   = DeviceDecodeWindow(
-            workspace, self, self.window.frame.right_anchor())
+        self.window = it.workspace.make_anchored_window(
+            'Registers', w=it.max_reg_name + 14,
+            left_anchor=left_elem.frame.right_anchor(),
+            top_anchor=it.workspace.canvas.frame.top_anchor(),
+            bottom_anchor=it.workspace.canvas.frame.bottom_anchor(dy=-1))
+
+        self.decode_win = DeviceDecodeWindow(it, self.window)
 
     def is_visible(self):
         return self.window.visible
@@ -39,7 +38,7 @@ class DeviceRegisterWindow:
 
     def hide(self):
         self.window.hide()
-        self.reg_win.window.hide()
+        self.decode_win.window.hide()
 
     def draw(self):
         self.window.show()
@@ -63,8 +62,8 @@ class DeviceRegisterWindow:
             self.window.content.addstr('%s' % rv, attr=attr)
         self.window.content.noutrefresh()
 
-        self.reg_win.draw(self.dev, self.dev.regs[self.selection],
-                          self.reg_vals[self.selection])
+        self.decode_win.draw(self.dev, self.dev.regs[self.selection],
+                             self.reg_vals[self.selection])
 
     def focus_lost(self):
         pass

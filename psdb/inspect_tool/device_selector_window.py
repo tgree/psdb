@@ -7,38 +7,35 @@ DEV_TYPE_REGISTER = 0
 DEV_TYPE_MEMORY   = 1
 
 
+def get_dev_type(dev):
+    if dev.regs:
+        return DEV_TYPE_REGISTER
+    elif hasattr(dev, 'size'):
+        return DEV_TYPE_MEMORY
+    raise Exception('Unknown device type!')
+
+
 class DeviceSelectorWindow:
-    def __init__(self, devs, reg_win, mem_win, workspace):
-        dev_names    = ['%08X %s' % (d.dev_base, d.path) for d in devs]
-        max_dev_name = max(len(dn) for dn in dev_names)
+    def __init__(self, it):
+        self.inspect_tool = it
 
-        self.workspace = workspace
-        self.devs      = devs
-        self.reg_win   = reg_win
-        self.mem_win   = mem_win
-        self.window    = workspace.make_anchored_window(
-            'Devices', w=max_dev_name + 11,
-            right_anchor=workspace.canvas.frame.right_anchor(),
-            top_anchor=workspace.canvas.frame.top_anchor(),
-            bottom_anchor=workspace.canvas.frame.bottom_anchor(dy=-1))
-        self.menu      = tgcurses.ui.Menu(self.window, dev_names)
+        self.window = it.workspace.make_anchored_window(
+            'Devices', w=it.max_dev_name + 11,
+            right_anchor=it.workspace.canvas.frame.right_anchor(),
+            top_anchor=it.workspace.canvas.frame.top_anchor(),
+            bottom_anchor=it.workspace.canvas.frame.bottom_anchor(dy=-1))
 
-        dt = self.get_dev_type()
+        self.menu = tgcurses.ui.Menu(self.window, self.inspect_tool.dev_names)
+
+        d  = self.get_selected_dev()
+        dt = get_dev_type(d)
         if dt == DEV_TYPE_REGISTER:
-            self.reg_win.set_dev(devs[0])
+            self.inspect_tool.reg_win.set_dev(d)
         elif dt == DEV_TYPE_MEMORY:
-            self.mem_win.set_mem(devs[0])
+            self.inspect_tool.mem_win.set_mem(d)
 
     def get_selected_dev(self):
-        return self.devs[self.menu.selection]
-
-    def get_dev_type(self):
-        dev = self.get_selected_dev()
-        if dev.regs:
-            return DEV_TYPE_REGISTER
-        elif hasattr(dev, 'size'):
-            return DEV_TYPE_MEMORY
-        raise Exception('Unknown device type!')
+        return self.inspect_tool.devs[self.menu.selection]
 
     def is_visible(self):
         return self.window.visible
@@ -56,16 +53,17 @@ class DeviceSelectorWindow:
         elif c == curses.KEY_UP:
             updated = self.menu.select_prev()
 
-        dt = self.get_dev_type()
+        d  = self.get_selected_dev()
+        dt = get_dev_type(d)
         if dt == DEV_TYPE_REGISTER:
             if updated:
-                self.mem_win.hide()
-                self.reg_win.set_dev(self.get_selected_dev())
+                self.inspect_tool.mem_win.hide()
+                self.inspect_tool.reg_win.set_dev(d)
             else:
-                self.reg_win.draw()
+                self.inspect_tool.reg_win.draw()
         elif dt == DEV_TYPE_MEMORY:
             if updated:
-                self.reg_win.hide()
-                self.mem_win.set_mem(self.get_selected_dev())
+                self.inspect_tool.reg_win.hide()
+                self.inspect_tool.mem_win.set_mem(d)
             else:
-                self.mem_win.draw()
+                self.inspect_tool.mem_win.draw()

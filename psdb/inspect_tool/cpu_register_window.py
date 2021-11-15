@@ -3,15 +3,15 @@ import curses
 
 
 class CPURegisterWindow:
-    def __init__(self, index, cpu, workspace, left_anchor):
-        self.index     = index
-        self.cpu       = cpu
-        self.workspace = workspace
-        self.window    = workspace.make_anchored_window(
+    def __init__(self, it, left_elem, index, cpu):
+        self.inspect_tool = it
+        self.index        = index
+        self.cpu          = cpu
+        self.window       = it.workspace.make_anchored_window(
             'CPU%u (%s)' % (index, cpu.model), w=18,
-            left_anchor=left_anchor,
-            top_anchor=workspace.canvas.frame.top_anchor(),
-            bottom_anchor=workspace.canvas.frame.bottom_anchor(dy=-1))
+            left_anchor=left_elem.frame.left_anchor(),
+            top_anchor=it.workspace.canvas.frame.top_anchor(),
+            bottom_anchor=it.workspace.canvas.frame.bottom_anchor(dy=-1))
 
     def draw(self):
         self.window.content.erase()

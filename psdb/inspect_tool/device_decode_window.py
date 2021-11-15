@@ -3,13 +3,13 @@ import curses
 
 
 class DeviceDecodeWindow:
-    def __init__(self, workspace, reg_win, left_anchor):
-        self.workspace = workspace
-        self.reg_win   = reg_win
-        self.window    = workspace.make_anchored_window(
+    def __init__(self, it, left_elem):
+        self.inspect_tool = it
+
+        self.window = it.workspace.make_anchored_window(
             'Decode', w=81, h=23,
-            left_anchor=left_anchor,
-            top_anchor=workspace.canvas.frame.top_anchor())
+            left_anchor=left_elem.frame.right_anchor(),
+            top_anchor=it.workspace.canvas.frame.top_anchor())
 
     def draw(self, dev, reg, reg_val):  # noqa: C901
         if reg_val is None:

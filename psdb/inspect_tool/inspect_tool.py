@@ -13,62 +13,78 @@ from .memory_window import MemoryWindow
 from .device_selector_window import DeviceSelectorWindow
 
 
+class InspectTool:
+    def __init__(self, target, workspace):
+        self.target    = target
+        self.workspace = workspace
+
+        # Build the device list, including global devices and per-CPU devices
+        # and then sort it by address.
+        devs = list(target.devs.values())
+        for c in target.cpus:
+            devs += list(c.devs.values())
+        self.devs      = sorted(devs, key=lambda d: d.dev_base)
+        self.dev_names = ['%08X %s' % (d.dev_base, d.path) for d in self.devs]
+
+        # Extract name info.
+        self.max_reg_name = max(len(r.name) for d in self.devs for r in d.regs)
+        self.max_dev_name = max(len(dn) for dn in self.dev_names)
+
+        # Add CPU windows.
+        self.cpu_wins = []
+        for i, c in enumerate(self.target.cpus):
+            if i == 0:
+                le = self.workspace.canvas
+            else:
+                le = self.cpu_wins[-1].window
+            self.cpu_wins.append(CPURegisterWindow(self, le, i, c))
+            self.cpu_wins[-1].draw()
+
+        # Add a device register window.
+        self.reg_win = DeviceRegisterWindow(self, self.cpu_wins[-1].window)
+
+        # Add a memory window.
+        self.mem_win = MemoryWindow(self, self.cpu_wins[-1].window)
+
+        # Add a device selector window.
+        self.dev_win = DeviceSelectorWindow(self)
+
+        # Focus handling.
+        self.focus_list = [self.dev_win, self.reg_win, self.mem_win]
+
+    def event_loop(self):
+        # Handle user input.
+        tgcurses.ui.curs_set(0)
+        self.workspace.canvas.timeout(100)
+        self.workspace.canvas.keypad(1)
+        while True:
+            tgcurses.ui.doupdate()
+            c = self.workspace.canvas.getch()
+            if c == ord('q'):
+                break
+            elif c == ord('\t'):
+                f = self.focus_list.pop(0)
+                f.focus_lost()
+                self.focus_list.append(f)
+
+                while not self.focus_list[0].is_visible():
+                    self.focus_list.append(self.focus_list.pop(0))
+
+                self.focus_list[0].focus_gained()
+            else:
+                self.focus_list[0].handle_ch(c)
+
+
 def main(screen, args):  # noqa: C901
     # Extract args.
     t = args.target
 
-    # Get the device list.
-    devs = list(t.devs.values())
-    for c in t.cpus:
-        devs += list(c.devs.values())
-
-    # Parse it.
-    devs = sorted(devs, key=lambda d: d.dev_base)
-
     # Create a workspace.
     ws = tgcurses.ui.Workspace(screen)
 
-    # Add CPU windows.
-    cpu_wins = []
-    for i, c in enumerate(t.cpus):
-        if i == 0:
-            la = ws.canvas.frame.left_anchor()
-        else:
-            la = cpu_wins[-1].frame.right_anchor()
-        cpu_wins.append(CPURegisterWindow(i, c, ws, la))
-        cpu_wins[-1].draw()
-
-    # Add a device register window.
-    reg_win = DeviceRegisterWindow(devs, ws,
-                                   cpu_wins[-1].window.frame.right_anchor())
-
-    # Add a memory window.
-    mem_win = MemoryWindow(ws, cpu_wins[-1].window.frame.right_anchor())
-
-    # Add a device selector window.
-    dev_win = DeviceSelectorWindow(devs, reg_win, mem_win, ws)
-
-    # Handle user input.
-    focus_list = [dev_win, reg_win, mem_win]
-    tgcurses.ui.curs_set(0)
-    ws.canvas.timeout(100)
-    ws.canvas.keypad(1)
-    while True:
-        tgcurses.ui.doupdate()
-        c = ws.canvas.getch()
-        if c == ord('q'):
-            break
-        elif c == ord('\t'):
-            f = focus_list.pop(0)
-            f.focus_lost()
-            focus_list.append(f)
-
-            while not focus_list[0].is_visible():
-                focus_list.append(focus_list.pop(0))
-
-            focus_list[0].focus_gained()
-        else:
-            focus_list[0].handle_ch(c)
+    # Create the inspect tool.
+    it = InspectTool(t, ws)
+    it.event_loop()
 
 
 def _main():
