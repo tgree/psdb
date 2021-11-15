@@ -1,13 +1,16 @@
 # Copyright (c) 2018-2021 Phase Advanced Sensor Systems, Inc.
 import curses
 
+import tgcurses
+
 
 class Field:
     def __init__(self, name, width, shift):
-        self.name  = name
-        self.width = width
-        self.shift = shift
-        self.mask  = ((1 << width) - 1)
+        self.name     = name
+        self.width    = width
+        self.nnibbles = (width + 3) // 4
+        self.shift    = shift
+        self.mask     = ((1 << width) - 1)
 
     def extract(self, reg_val):
         return ((reg_val >> self.shift) & self.mask)
@@ -15,22 +18,30 @@ class Field:
 
 class DeviceDecodeWindow:
     def __init__(self, it, reg_win):
-        self.inspect_tool  = it
-        self.reg_win       = reg_win
-        self.fields        = []
-        self.named_fields  = []
-        self.max_field_len = None
-        self.reg_addr      = None
+        self.inspect_tool   = it
+        self.reg_win        = reg_win
+        self.fields         = []
+        self.named_fields   = []
+        self.max_field_len  = None
+        self.reg_addr       = None
+        self.selected_field = None
+        self.pos            = None
 
         self.window = it.workspace.make_anchored_window(
-            'Decode', w=81, h=23,
+            'Decode', w=81, h=24,
             left_anchor=reg_win.window.frame.right_anchor(),
             top_anchor=it.workspace.canvas.frame.top_anchor())
 
+    def is_visible(self):
+        return self.window.visible
+
     def select_register(self, reg):
-        shift             = 0
-        self.fields       = []
-        self.named_fields = []
+        self.fields         = []
+        self.named_fields   = []
+        self.selected_field = 0
+        self.pos            = 0
+
+        shift = 0
         for name, width in reg.fields:
             self.fields.append(Field(name, width, shift))
             if name:
@@ -115,8 +126,46 @@ class DeviceDecodeWindow:
                 x = 1 if i < 16 else 41
                 y = i % 16
                 self.window.content.addstr(
-                    '%*s: ' % (self.max_field_len, f.name), pos=(5+y, x),
+                    '%*s: ' % (self.max_field_len, f.name), pos=(6+y, x),
                     attr=curses.A_BOLD)
-                self.window.content.addstr('0x%X' % f.extract(reg_val))
+                self.window.content.addstr(
+                    '%0*X' % (f.nnibbles, f.extract(reg_val)))
 
         self.window.content.noutrefresh()
+
+    def can_focus(self):
+        return bool(self.named_fields)
+
+    def focus_lost(self):
+        tgcurses.ui.curs_set(0)
+
+    def focus_gained(self):
+        self.focus_draw_cursor()
+        tgcurses.ui.doupdate()
+        tgcurses.ui.curs_set(1)
+
+    def focus_draw_cursor(self):
+        x = 1 if self.selected_field < 16 else 41
+        self.window.content.move(6 + (self.selected_field % 16),
+                                 x + self.max_field_len + 2 + self.pos)
+        self.window.content.noutrefresh()
+
+    def handle_ch(self, c):
+        if c == curses.KEY_UP:
+            if self.selected_field > 0:
+                self.selected_field -= 1
+                self.pos = min(
+                    self.pos,
+                    self.named_fields[self.selected_field].nnibbles - 1)
+        elif c == curses.KEY_DOWN:
+            if self.selected_field < len(self.named_fields) - 1:
+                self.selected_field += 1
+                self.pos = min(
+                    self.pos,
+                    self.named_fields[self.selected_field].nnibbles - 1)
+        elif c == curses.KEY_LEFT:
+            self.pos = max(self.pos - 1, 0)
+        elif c == curses.KEY_RIGHT:
+            self.pos = min(
+                self.pos + 1,
+                self.named_fields[self.selected_field].nnibbles - 1)

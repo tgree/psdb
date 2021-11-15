@@ -69,6 +69,7 @@ class InspectTool:
         # Focus handling.
         self.focus_list = [self.dev_win,
                            self.reg_win,
+                           self.reg_win.decode_win,
                            self.mem_win,
                            ]
 
