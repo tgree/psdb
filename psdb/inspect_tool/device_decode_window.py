@@ -26,6 +26,7 @@ class DeviceDecodeWindow:
         self.reg_addr       = None
         self.selected_field = None
         self.pos            = None
+        self.hilite_attr    = curses.A_REVERSE
 
         self.window = it.workspace.make_anchored_window(
             'Decode', w=81, h=24,
@@ -129,9 +130,13 @@ class DeviceDecodeWindow:
             for i, f in enumerate(self.named_fields):
                 x = 1 if i < 16 else 41
                 y = i % 16
+                attr = curses.A_BOLD
+                if i == self.selected_field:
+                    attr |= self.hilite_attr
                 self.window.content.addstr(
-                    '%*s: ' % (self.max_field_len, f.name), pos=(6+y, x),
-                    attr=curses.A_BOLD)
+                    '%*s:' % (self.max_field_len, f.name), pos=(6+y, x),
+                    attr=attr)
+                self.window.content.addstr(' ')
                 self.window.content.addstr(
                     '%0*X' % (f.nnibbles, f.extract(reg_val)), attr=hattr)
 
@@ -141,9 +146,13 @@ class DeviceDecodeWindow:
         return bool(self.named_fields)
 
     def focus_lost(self):
+        self.hilite_attr = curses.A_REVERSE
+        self.draw()
         tgcurses.ui.curs_set(0)
 
     def focus_gained(self):
+        self.hilite_attr = curses.color_pair(1)
+        self.draw()
         self.focus_draw_cursor()
         tgcurses.ui.doupdate()
         tgcurses.ui.curs_set(1)

@@ -42,10 +42,11 @@ class DeviceRegisterWindow:
         return self.reg_vals[self.selection]
 
     def set_dev(self, dev):
-        self.dev       = dev
-        self.top       = 0
-        self.selection = 0
-        self.pos       = 0
+        self.dev         = dev
+        self.top         = 0
+        self.selection   = 0
+        self.pos         = 0
+        self.hilite_attr = curses.A_REVERSE
         self.decode_win.select_register(self.get_selected_reg())
         self.window.show()
 
@@ -84,7 +85,7 @@ class DeviceRegisterWindow:
         else:
             tag = ' '
 
-        attr  = curses.A_REVERSE if i == self.selection else 0
+        attr  = self.hilite_attr if i == self.selection else 0
         hattr = (curses.A_UNDERLINE
                  if i == self.selection and self.edit_val is not None else 0)
         self.window.content.addstr(
@@ -112,9 +113,13 @@ class DeviceRegisterWindow:
         return True
 
     def focus_lost(self):
+        self.hilite_attr = curses.A_REVERSE
+        self.draw_item(self.selection)
         tgcurses.ui.curs_set(0)
 
     def focus_gained(self):
+        self.hilite_attr = curses.color_pair(1)
+        self.draw_item(self.selection)
         self.focus_draw_cursor()
         tgcurses.ui.doupdate()
         tgcurses.ui.curs_set(1)
