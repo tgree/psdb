@@ -99,6 +99,7 @@ class InspectTool:
         tgcurses.ui.curs_set(0)
         self.workspace.canvas.timeout(100)
         self.workspace.canvas.keypad(1)
+        self.focus_list[0].focus_gained()
         while True:
             # Clear status text if it has expired.
             if self.status_time is not None:
@@ -141,6 +142,10 @@ class InspectTool:
 def main(screen, args):  # noqa: C901
     # Extract args.
     t = args.target
+
+    # Initialize colors.
+    curses.use_default_colors()
+    curses.init_pair(1, -1, curses.COLOR_GREEN)
 
     # Create a workspace.
     ws = tgcurses.ui.Workspace(screen)

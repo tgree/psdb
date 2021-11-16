@@ -25,10 +25,12 @@ class DeviceSelectorWindow:
         return True
 
     def focus_lost(self):
-        pass
+        self.menu.hilite_attr = curses.A_REVERSE
+        self.menu.select(self.menu.selection)
 
     def focus_gained(self):
-        pass
+        self.menu.hilite_attr = curses.color_pair(1)
+        self.menu.select(self.menu.selection)
 
     def focus_draw_cursor(self):
         pass
