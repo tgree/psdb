@@ -84,6 +84,14 @@ def main(rv):
         target.flash.erase_all()
         target.reset_halt()
 
+    # Erase individual regions if requested.
+    if rv.erase_region:
+        for r in rv.erase_region:
+            base, length = r.split(',')
+            base         = int(base, 0)
+            length       = int(length, 0)
+            target.flash.erase(base, length, verbose=True)
+
     # Write a new ELF image to flash if requested.
     if rv.flash:
         dv = []
@@ -148,6 +156,7 @@ def _main():
     parser.add_argument('--write-raw-binary')
     parser.add_argument('--flash-inactive', action='store_true')
     parser.add_argument('--erase', action='store_true')
+    parser.add_argument('--erase-region', action='append')
     parser.add_argument('--mem-dump', '-m')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
