@@ -219,7 +219,11 @@ class STLink(usb_probe.Probe):
             self._cmd_allow_retry(cdb.OpenAP(apsel))
 
     def read_dp_reg(self, addr):
-        '''Read a 32-bit register from the DP address space. '''
+        '''
+        Read a 32-bit register from the DP address space.  The low-order 4 bits
+        are the register offset and the next 4 bits are the DPBANKSEL value.
+        For instance, to read the TARGETID register use an addres of 0x24.
+        '''
         return self.read_ap_reg(0xFFFF, addr)
 
     def write_dp_reg(self, addr, value):
