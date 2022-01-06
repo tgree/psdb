@@ -9,6 +9,7 @@ from .pwr import PWR
 from .rcc import RCC
 from .rtc import RTC
 from .syscfg import SYSCFG
+from .tamp import TAMP
 
 
 __all__ = ['COMP',
@@ -21,4 +22,5 @@ __all__ = ['COMP',
            'RCC',
            'RTC',
            'SYSCFG',
+           'TAMP',
            ]
