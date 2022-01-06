@@ -35,6 +35,39 @@ class StaticMatcher(Matcher):
         return super(StaticMatcher, self).score(c)*2
 
 
+class M33Matcher(Matcher):
+    '''
+    Matcher used for some Cortex-M33 components.  The M33 introduces DEVARCH
+    and DEVTYPE fields and uses them to overload CIDR/PIDR values which are
+    copied across different devices.  Extremely annoying for topology probing.
+    '''
+    def __init__(self, cls, addr, cidr, pidr, devarch, devtype, **kwargs):
+        super().__init__(cls, cidr, pidr, **kwargs)
+        self.addr    = addr
+        self.cidr    = cidr
+        self.pidr    = pidr
+        self.devarch = devarch
+        self.devtype = devtype
+
+    def score(self, c):
+        if self.addr != c.addr:
+            return 0
+
+        id_score = super().score(c)
+        if id_score == 0:
+            return 0
+
+        devtype = c.ap.read_32(c.addr + 0xFCC)
+        if devtype != self.devtype:
+            return id_score
+
+        devarch = c.ap.read_32(c.addr + 0xFBC)
+        if devarch != self.devarch:
+            return id_score
+
+        return id_score * 2
+
+
 def match(c):
     scores = [(m.score(c), m) for m in MATCHERS]
     scores.sort(key=lambda s: s[0])
