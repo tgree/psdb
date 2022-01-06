@@ -354,6 +354,14 @@ class AHB3AP(MemAP):
         super().__init__(db, ap_num, idr, csw_base, 'AHB3')
 
 
+class AHB5AP(MemAP):
+    '''
+    See AHB3AP description.
+    '''
+    def __init__(self, db, ap_num, idr, csw_base):
+        super().__init__(db, ap_num, idr, csw_base, 'AHB5')
+
+
 class APBAP(MemAP):
     '''
     APBAP has DbgSwEnable in the upper bit that we need to preserve as set so
@@ -386,6 +394,7 @@ class IDRMapper(object):
 IDR_MAPPERS = [
     IDRMapper(0x04770001, 0x0FFFE00F, AHB3AP,IDRMapper.PROBE_SIZES, 0x23000040),
     IDRMapper(0x04770002, 0x0FFFE00F, APBAP, IDRMapper.PROBE_SIZES, 0x80000040),
+    IDRMapper(0x04770005, 0x0FFFE00F, AHB5AP,IDRMapper.PROBE_SIZES, 0x23000040),
     IDRMapper(0x00010000, 0x0001E000, MemAP, 0,                     None),
     IDRMapper(0x00000000, 0x00000000, AP,    0),
     ]
