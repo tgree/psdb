@@ -62,13 +62,13 @@ class STM32H7(Target):
         if set(db.aps) != set((0, 1, 2)):
             return False
 
-        # APSEL 0 should be an AHB AP.
+        # APSEL 0 should be an AHB3 AP.
         ap = db.aps[0]
-        if not isinstance(ap, psdb.access_port.AHBAP):
+        if not isinstance(ap, psdb.access_port.AHB3AP):
             return False
 
-        # APSEL 1 should be an AHB AP.
-        if not isinstance(db.aps[1], psdb.access_port.AHBAP):
+        # APSEL 1 should be an AHB3 AP.
+        if not isinstance(db.aps[1], psdb.access_port.AHB3AP):
             return False
 
         # APSEL 2 should be an APB AP.

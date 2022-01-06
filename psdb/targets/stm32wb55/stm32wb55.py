@@ -151,13 +151,13 @@ class STM32WB55(Target):
 
     @staticmethod
     def probe(db):
-        # APSEL 0 and 1 should be populated and be AHB APs.
+        # APSEL 0 and 1 should be populated and be AHB3 APs.
         for i in range(2):
             if i not in db.aps:
                 return None
 
             ap = db.aps[i]
-            if not isinstance(ap, psdb.access_port.AHBAP):
+            if not isinstance(ap, psdb.access_port.AHB3AP):
                 return None
 
         # Identify the STM32WB55 through the base component's CIDR/PIDR

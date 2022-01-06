@@ -344,14 +344,14 @@ class MemAP(AP):
             n      -= count
 
 
-class AHBAP(MemAP):
+class AHB3AP(MemAP):
     '''
     AHBAP is a specific type of MEM AP and it has a different CSW register from
     other MEM APs.  We need to configure the CSW register properly to be able
     to access memory through the AP otherwise we get fault errors.
     '''
     def __init__(self, db, ap_num, idr, csw_base):
-        super().__init__(db, ap_num, idr, csw_base, 'AHB')
+        super().__init__(db, ap_num, idr, csw_base, 'AHB3')
 
 
 class APBAP(MemAP):
@@ -384,7 +384,7 @@ class IDRMapper(object):
 
 
 IDR_MAPPERS = [
-    IDRMapper(0x04770001, 0x0FFFE00F, AHBAP, IDRMapper.PROBE_SIZES, 0x23000040),
+    IDRMapper(0x04770001, 0x0FFFE00F, AHB3AP,IDRMapper.PROBE_SIZES, 0x23000040),
     IDRMapper(0x04770002, 0x0FFFE00F, APBAP, IDRMapper.PROBE_SIZES, 0x80000040),
     IDRMapper(0x00010000, 0x0001E000, MemAP, 0,                     None),
     IDRMapper(0x00000000, 0x00000000, AP,    0),

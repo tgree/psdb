@@ -231,9 +231,9 @@ class STM32G4(Target):
         if set(db.aps) != set((0,)):
             return False
 
-        # APSEL 0 should be an AHB AP.
+        # APSEL 0 should be an AHB3 AP.
         ap = db.aps[0]
-        if not isinstance(ap, psdb.access_port.AHBAP):
+        if not isinstance(ap, psdb.access_port.AHB3AP):
             return False
 
         # Identify the STM32G4 through the base component's CIDR/PIDR
