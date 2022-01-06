@@ -127,29 +127,7 @@ class Flash(object):
         Returns a copy of the data vector containing only alps that are
         entirely contained in the flash.
         '''
-        f_base = self.mem_base
-        f_end  = self.mem_base + self.flash_size
-
-        pdv = []
-        for v in dv:
-            v_base = v[0]
-            v_data = v[1]
-            v_end  = v_base + len(v_data)
-            if v_base >= f_end or v_end <= f_base:
-                continue
-
-            if v_base < f_base:
-                n       = f_base - v_base
-                v_base += n
-                v_data  = v_data[n:]
-
-            if v_end > f_end:
-                n      = v_end - f_end
-                v_data = v_data[:-n]
-
-            pdv.append((v_base, v_data))
-
-        return pdv
+        return psdb.elf.dv.prune_dv(dv, self.mem_base, self.flash_size)
 
     def burn_dv(self, dv, bank_swap=False, verbose=True, erase=True):
         '''

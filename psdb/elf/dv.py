@@ -26,6 +26,36 @@ assert (not dv_overlaps_region([(5, b'12345')], 10, 2))
 assert (not dv_overlaps_region([(5, b'12345')], 11, 2))
 
 
+def prune_dv(dv, f_base, f_len):
+    '''
+    Returns a copy of the data vector containing only alps that are
+    entirely contained in the flash.  The flash base and length must
+    be provided as arguments.
+    '''
+    f_end = f_base + f_len
+
+    pdv = []
+    for v in dv:
+        v_base = v[0]
+        v_data = v[1]
+        v_end  = v_base + len(v_data)
+        if v_base >= f_end or v_end <= f_base:
+            continue
+
+        if v_base < f_base:
+            n       = f_base - v_base
+            v_base += n
+            v_data  = v_data[n:]
+
+        if v_end > f_end:
+            n      = v_end - f_end
+            v_data = v_data[:-n]
+
+        pdv.append((v_base, v_data))
+
+    return pdv
+
+
 def merge_dvs(lhs, rhs):
     '''
     Merges lhs and rhs, checking for address conflicts.  Alps from
