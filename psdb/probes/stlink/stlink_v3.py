@@ -1,4 +1,4 @@
-# Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+# Copyright (c) 2020-2021 by Phase Advanced Sensor Systems, Inc.
 import usb
 
 from . import stlink
@@ -10,6 +10,7 @@ import psdb
 V3_PIDS = [0x374E,
            0x374F,
            0x3753,
+           0x3754,
            ]
 
 
@@ -25,6 +26,11 @@ class STLinkV3(stlink.STLink):
     2xVCP mode:
 
         0x3753 - STLINK-V3 in dual-VCP mode (V3SET)
+
+    This device ID was observer after converting two different types of Nucleo
+    board from MSD+VCP to just VCP mode:
+
+        0x3754 - STLINK-V3 in single-VCP mode (Nucleo)
     '''
     def __init__(self, usb_dev):
         super().__init__(usb_dev, 'STLinkV3')
