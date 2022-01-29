@@ -37,9 +37,9 @@ class DeviceSelectorWindow:
 
     def handle_ch(self, c):
         updated = False
-        if c == curses.KEY_DOWN:
+        if c in (curses.KEY_DOWN, ord('j')):
             updated = self.menu.select_next()
-        elif c == curses.KEY_UP:
+        elif c in (curses.KEY_UP, ord('k')):
             updated = self.menu.select_prev()
 
         if updated:

@@ -12,6 +12,8 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (RAMDevice,          'SRAM1 ID M7',  0x10000000, 0x00020000),
            (RAMDevice,          'SRAM2 ID M7',  0x10020000, 0x00020000),
            (RAMDevice,          'SRAM3 ID M7',  0x10040000, 0x00008000),
+           (MemDevice,          'System ROM 1', 0x1FF00000, 0x00020000),
+           (MemDevice,          'System ROM 2', 0x1FF40000, 0x00020000),
            (RAMDevice,          'M7 DTCM',      0x20000000, 0x00020000),
            (RAMDevice,          'AXI SRAM M7',  0x24000000, 0x00080000),
            (RAMDevice,          'SRAM1 M7',     0x30000000, 0x00020000),
@@ -26,11 +28,13 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (stm32.DMA_DBM,      'DMA1',         0x40020000),
            (stm32.DMA_DBM,      'DMA2',         0x40020400),
            (stm32.DMAMUX,       'DMAMUX1',      0x40020800, 16, 8),
+           (stm32.ADC16,        'ADC12',        0x40022000, 1, 2),
            (stm32h7.FLASH_DP,   'FLASH',        0x52002000, 0x08000000,
                                                 3300000),  # noqa: E127
            (stm32.USB_HS,       'USB1',         0x40040000),
            (stm32.USB_HS,       'USB2',         0x40080000),
            (stm32h7.RCC,        'RCC_M7',       0x58024400),
+           (stm32.ADC16,        'ADC3',         0x58026000, 3, 1),
            ]
 
 # AP1 devices are ones accessible in the D3 domain; we can access these via AP1
@@ -230,8 +234,8 @@ class STM32H7_DP(Target):
         if set(db.aps) != set((0, 1, 2, 3)):
             return False
 
-        # APSEL 1 should be an AHB AP.
-        if not isinstance(db.aps[1], psdb.access_port.AHBAP):
+        # APSEL 1 should be an AHB3 AP.
+        if not isinstance(db.aps[1], psdb.access_port.AHB3AP):
             return False
 
         # APSEL 2 should be an APB AP.

@@ -128,13 +128,13 @@ class DeviceDecodeWindow:
             else:
                 hattr = 0
             for i, f in enumerate(self.named_fields):
-                x = 1 if i < 16 else 41
+                x = 0 if i < 16 else 40
                 y = i % 16
                 attr = curses.A_BOLD
                 if i == self.selected_field:
                     attr |= self.hilite_attr
                 self.window.content.addstr(
-                    '%*s:' % (self.max_field_len, f.name), pos=(6+y, x),
+                    ' %*s:' % (self.max_field_len, f.name), pos=(6+y, x),
                     attr=attr)
                 self.window.content.addstr(' ')
                 self.window.content.addstr(
@@ -171,21 +171,21 @@ class DeviceDecodeWindow:
         self.reg_win.edit_field(width, f.shift + shift, v)
 
     def handle_ch(self, c):
-        if c == curses.KEY_UP:
+        if c in (curses.KEY_UP, ord('k')):
             if self.selected_field > 0:
                 self.selected_field -= 1
                 self.pos = min(
                     self.pos,
                     self.named_fields[self.selected_field].nnibbles - 1)
-        elif c == curses.KEY_DOWN:
+        elif c in (curses.KEY_DOWN, ord('j')):
             if self.selected_field < len(self.named_fields) - 1:
                 self.selected_field += 1
                 self.pos = min(
                     self.pos,
                     self.named_fields[self.selected_field].nnibbles - 1)
-        elif c == curses.KEY_LEFT:
+        elif c in (curses.KEY_LEFT, ord('h')):
             self.pos = max(self.pos - 1, 0)
-        elif c == curses.KEY_RIGHT:
+        elif c in (curses.KEY_RIGHT, ord('l')):
             self.pos = min(
                 self.pos + 1,
                 self.named_fields[self.selected_field].nnibbles - 1)

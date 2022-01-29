@@ -168,17 +168,17 @@ class DeviceRegisterWindow:
         self.decode_win.select_register(self.get_selected_reg())
 
     def handle_ch(self, c):
-        if c == curses.KEY_UP:
+        if c in (curses.KEY_UP, ord('k')):
             self.abort_write()
             if self.selection > 0:
                 self.select(self.selection - 1)
-        elif c == curses.KEY_DOWN:
+        elif c in (curses.KEY_DOWN, ord('j')):
             self.abort_write()
             if self.selection < len(self.reg_vals) - 1:
                 self.select(self.selection + 1)
-        elif c == curses.KEY_LEFT:
+        elif c in (curses.KEY_LEFT, ord('h')):
             self.pos = max(self.pos - 1, 0)
-        elif c == curses.KEY_RIGHT:
+        elif c in (curses.KEY_RIGHT, ord('l')):
             self.pos = min(self.pos + 1, 7)
         elif ord('0') <= c <= ord('9'):
             self.edit_nibble(c - ord('0') + 0x0)

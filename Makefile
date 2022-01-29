@@ -1,4 +1,4 @@
-PSDB_VERS := 0.9.8
+PSDB_VERS := 0.9.9
 PSDB_DEPS := \
 		setup.cfg                           \
 		setup.py							\
@@ -13,6 +13,7 @@ PSDB_DEPS := \
 		psdb/devices/stm32g0/*.py   		\
 		psdb/devices/stm32g4/*.py   		\
 		psdb/devices/stm32h7/*.py			\
+		psdb/devices/stm32u5/*.py			\
 		psdb/devices/stm32wb55/*.py			\
 		psdb/devices/stm32wb55/ipc/*.py 	\
 		psdb/elf/*.py						\
@@ -26,6 +27,7 @@ PSDB_DEPS := \
 		psdb/targets/stm32g0/*.py   		\
 		psdb/targets/stm32g4/*.py   		\
 		psdb/targets/stm32h7/*.py			\
+		psdb/targets/stm32u5/*.py			\
 		psdb/targets/stm32wb55/*.py			\
 		psdb/util/*.py
 PYTHON := python3

@@ -3,11 +3,16 @@ import psdb.component
 from . import cortex_m0p
 from . import cortex_m4
 from . import cortex_m7
+from . import cortex_m33
 
 
 # Cortex-M7 as defined in the ARM spec.
 psdb.component.Matcher(cortex_m7.CortexM7, 0xB105100D, 0x00000004000BB4C8,
                        subtype='Cortex-M7')
+
+# Cortex-M33 as defined in the ARM spec.
+psdb.component.Matcher(cortex_m33.CortexM33, 0xB105100D, 0x00000004000BB4C9,
+                       subtype='Cortex-M33')
 
 # It's common practice for third-party vendors to put their own identifying
 # information in the top-level Cortex ROM Table.  It's implied that this is
