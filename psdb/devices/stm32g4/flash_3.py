@@ -1,5 +1,5 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from ..device import Reg32, Reg32W
+from ..device import Reg32, Reg32W, AReg32
 from ..stm32 import flash_type1
 
 
@@ -12,7 +12,16 @@ class FLASH_3(flash_type1.FLASH):
         STM32G483
         STM32G484
     '''
-    REGS = [Reg32 ('ACR',           0x000),
+    REGS = [AReg32('ACR',           0x000, [('LATENCY',     0, 3),
+                                            ('PRFTEN',      8),
+                                            ('ICEN',        9),
+                                            ('DCEN',        10),
+                                            ('ICRST',       11),
+                                            ('DCRST',       12),
+                                            ('RUN_PD',      13),
+                                            ('SLEEP_PD',    14),
+                                            ('DBG_SWEN',    18),
+                                            ]),
             Reg32 ('PDKEYR',        0x004),
             Reg32W('KEYR',          0x008),
             Reg32W('OPTKEYR',       0x00C),
@@ -52,7 +61,15 @@ class FLASH_3(flash_type1.FLASH):
                                             ('OPTLOCK',     1),
                                             ('LOCK',        1),
                                             ]),
-            Reg32 ('ECCR',          0x018),
+            AReg32('ECCR',          0x018, [('ADDR_ECC',    0, 18),
+                                            ('BK_ECC',      21),
+                                            ('SYSF_ECC',    22),
+                                            ('ECCCIE',      24),
+                                            ('ECCC2',       28),
+                                            ('ECCD2',       29),
+                                            ('ECCC',        30),
+                                            ('ECCD',        31),
+                                            ]),
             Reg32 ('OPTR',          0x020, [('RDP',         8),
                                             ('BOR_LEV',     3),
                                             ('',            1),
