@@ -79,12 +79,10 @@ class Component(object):
                 if verbose:
                     print('  %s%s' % (prefix, c))
                 self.children.append(c)
+                c.probe_children(prefix=prefix + '  ', verbose=verbose,
+                                 match=match)
 
             offset += 4
-
-        prefix += '  '
-        for c in self.children:
-            c.probe_children(prefix=prefix, verbose=verbose, match=match)
 
     def read_id_block(self, addr):
         mem = self.ap.read_bulk(addr, 16)
