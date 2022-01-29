@@ -76,13 +76,13 @@ class MemoryWindow:
         pass
 
     def handle_ch(self, c):
-        if c == curses.KEY_DOWN:
+        if c in (curses.KEY_DOWN, ord('j')):
             self.set_addr(self.dump_addr + 32)
-        elif c == curses.KEY_UP:
+        elif c in (curses.KEY_UP, ord('k')):
             self.set_addr(self.dump_addr - 32)
-        elif c == curses.KEY_NPAGE:
+        elif c in (curses.KEY_NPAGE, ord(' ')):
             nrows = self.window.content.height
             self.set_addr(self.dump_addr + nrows*32 - 32)
-        elif c == curses.KEY_PPAGE:
+        elif c in (curses.KEY_PPAGE, ord('-')):
             nrows = self.window.content.height
             self.set_addr(self.dump_addr - nrows*32 + 32)
