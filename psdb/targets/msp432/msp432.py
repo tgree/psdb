@@ -54,9 +54,9 @@ class MSP432P401(Target):
         if 0 not in db.aps:
             return None
 
-        # APSEL 0 should be an AHB AP.
+        # APSEL 0 should be an AHB3 AP.
         ap = db.aps[0]
-        if not isinstance(ap, psdb.access_port.AHBAP):
+        if not isinstance(ap, psdb.access_port.AHB3AP):
             return None
 
         # Identify the MSP432P401 through the base component's CIDR/PIDR
