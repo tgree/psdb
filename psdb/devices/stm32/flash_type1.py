@@ -98,10 +98,12 @@ class FLASH(Device, Flash):
         with self._flash_unlocked():
             self._clear_errors()
             self._CR = ((n << 3) | (1 << 1))
-            self._CR = ((1 << 16) | (n << 3) | (1 << 1))
-            self._wait_bsy_clear()
-            self._check_errors()
-            self._CR = 0
+            try:
+                self._CR = ((1 << 16) | (n << 3) | (1 << 1))
+                self._wait_bsy_clear()
+                self._check_errors()
+            finally:
+                self._CR = 0
 
     def read(self, addr, length):
         '''
@@ -132,10 +134,12 @@ class FLASH(Device, Flash):
         with self._flash_unlocked():
             self._clear_errors()
             self._CR = (1 << 0)
-            self.ap.write_bulk(data, addr)
-            self._wait_bsy_clear()
-            self._check_errors()
-            self._CR = 0
+            try:
+                self.ap.write_bulk(data, addr)
+                self._wait_bsy_clear()
+                self._check_errors()
+            finally:
+                self._CR = 0
 
     def read_otp(self, offset, size):
         '''
