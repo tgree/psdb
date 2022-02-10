@@ -218,7 +218,7 @@ class STM32G4(Target):
         pwr = self.devs['PWR']
         rtc = self.devs['RTC']
         rcc.enable_device('PWR')
-        pwr.enable_backup_domain()
+        pwr.unlock_backup_domain()
         rcc.set_lse_drive_capability(0)
         rcc.enable_lse()
         rcc.set_rtcclock_source(rtcsel)
