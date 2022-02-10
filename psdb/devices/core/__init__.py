@@ -7,6 +7,7 @@ from . import scs_v7_m
 from . import scs_v8_m
 from . import dwt_m4
 from . import itm_m4
+from . import tpiu_m4
 
 
 # Matcher for the Cortex System Control Block.  This is matched in order to
@@ -29,6 +30,10 @@ psdb.component.Matcher(dwt_m4.DWT, 0xB105E00D, 0x00000004003BB002,
 # Matcher for the Instrumentation Trace Macrocell (ITM) unit.
 psdb.component.Matcher(itm_m4.ITM, 0xB105E00D, 0x00000004003BB001,
                        subtype='ITM (M4)')
+
+# Matcher for the Trace Port Interface Unit (TPIU).
+psdb.component.Matcher(tpiu_m4.TPIU, 0xB105900D, 0x00000004000BB9A1,
+                       subtype='TPIU (M4)')
 
 # Matcher for the Flash Patch and Breakpoint unit.
 psdb.component.Matcher(bpu.BPU, 0xB105E00D, 0x00000004000BB00B,
