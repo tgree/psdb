@@ -336,6 +336,11 @@ class SWDConnect(STLinkCommand):
                while maintaining the SRST state if we were already connected
                previously.
 
+               Note: When re-issuing SWDConnect in this way, trace must first
+               be disabled otherwise a subsequent read returns a 0 byte for
+               every previously-read byte from the trace buffer - i.e. the
+               probe's circular buffer pointers don't get reset properly.
+
     Availability: All.
 
     TX_EP (CDB):
@@ -1249,6 +1254,102 @@ class ScatterGatherGetMaxOps(STLinkCommand):
 
     def __init__(self):
         super().__init__(pack('<BB', 0xF2, 0x53))
+
+    def decode(self, rsp):
+        return unpack('<H', rsp)[0]
+
+
+class TraceEnable(STLinkCommand):
+    '''
+    Enable trace of the specified size and at the specified SWO frequency.  The
+    V3SET manual indicates that the debug probe has three different internal
+    frequencies that it can run at: high-performance frequency, standard
+    frequency and low-consumption frequency.  It is unclear how one of these
+    three frequencies is selected (the GetComFreqs command returns a list of 7
+    frequencies...), however it does say that the probe starts off in high-
+    frequency mode and it is up to the toolchain provider to "propose or not
+    the frequency selection at the user level."
+
+    In high-frequency mode, the manual later states that VCP and SWV ports can
+    baud rates from the following list:
+
+        [384 MHz / presc for presc in 24 to 31] +
+        [192 MHz / presc for presc in 16 to 65535]
+
+    Thus the highest SWV frequeny supported is 16 MHz.
+
+    On a G4 MCU (and perhaps others) the SWO frequency is tied to HCLK (the CPU
+    clock).  The TPIU has an asynchronous prescaler used to generate SWO by
+    dividing HCLK down to the desired frequency.  The SWV frequency used by the
+    probe should match the SWO frequency used by the MCU to a tolerance of 3%.
+
+    According to OpenOCD, the maximum trace size is 4096.  It's unclear what
+    the units are.
+
+    Availability: V3, V2J13
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x40      |           Trace size            |
+        +----------------+----------------+---------------------------------+
+        |                         SWO frequency (Hz)                        |
+        +-------------------------------------------------------------------+
+
+    RX_EP (2 bytes)
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self, swo_freq_hz, trace_size):
+        super().__init__(pack('<BBHI', 0xF2, 0x40, trace_size, swo_freq_hz))
+
+
+class TraceDisable(STLinkCommand):
+    '''
+    Availability: V3, V2J13
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x41      |
+        +----------------+----------------+
+
+    RX_EP (2 bytes)
+        +----------------+----------------+
+        |     STATUS     |       --       |
+        +----------------+----------------+
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_EMBEDDED_STATUS
+    RSP_LEN   = 2
+
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x41))
+
+
+class GetTraceNumBytes(STLinkCommand):
+    '''
+    Get the number of bytes available in the trace buffer.  This command only
+    works if the probe is in DEBUG mode.
+
+    Availability: V3, V2J13.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x42      |
+        +----------------+----------------+
+
+    RX_EP (2 bytes):
+        +---------------------------------+
+        |    Number of bytes in trace     |
+        +---------------------------------+
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 2
+
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x42))
 
     def decode(self, rsp):
         return unpack('<H', rsp)[0]

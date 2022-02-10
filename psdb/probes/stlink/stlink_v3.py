@@ -44,12 +44,14 @@ class STLinkV3(stlink.STLink):
         else:
             self.max_rw8 = 64
 
-        self.features      |= stlink.FEATURE_BULK_READ_16
-        self.features      |= stlink.FEATURE_BULK_WRITE_16
-        self.features      |= stlink.FEATURE_RW_STATUS_12
-        self.features      |= stlink.FEATURE_VOLTAGE
-        self.features      |= stlink.FEATURE_AP
-        self.features      |= stlink.FEATURE_OPEN_AP
+        self.features    |= stlink.FEATURE_BULK_READ_16
+        self.features    |= stlink.FEATURE_BULK_WRITE_16
+        self.features    |= stlink.FEATURE_RW_STATUS_12
+        self.features    |= stlink.FEATURE_VOLTAGE
+        self.features    |= stlink.FEATURE_AP
+        self.features    |= stlink.FEATURE_OPEN_AP
+        self.features    |= stlink.FEATURE_TRACE
+        self.max_swo_freq = 24000000
         self._swd_freqs_khz = sorted(self._get_com_freq(), reverse=True)
 
     def _check_xfer_status(self):

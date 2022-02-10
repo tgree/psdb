@@ -24,6 +24,7 @@ import time
 # from the RX_EP.
 RX_EP    = 0x81
 TX_EP    = 0x01
+TRACE_EP = 0x82
 
 # Maximum size of data that can be returned in a DATA in operation.
 DATA_SIZE = 4096
@@ -44,6 +45,7 @@ FEATURE_VOLTAGE       = (1 << 4)
 FEATURE_AP            = (1 << 5)
 FEATURE_OPEN_AP       = (1 << 6)
 FEATURE_SCATTERGATHER = (1 << 7)
+FEATURE_TRACE         = (1 << 8)
 
 
 class STLink(usb_probe.Probe):
@@ -54,9 +56,10 @@ class STLink(usb_probe.Probe):
     '''
     def __init__(self, usb_dev, name):
         super().__init__(usb_dev, name)
-        self.dpidr      = None
-        self.features   = 0
-        self.max_sg_ops = 0
+        self.dpidr        = None
+        self.features     = 0
+        self.max_sg_ops   = 0
+        self.max_swo_freq = 0
 
     def _check_xfer_status(self):
         '''
@@ -150,6 +153,8 @@ class STLink(usb_probe.Probe):
         mode = self._current_mode()
         if mode != cdb.MODE_DEBUG:
             self._mode_leave(mode)
+        else:
+            self.trace_disable()
         self._cmd_allow_retry(cdb.SWDConnect())
         assert self._current_mode() == cdb.MODE_DEBUG
 
@@ -209,6 +214,9 @@ class STLink(usb_probe.Probe):
 
     def _get_max_sg_ops(self):
         return self._cmd_allow_retry(cdb.ScatterGatherGetMaxOps())
+
+    def _get_trace_num_bytes(self):
+        return self._cmd_allow_retry(cdb.GetTraceNumBytes())
 
     def assert_srst(self):
         '''Holds the target in reset.'''
@@ -270,6 +278,31 @@ class STLink(usb_probe.Probe):
         assert len(ops) <= self.max_sg_ops
         self._cmd_allow_retry(cdb.ScatterGatherOut(ops))
         return self._cmd_allow_retry(cdb.ScatterGatherIn(ops))
+
+    def trace_enable(self, swo_freq_hz, trace_size=4096):
+        return self._cmd_allow_retry(cdb.TraceEnable(swo_freq_hz, trace_size))
+
+    def trace_disable(self):
+        return self._cmd_allow_retry(cdb.TraceDisable())
+
+    def trace_flush(self, swo_freq_hz, trace_size=4096):
+        self.trace_enable(swo_freq_hz, trace_size=trace_size)
+        data = self.trace_read(timeout=100)
+        if data:
+            print('Stale trace data: %s' % data)
+        self.trace_disable()
+        return data
+
+    def trace_read(self, timeout=1000):
+        '''
+        Reads as many bytes of trace as possible.
+        '''
+        n = self._get_trace_num_bytes()
+        if n <= 0:
+            return None
+        rsp = self.usb_dev.read(TRACE_EP, n, timeout=timeout)
+        assert len(rsp) == n
+        return bytes(rsp)
 
     def connect(self):
         self._swd_connect()
