@@ -228,6 +228,30 @@ class STM32G4(Target):
         rcc.enable_rtc()
         rtc.init()
 
+    def start_swo_trace(self, divisor):
+        dbgmcu = self.devs['DBGMCU']
+        scs    = self.cpus[0].devs['SCS']
+        tpiu   = self.cpus[0].devs['TPIU']
+        itm    = self.cpus[0].devs['ITM']
+        dwt    = self.cpus[0].devs['DWT']
+
+        dbgmcu._CR.TRACE_IOEN = 0
+        scs._DEMCR.TRCENA     = 1
+        tpiu._CSPSR           = 0x00000001
+        tpiu._ACPR            = divisor - 1
+        tpiu._FFCR            = 0x00000100
+        tpiu._SPPR            = 0x00000002
+        dbgmcu._CR.TRACE_MODE = 0
+        dbgmcu._CR.TRACE_IOEN = 1
+        itm._LAR              = 0xC5ACCE55
+        itm._TCR              = (1 << 0) | (1 << 3) | (1 << 16)
+        itm._TER              = 0xFFFFFFFF
+        itm._TPR              = 0x0000000F
+
+    def disable_debug_clocks(self):
+        dbgmcu = self.devs['DBGMCU']
+        dbgmcu._CR = dbgmcu._CR.read() & ~7
+
     @staticmethod
     def is_mcu(db):
         # Only APSEL 0 should be populated.
