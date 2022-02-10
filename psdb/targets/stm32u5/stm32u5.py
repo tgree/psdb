@@ -14,6 +14,7 @@ DEVICES = [
            (stm32u5.FLASH,   'FLASH',       0x40022000, 0x08000000, 3300000,
                                             0x0BFA0000, 512),  # noqa: E127
            (RAMDevice,       'Backup SRAM', 0x40036400, 0x00000800),
+           (stm32u5.RCC,     'RCC',         0x46020C00),
            (stm32u5.DBGMCU,  'DBGMCU',      0xE0044000),
            ]
 
