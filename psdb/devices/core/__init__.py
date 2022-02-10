@@ -5,6 +5,7 @@ from . import fpb
 from . import scs_v6_m
 from . import scs_v7_m
 from . import scs_v8_m
+from . import dwt_m4
 
 
 # Matcher for the Cortex System Control Block.  This is matched in order to
@@ -19,6 +20,10 @@ psdb.component.Matcher(scs_v7_m.SCS, 0xB105E00D, 0x00000004000BB00C,
 psdb.component.M33Matcher(scs_v8_m.SCS, 0xE000E000, 0xB105900D,
                           0x00000004000BBD21, 0x47702A04, 0x00000000,
                           subtype='SCB V8-M')
+
+# Matcher for the Data Watchpoint and Trace (DWT) unit.
+psdb.component.Matcher(dwt_m4.DWT, 0xB105E00D, 0x00000004003BB002,
+                       subtype='DWT (M4)')
 
 # Matcher for the Flash Patch and Breakpoint unit.
 psdb.component.Matcher(bpu.BPU, 0xB105E00D, 0x00000004000BB00B,
