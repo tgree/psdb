@@ -11,6 +11,8 @@ DEVICES = [
            (RAMDevice,       'SRAM2',       0x20030000, 0x00010000),
            (RAMDevice,       'SRAM3',       0x20040000, 0x00080000),
            (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
+           (stm32u5.FLASH,   'FLASH',       0x40022000, 0x08000000, 3300000,
+                                            0x0BFA0000, 512),  # noqa: E127
            (RAMDevice,       'Backup SRAM', 0x40036400, 0x00000800),
            (stm32u5.DBGMCU,  'DBGMCU',      0xE0044000),
            ]
@@ -41,6 +43,12 @@ class STM32U5(Target):
             addr = d[2]
             args = d[3:]
             cls(self, self.ahb_ap, name, addr, *args)
+
+        self.flash = self.devs['FLASH']
+        MemDevice(self, self.ahb_ap, 'FBANKS', self.flash.mem_base,
+                  self.flash.flash_size)
+        MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
+                  self.flash.otp_len)
 
     def __repr__(self):
         return 'STM32U5 MCU_IDCODE 0x%08X' % self.mcu_idcode
