@@ -6,6 +6,7 @@ from . import dbgmcu
 
 
 DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
+             (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00004000),
              (RAMDevice,       'SRAM2',       0x20004000, 0x00001800),
              (RAMDevice,       'CCM SRAM S',  0x20005800, 0x00002800),
@@ -46,6 +47,7 @@ DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              ]
 
 DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
+             (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00014000),
              (RAMDevice,       'SRAM2',       0x20014000, 0x00004000),
              (RAMDevice,       'CCM SRAM S',  0x20018000, 0x00008000),
@@ -92,6 +94,7 @@ DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
 
 
 DEVICES_4 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
+             (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00014000),
              (RAMDevice,       'SRAM2',       0x20014000, 0x00004000),
              (RAMDevice,       'CCM SRAM S',  0x20018000, 0x00004000),
@@ -218,7 +221,7 @@ class STM32G4(Target):
         pwr = self.devs['PWR']
         rtc = self.devs['RTC']
         rcc.enable_device('PWR')
-        pwr.enable_backup_domain()
+        pwr.unlock_backup_domain()
         rcc.set_lse_drive_capability(0)
         rcc.enable_lse()
         rcc.set_rtcclock_source(rtcsel)

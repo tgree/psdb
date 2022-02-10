@@ -18,7 +18,9 @@ class STLinkV2_1(stlink.STLink):
 
         self.max_rw8 = 64
         if self.ver_jtag >= 13:
-            self.features |= stlink.FEATURE_VOLTAGE
+            self.features    |= stlink.FEATURE_VOLTAGE
+            self.features    |= stlink.FEATURE_TRACE
+            self.max_swo_freq = 2000000
         if self.ver_jtag >= 15:
             self.features |= stlink.FEATURE_RW_STATUS_12
         if self.ver_jtag >= 22:
@@ -28,6 +30,7 @@ class STLinkV2_1(stlink.STLink):
         if self.ver_jtag >= 26:
             self.features |= stlink.FEATURE_BULK_READ_16
             self.features |= stlink.FEATURE_BULK_WRITE_16
+            self.features |= stlink.FEATURE_SCATTERGATHER
         if self.ver_jtag >= 28:
             self.features |= stlink.FEATURE_OPEN_AP
 

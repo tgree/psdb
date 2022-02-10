@@ -59,7 +59,7 @@ class DeviceRegisterWindow:
         for i, r in enumerate(self.dev.regs):
             if i == self.selection and self.edit_val is not None:
                 self.reg_vals.append(self.edit_val)
-            elif r.flags & Reg.READABLE:
+            elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
                 self.reg_vals.append(r.read(self.dev))
             else:
                 self.reg_vals.append(None)
@@ -74,8 +74,10 @@ class DeviceRegisterWindow:
             rv = '--------'
         elif self.reg_vals[i] is not None:
             rv = '%08X' % self.reg_vals[i]
-        else:
+        elif not (r.flags & Reg.READABLE):
             rv = '-WrOnly-'
+        else:
+            rv = '-SideFx-'
 
         row = i - self.top
         if self.top > 0 and row == 0:
@@ -140,7 +142,7 @@ class DeviceRegisterWindow:
             if not r.flags & Reg.WRITEABLE:
                 self.inspect_tool.status('Register not writeable')
                 return
-            elif r.flags & Reg.READABLE:
+            elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
                 self.edit_val = r.read(self.dev)
             else:
                 self.edit_val = 0
