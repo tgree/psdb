@@ -131,7 +131,7 @@ class PWR(Device):
     def is_cpu2_boot_enabled(self):
         return self._CR4.C2BOOT != 0
 
-    def enable_backup_domain(self):
+    def unlock_backup_domain(self):
         self._CR1.DBP = 1
         while self._CR1.DBP == 0:
             time.sleep(0.01)

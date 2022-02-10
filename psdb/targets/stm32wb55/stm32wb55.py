@@ -108,7 +108,7 @@ class STM32WB55(Target):
         rcc.apply_hse_tuning()
 
         # Enable access to the backup domain.
-        pwr.enable_backup_domain()
+        pwr.unlock_backup_domain()
 
         # Reset the backup domain.
         rcc.reset_backup_domain()
