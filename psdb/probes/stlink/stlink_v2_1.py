@@ -28,6 +28,7 @@ class STLinkV2_1(stlink.STLink):
         if self.ver_jtag >= 26:
             self.features |= stlink.FEATURE_BULK_READ_16
             self.features |= stlink.FEATURE_BULK_WRITE_16
+            self.features |= stlink.FEATURE_SCATTERGATHER
         if self.ver_jtag >= 28:
             self.features |= stlink.FEATURE_OPEN_AP
 

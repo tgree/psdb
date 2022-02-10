@@ -43,6 +43,7 @@ FEATURE_BULK_WRITE_16 = (1 << 3)
 FEATURE_VOLTAGE       = (1 << 4)
 FEATURE_AP            = (1 << 5)
 FEATURE_OPEN_AP       = (1 << 6)
+FEATURE_SCATTERGATHER = (1 << 7)
 
 
 class STLink(usb_probe.Probe):
@@ -53,8 +54,9 @@ class STLink(usb_probe.Probe):
     '''
     def __init__(self, usb_dev, name):
         super().__init__(usb_dev, name)
-        self.dpidr    = None
-        self.features = 0
+        self.dpidr      = None
+        self.features   = 0
+        self.max_sg_ops = 0
 
     def _check_xfer_status(self):
         '''
@@ -205,6 +207,9 @@ class STLink(usb_probe.Probe):
         assert data
         self._exec_cdb(cdb.BulkWrite32(data, addr, ap_num))
 
+    def _get_max_sg_ops(self):
+        return self._cmd_allow_retry(cdb.ScatterGatherGetMaxOps())
+
     def assert_srst(self):
         '''Holds the target in reset.'''
         self._cmd_allow_retry(cdb.SetSRST(True))
@@ -256,6 +261,18 @@ class STLink(usb_probe.Probe):
         '''
         self._cmd_allow_retry(cdb.Write32(addr, v, ap_num))
 
+    def scatter_gather(self, ops):
+        '''
+        Performs a scatter/gather operation using 32-bit accesses encoded in
+        the ops list.
+        '''
+        assert self.features & FEATURE_SCATTERGATHER
+        assert len(ops) <= self.max_sg_ops
+        self._cmd_allow_retry(cdb.ScatterGatherOut(ops))
+        return self._cmd_allow_retry(cdb.ScatterGatherIn(ops))
+
     def connect(self):
         self._swd_connect()
         self.dpidr = self._read_dpidr()
+        if self.features & FEATURE_SCATTERGATHER:
+            self.max_sg_ops = self._get_max_sg_ops()
