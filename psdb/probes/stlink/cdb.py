@@ -1002,3 +1002,90 @@ class Write32(STLinkCommand):
     def __init__(self, addr, v, ap_num):
         assert addr % 4 == 0
         super().__init__(pack('<BBIIB', 0xF2, 0x35, addr, v, ap_num))
+
+
+class BulkRead32NoIncr(STLinkCommand):
+    '''
+    Reads the specified number of words from the specified AP and address,
+    without incrementing the address between reads.  This is useful for
+    accessing a 32-bit FIFO.  One of the "last transfer" status commands must
+    be used afterwards to get the transfer status since it is not encoded in
+    the response.
+
+    Note that the API takes a count of n words, but the CDB itself takes a
+    count of N = n*4 bytes.
+
+    Availability: V3J2, V2J32.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x54      |            addr[31:16]         ...
+        +----------------+----------------+---------------------------------+
+       ...          addr[15:0]            |              N bytes            |
+        +----------------+--------------------------------------------------+
+        |       AP       |                   CSW >> 8                       |
+        +----------------+--------------------------------------------------+
+
+    RX_EP (N bytes):
+        +-------------------------------------------------------------------+
+        |                              DATA[0]                              |
+        +-------------------------------------------------------------------+
+        |                              DATA[1]                              |
+        +-------------------------------------------------------------------+
+        |                                ...                                |
+        +-------------------------------------------------------------------+
+        |                           DATA[N/4 - 1]                           |
+        +-------------------------------------------------------------------+
+
+    Status should be retrieved via a LastXFERStatus command.
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, addr, n, ap_num):
+        assert addr % 4 == 0
+        self.RSP_LEN = n*4
+        super().__init__(pack('<BBIHB', 0xF2, 0x54, addr, n*4, ap_num))
+
+    def decode(self, rsp):
+        assert len(rsp) == self.RSP_LEN
+        return bytes(rsp)
+
+
+class BulkWrite32NoIncr(STLinkCommand):
+    '''
+    Writes the data to the specified AP and address, without incrementing the
+    address between writes.  This is useful for accessing a 32-bit FIFO.  One
+    of the "last transfer" status commands must be used afterwards to get the
+    transfer status since it is not encoded in the response.
+
+    Availability: V3, V2J26.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x50      |            addr[31:16]         ...
+        +----------------+----------------+---------------------------------+
+       ...          addr[15:0]            |              N bytes            |
+        +----------------+--------------------------------------------------+
+        |       AP       |                   CSW >> 8                       |
+        +----------------+--------------------------------------------------+
+
+    TX_EP (DATA, N bytes):
+        +-------------------------------------------------------------------+
+        |                              DATA[0]                              |
+        +-------------------------------------------------------------------+
+        |                              DATA[1]                              |
+        +-------------------------------------------------------------------+
+        |                                ...                                |
+        +-------------------------------------------------------------------+
+        |                           DATA[N/4 - 1]                           |
+        +-------------------------------------------------------------------+
+
+    Status should be retrieved via a LastXFERStatus command.
+    '''
+    CMD_FLAGS = HAS_DATA_OUT_PHASE | HAS_STATUS_PHASE
+
+    def __init__(self, data, addr, ap_num):
+        assert addr % 4 == 0
+        assert len(data) % 4 == 0
+        self.data_out = data
+        super().__init__(pack('<BBIHB', 0xF2, 0x50, addr, len(data), ap_num))
