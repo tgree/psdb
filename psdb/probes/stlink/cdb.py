@@ -1,5 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from struct import pack, unpack
+from struct import pack, unpack, unpack_from
 from builtins import bytes
 
 from . import errors
@@ -17,6 +17,12 @@ HAS_DATA_OUT_PHASE  = (1 << 0)  # USB write op after the CDB.
 HAS_DATA_IN_PHASE   = (1 << 1)  # USB read op after the CDB.
 HAS_EMBEDDED_STATUS = (1 << 2)  # Data IN phase has status in first byte.
 HAS_STATUS_PHASE    = (1 << 3)  # Full XFER_STATUS phase after CDB/DATA phases.
+
+# Opcode types for scatter/gather commands.
+CMD_ADDRESS = 1
+CMD_WRITE   = 2
+CMD_READ    = 3
+CMD_APNUM   = 5
 
 
 def check_xfer_status(status, fault_addr=None):
@@ -1089,3 +1095,160 @@ class BulkWrite32NoIncr(STLinkCommand):
         assert len(data) % 4 == 0
         self.data_out = data
         super().__init__(pack('<BBIHB', 0xF2, 0x50, addr, len(data), ap_num))
+
+
+class ScatterGatherOut(STLinkCommand):
+    '''
+    Performs a scatter-gather Read32/Write32 operation.  This command takes
+    a single ops list argument, encoded with pairs as follows:
+
+        (CMD_ADDRESS, 32-bit address for subsequent CMD_WRITE ops)
+        (CMD_WRITE,   32-bit value to write to current address)
+        (CMD_READ,    32-bit address to read from)
+        (CMD_APNUM,   AP number to switch to)
+
+    The ops list should (must?) start with a CMD_APNUM entry.  Note that when
+    writing the current address does NOT increment, so a CMD_ADDRESS is
+    required any time you want to change the write position.
+
+    The maximum op list length is 64 entries on V2 and 1227 entries on V3.
+
+    Availability: V3J2, V2J26.
+
+    TX_EP (CDB):
+        +----------------+----------------+---------------------------------+
+        |      0xF2      |      0x51      |               N[31:16]         ...
+        +----------------+----------------+---------------------------------+
+       ...            N[15:0]             |
+        +---------------------------------+
+
+    TX_EP (DATA, N*5 + PAD(N,4) bytes):
+        +----------------+----------------+----------------+----------------+
+        |      CMD1      |      CMD2      |      CMD3      |      CMD4     ...
+        +----------------+----------------+----------------+----------------+
+       ...     ...              ...              ...              ...      ...
+        +----------------+----------------+----------------+----------------+
+       ...   CMD(N-1)    |      CMDN      |      Pad to 4-byte alignment    |
+        +----------------+----------------+---------------------------------+
+        |                             Payload 1                             |
+        +-------------------------------------------------------------------+
+        |                             Payload 2                             |
+        +-------------------------------------------------------------------+
+        |                                ...                                |
+        +-------------------------------------------------------------------+
+        |                             Payload N                             |
+        +-------------------------------------------------------------------+
+
+        The command opcodes are defined as follows:
+            CMD_ADDRESS = 1
+            CMD_WRITE   = 2
+            CMD_READ    = 3
+            CMD_APNUM   = 5
+
+        The payload entries are defined as follows:
+            CMD_ADDRESS:    The 32-bit address for a subsequent CMD_WRITE.
+            CMD_WRITE:      The 32-bit value to write.
+            CMD_READ:       The 32-bit address from which to read.
+            CMD_APNUM:      The AP number, encoded as a 32-bit value.
+
+        The result status is retrieved using ScatterGatherIn.
+    '''
+    CMD_FLAGS = HAS_DATA_OUT_PHASE
+
+    def __init__(self, ops):
+        N             = len(ops)
+        cmds          = pack('<%uB' % N, *[op[0] for op in ops])
+        payloads      = pack('<%uI' % N, *[op[1] for op in ops])
+        self.data_out = cmds + b'\x00'*(-N % 4) + payloads
+        super().__init__(pack('<BBI', 0xF2, 0x51, N))
+
+
+class ScatterGatherIn(STLinkCommand):
+    '''
+    Retrieves the result of a previous ScatterGatherOut command.  Takes as an
+    argument the ops list that was used in the original command so that the
+    response can be decoded into a list of tuples:
+
+        (CMD1, Error 1, Payload 1)
+        ...
+        (CMDN, Error N, Payload N)
+
+    Availability: V3J2, V2J26.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x52      |
+        +----------------+----------------+
+
+    RX_EP (N*8 bytes):
+        +-------------------------------------------------------------------+
+        |                             Payload 1                             |
+        +-------------------------------------------------------------------+
+        |                             Payload 2                             |
+        +-------------------------------------------------------------------+
+        |                                ...                                |
+        +-------------------------------------------------------------------+
+        |                             Payload N                             |
+        +-------------------------------------------------------------------+
+        |                              Error 1                              |
+        +-------------------------------------------------------------------+
+        |                              Error 2                              |
+        +-------------------------------------------------------------------+
+        |                                ...                                |
+        +-------------------------------------------------------------------+
+        |                              Error N                              |
+        +-------------------------------------------------------------------+
+
+        Th payload entries are ignored in all cases except reads and are
+        returned from the probe as follows:
+            CMD_ADDRESS:    0
+            CMD_WRITE:      0
+            CMD_READ:       The 32-bit read result.
+            CMD_APNUM:      0
+
+        The error entries are the standard error status codes used in other
+        commands.
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+
+    def __init__(self, ops):
+        self.RSP_LEN = len(ops) * 8
+        super().__init__(pack('<BB', 0xF2, 0x52))
+        self.ops = ops
+
+    def decode(self, rsp):
+        N      = len(self.ops)
+        result = []
+        for i, op in enumerate(self.ops):
+            payload = unpack_from('<I', rsp, i * 4)
+            error   = unpack_from('<I', rsp, (i + N) * 4)
+            result.append((op[0], error, payload))
+
+        return result
+
+
+class ScatterGatherGetMaxOps(STLinkCommand):
+    '''
+    Get the number of command opcodes that can be processed in a single scatter-
+    gather command.  This command only works if the probe is in DEBUG mode.
+
+    Availability: V3J2, V2J26.
+
+    TX_EP (CDB):
+        +----------------+----------------+
+        |      0xF2      |      0x53      |
+        +----------------+----------------+
+
+    RX_EP (2 bytes):
+        +---------------------------------+
+        |      Max supported SG ops       |
+        +---------------------------------+
+    '''
+    CMD_FLAGS = HAS_DATA_IN_PHASE
+    RSP_LEN   = 2
+
+    def __init__(self):
+        super().__init__(pack('<BB', 0xF2, 0x53))
+
+    def decode(self, rsp):
+        return unpack('<H', rsp)[0]
