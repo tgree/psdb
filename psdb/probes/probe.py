@@ -151,7 +151,7 @@ class Probe(object):
         both the connection process and the component probing will take place
         while the MCU is held in SRST.  Reset vector catch will then be
         configured, SRST will be released and the MCU will then end up halted
-        right in the reset vector and we return
+        right in the reset vector and we return.
 
         If connect_under_reset is False, the SRST line will be deasserted (in
         case it had been previously asserted - we assume that the MCU does not
