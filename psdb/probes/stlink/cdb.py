@@ -375,7 +375,7 @@ class SetSWDCLKDivisor(STLinkCommand):
                 798 |    5 |
             --------+------+------
 
-    Availability: V2 with J >= 22.  On V3, use SetCOMFreq instead.
+    Availability: V2 with J >= 22.  On V3, use SetComFreq instead.
 
     TX_EP (CDB):
         +----------------+----------------+---------------------------------+
