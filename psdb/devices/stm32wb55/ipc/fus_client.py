@@ -93,11 +93,11 @@ class FUSClient(object):
 
     def upgrade_fus_firmware(self, bin_dir):
         '''
-        Upgrades to the next binary in the chain to the latest FUS firmware.
-        The following images must be present in the bin_dir directory:
+        Upgrades the binary to the latest FUS firmware.  The following images
+        must be present in the bin_dir directory:
 
-            stm32wb5x_FUS_fw_1_0_2.bin - 1.0.2 FUS binary
-            stm32wb5x_FUS_fw.bin       - 1.1.0 FUS binary
+            stm32wb5x_FUS_fw_for_fus_0_5_3.bin  - 1.2.0 FUS binary
+            stm32wb5x_FUS_fw.bin                - 1.2.0 FUS binary
 
         This process involves multiple reboots (3 or 4) which invalidates the
         debugger connection and target object.  The correct idiom for use is:
@@ -109,16 +109,12 @@ class FUSClient(object):
         assert client.get_ws_version() == 0
 
         version = (client.get_fus_version() & 0xFFFFFF00)
-        if version == binaries.FUS_BINARY_LATEST.version:
-            print('FUS already at latest version %s.'
-                  % binaries.FUS_BINARY_LATEST.version_str)
-            return t, client
-        elif version == 0x00050300:
-            fb = binaries.find_fus_binary(0x01000200)
-        elif version == 0x01000200:
-            fb = binaries.find_fus_binary(0x01010000)
-        else:
+        fb      = binaries.find_fus_binary(version)
+        if fb is None:
             raise Exception("Don't know how to upgrade from 0x%08X" % version)
+        if fb.version == version:
+            print('FUS already at latest version %s.' % fb.version_str)
+            return t, client
 
         print('Upgrading to %s' % fb.version_str)
         bin_path = os.path.join(bin_dir, fb.fname)
