@@ -35,6 +35,10 @@ class FUSClient(object):
             data += b'\x00\x00\x00\x00'
 
         addr = fb.addr[t.flash.flash_size]
+        if addr is None:
+            raise Exception("Don't know where to burn image on STM32WB55 "
+                            "device with %u bytes of flash." %
+                            t.flash.flash_size)
         t.flash.burn_dv([(addr, data)])
 
         print('Executing FUS_FW_UPGRADE...')
