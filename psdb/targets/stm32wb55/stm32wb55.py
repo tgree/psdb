@@ -56,10 +56,10 @@ class STM32WB55(Target):
         self.devs['SRAM2a'].size = self.flash.user_sram2a_size
         self.devs['SRAM2b'].size = self.flash.user_sram2b_size
 
-        ipccdba = self.flash.get_ipccdba()
-        sram1   = self.devs['SRAM1']
-        sram2a  = self.devs['SRAM2a']
-        size    = sram2a.size - (ipccdba - sram2a.dev_base)
+        ipccdba  = self.flash.get_ipccdba()
+        sram1    = self.devs['SRAM1']
+        sram2a   = self.devs['SRAM2a']
+        size     = sram2a.size - (ipccdba - sram2a.dev_base)
         self.ipc = IPC(self, self.ahb_ap, ipccdba, size, sram1.dev_base)
 
     def __repr__(self):
