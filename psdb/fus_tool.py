@@ -36,6 +36,7 @@ def main(rv):
     print('       Flash size: %u' % target.flash.flash_size)
     print('Flash sector size: %u' % target.flash.sector_size)
     print('IPCC mailbox addr: 0x%08X' % target.flash.get_ipccdba())
+    print('    IPCC RAM size: %u' % target.ipc.ram_size)
 
     # Start the existing CPU2 firmware and get a client object to interact with
     # it.
