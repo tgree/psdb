@@ -179,7 +179,8 @@ class Probe(object):
 
         self.cpus = []
         for _, ap in self.aps.items():
-            ap.base_component = ap.probe_components(verbose=verbose)
+            if hasattr(ap, 'probe_components'):
+                ap.base_component = ap.probe_components(verbose=verbose)
 
         if connect_under_reset:
             for c in self.cpus:
