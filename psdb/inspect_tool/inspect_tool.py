@@ -165,11 +165,15 @@ def _main():
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--resume', '-r', action='store_true')
+    parser.add_argument('--intf', '-i')
     args = parser.parse_args()
 
     # Find a debug probe.
     try:
-        args.probe = psdb.probes.find_default(usb_path=args.usb_path)
+        if args.intf:
+            args.probe = psdb.probes.xtswd.XTSWD(args.intf)
+        else:
+            args.probe = psdb.probes.find_default(usb_path=args.usb_path)
     except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
