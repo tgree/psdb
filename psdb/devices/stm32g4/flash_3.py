@@ -107,10 +107,11 @@ class FLASH_3(flash_type1.FLASH):
     def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
                  otp_base, otp_len, **kwargs):
         optr = ap.read_32(dev_base + 0x20)
-        if optr == 0:
-            raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
-                            'try using --srst')
-        sector_size = 2048 if optr & (1<<22) else 4096
+        #if optr == 0:
+        #    raise Exception('Unexpected OPTR=0, debug clocks may be disabled; '
+        #                    'try using --srst')
+        #sector_size = 2048 if optr & (1<<22) else 4096
+        sector_size = 2048
 
         super(FLASH_3, self).__init__(target, FLASH_3.REGS, sector_size, ap,
                                       name, dev_base, mem_base, max_write_freq,
