@@ -329,6 +329,12 @@ class GDBServer(object):
             return self._handle_insert_software_breakpoint(pkt)
         if pkt[1:3] == b'1,':
             return self._handle_insert_hardware_breakpoint(pkt)
+        if pkt[1:3] == b'2,':
+            return self._handle_insert_write_watchpoint(pkt)
+        if pkt[1:3] == b'3,':
+            return self._handle_insert_read_watchpoint(pkt)
+        if pkt[1:3] == b'4,':
+            return self._handle_insert_access_watchpoint(pkt)
         return b'E01'
 
     def _handle_insert_software_breakpoint(self, pkt):
@@ -345,6 +351,18 @@ class GDBServer(object):
         print('Inserting HW breakpoint 0x%08X of kind 0x%X' % (addr, kind))
         self.cpu.bpu.insert_breakpoint(addr)
         return b'OK'
+
+    def _handle_insert_write_watchpoint(self, pkt):
+        print('Write watchpoints not supported!')
+        return b'E01'
+
+    def _handle_insert_read_watchpoint(self, pkt):
+        print('Read watchpoints not supported!')
+        return b'E01'
+
+    def _handle_insert_access_watchpoint(self, pkt):
+        print('Access watchpoints not supported!')
+        return b'E01'
 
     def _handle_remove_breakpoint(self, pkt):
         if pkt[1:3] == b'0,':
