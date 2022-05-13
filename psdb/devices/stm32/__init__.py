@@ -15,6 +15,7 @@ from .general_purpose_timer_32 import GPT32
 from .usb import USB
 from .usb_hs import USB_HS
 from .crs import CRS
+from .lpuart import LPUART
 from . import flash_type1
 
 
@@ -35,6 +36,7 @@ __all__ = ['ACT',
            'GPT16x2',
            'GPT16x4',
            'GPT32',
+           'LPUART',
            'USB',
            'USB_HS',
            ]
