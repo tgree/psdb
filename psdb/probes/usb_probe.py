@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+import usb.core
+
 from . import probe
 import psdb
 
@@ -23,12 +25,25 @@ class Probe(probe.Probe):
         if usb_reset:
             usb_dev.reset()
 
-        if (usb_dev.get_active_configuration().bConfigurationValue !=
-                configurations[0].bConfigurationValue):
-            usb_dev.set_configuration(configurations[0].bConfigurationValue)
+        self._set_configuration(configurations[0].bConfigurationValue)
 
     def __str__(self):
         return '%s Debug Probe at %s' % (self.name, self.usb_path)
+
+    def _get_active_configuration(self):
+        try:
+            return self.usb_dev.get_active_configuration()
+        except usb.core.USBError as e:
+            if e.strerror != 'Configuration not set':
+                raise
+        return None
+
+    def _set_configuration(self, bConfigurationValue, force=False):
+        cfg = self._get_active_configuration()
+        if (cfg is None or cfg.bConfigurationValue != bConfigurationValue or
+                force):
+            usb.util.dispose_resources(self.usb_dev)
+            self.usb_dev.set_configuration(bConfigurationValue)
 
     def show_info(self):
         print(('============= %s Bus 0x%02X Address 0x%02X %04X:%04X '
