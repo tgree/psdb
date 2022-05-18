@@ -131,6 +131,23 @@ class Probe(object):
         if data:
             self._bulk_write_8(data, addr, ap_num)
 
+    def exec_cmd_list(self, cmd_list):
+        read_vals = []
+        for cmd in cmd_list:
+            if isinstance(cmd, psdb.devices.ReadCommand):
+                assert cmd.ap.db == self
+                if cmd.size == 4:
+                    read_vals.append(self.read_32(cmd.addr, cmd.ap.ap_num))
+                elif cmd.size == 2:
+                    read_vals.append(self.read_16(cmd.addr, cmd.ap.ap_num))
+                elif cmd.size == 1:
+                    read_vals.append(self.read_8(cmd.addr, cmd.ap.ap_num))
+                else:
+                    raise Exception('Illegal size %u in cmd list.' % cmd.size)
+            else:
+                raise Exception('Unrecognized command: %s' % cmd)
+        return read_vals
+
     def halt(self):
         for c in self.cpus:
             c.halt()
