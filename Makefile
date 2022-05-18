@@ -1,4 +1,4 @@
-PSDB_VERS := 0.9.9
+PSDB_VERS := 1.0.0
 PSDB_DEPS := \
 		setup.cfg                           \
 		setup.py							\
@@ -22,6 +22,7 @@ PSDB_DEPS := \
 		psdb/probes/*.py					\
 		psdb/probes/stlink/*.py				\
 		psdb/probes/xds110/*.py				\
+		psdb/probes/xtswd/*.py				\
 		psdb/targets/*.py					\
 		psdb/targets/msp432/*.py			\
 		psdb/targets/stm32g0/*.py   		\
