@@ -43,6 +43,13 @@ def convert_positional_to_adjacency(fields):
     return generated_fields
 
 
+class ReadCommand:
+    def __init__(self, ap, addr, size):
+        self.ap   = ap
+        self.addr = addr
+        self.size = size
+
+
 class Reg(object):
     READABLE     = (1 << 0)
     WRITEABLE    = (1 << 1)
@@ -81,6 +88,9 @@ class Reg32(Reg):
     def read(self, dev):
         return dev._read_32(self.offset)
 
+    def read_cmd(self, dev):
+        return dev._read_32_cmd(self.offset)
+
     def write(self, dev, v):
         dev._write_32(v, self.offset)
 
@@ -91,6 +101,9 @@ class Reg32R(Reg):
 
     def read(self, dev):
         return dev._read_32(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_32_cmd(self.offset)
 
 
 class Reg32W(Reg):
@@ -108,6 +121,9 @@ class Reg32RS(Reg):
 
     def read(self, dev):
         return dev._read_32(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_32_cmd(self.offset)
 
 
 class AReg32(Reg32):
@@ -216,6 +232,9 @@ class Device(object):
 
     def _read_32(self, offset):
         return self.ap.read_32(self.dev_base + offset)
+
+    def _read_32_cmd(self, offset):
+        return ReadCommand(self.ap, self.dev_base + offset, 4)
 
     def _write_32(self, v, offset):
         self.ap.write_32(v, self.dev_base + offset)
