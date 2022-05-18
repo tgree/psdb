@@ -389,6 +389,7 @@ def main(rv):
     if c.bpu is not None:
         c.bpu.reset()
         print('CPU%u: %s' % (rv.cpu, c.bpu))
+    print('CPU%u: %s' % (rv.cpu, c.devs['DWT']))
 
     if not rv.halt:
         target.resume()
