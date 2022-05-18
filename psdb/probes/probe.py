@@ -29,6 +29,21 @@ class Probe(object):
     def _bulk_read_8(self, addr, n, ap_num=0):
         raise NotImplementedError
 
+    def _bulk_read_16(self, addr, n, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_read_32(self, addr, n, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_write_8(self, data, addr, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_write_16(self, data, addr, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_write_32(self, data, addr, ap_num=0):
+        raise NotImplementedError
+
     def read_32(self, addr, ap_num=0):
         return unpack('<I', self._bulk_read_32(addr, 1, ap_num=ap_num))[0]
 
