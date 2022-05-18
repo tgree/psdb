@@ -3,12 +3,12 @@ from .ws_client import WSClient
 from .ble_client import BLEClient
 
 
-'''
-These are all defined in the STM32CubeWB git repository under:
-
-    Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci/shci.h
-'''
 class WS_TYPE(object):
+    '''
+    These are all defined in the STM32CubeWB git repository under:
+
+        Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/shci/shci.h
+    '''
     UNKNOWN                   = -1
     BLE_FULL                  = 0x01
     BLE_HCI                   = 0x02

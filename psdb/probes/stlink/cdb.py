@@ -496,6 +496,29 @@ class SetComFreq(STLinkCommand):
         return act_freq_khz
 
 
+class SetSTLinkPrescaler(STLinkCommand):
+    '''
+    Sets the ST-Link's HCLK prescaler to 1 (default), 2 or 4.
+
+    Availability: V3.
+
+    TX_EP (CDB):
+        +----------------+----------------+----------------+
+        |      0xF2      |      0x63      |   prescaler    |
+        +----------------+----------------+----------------+
+
+    RX_EP (8 bytes):
+        +----------------+--------------------------------------------------+
+        |     STATUS     |                       --                         |
+        +----------------+--------------------------------------------------+
+        |                                --                                 |
+        +-------------------------------------------------------------------+
+
+    Note that the expected status is 0x40 (JTAG configuration changed) instead
+    of the normal 0x80 (OK).
+    '''
+
+
 class BulkRead8(STLinkCommand):
     '''
     Reads the specified number of bytes from the specified AP and address.  One

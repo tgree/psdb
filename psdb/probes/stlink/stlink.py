@@ -56,7 +56,6 @@ class STLink(usb_probe.Probe):
     '''
     def __init__(self, usb_dev, name):
         super().__init__(usb_dev, name)
-        self.dpidr        = None
         self.features     = 0
         self.max_sg_ops   = 0
         self.max_swo_freq = 0

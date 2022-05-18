@@ -13,6 +13,7 @@ class Probe(object):
         self.aps    = {}
         self.cpus   = []
         self.target = None
+        self.dpidr  = None
 
     def assert_srst(self):
         raise NotImplementedError
@@ -27,6 +28,21 @@ class Probe(object):
         raise NotImplementedError
 
     def _bulk_read_8(self, addr, n, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_read_16(self, addr, n, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_read_32(self, addr, n, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_write_8(self, data, addr, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_write_16(self, data, addr, ap_num=0):
+        raise NotImplementedError
+
+    def _bulk_write_32(self, data, addr, ap_num=0):
         raise NotImplementedError
 
     def read_32(self, addr, ap_num=0):
@@ -116,6 +132,23 @@ class Probe(object):
         if data:
             self._bulk_write_8(data, addr, ap_num)
 
+    def exec_cmd_list(self, cmd_list):
+        read_vals = []
+        for cmd in cmd_list:
+            if isinstance(cmd, psdb.devices.ReadCommand):
+                assert cmd.ap.db == self
+                if cmd.size == 4:
+                    read_vals.append(self.read_32(cmd.addr, cmd.ap.ap_num))
+                elif cmd.size == 2:
+                    read_vals.append(self.read_16(cmd.addr, cmd.ap.ap_num))
+                elif cmd.size == 1:
+                    read_vals.append(self.read_8(cmd.addr, cmd.ap.ap_num))
+                else:
+                    raise Exception('Illegal size %u in cmd list.' % cmd.size)
+            else:
+                raise Exception('Unrecognized command: %s' % cmd)
+        return read_vals
+
     def halt(self):
         for c in self.cpus:
             c.halt()
@@ -179,7 +212,8 @@ class Probe(object):
 
         self.cpus = []
         for _, ap in self.aps.items():
-            ap.base_component = ap.probe_components(verbose=verbose)
+            if hasattr(ap, 'probe_components'):
+                ap.base_component = ap.probe_components(verbose=verbose)
 
         if connect_under_reset:
             for c in self.cpus:

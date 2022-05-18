@@ -55,12 +55,23 @@ class DeviceRegisterWindow:
         self.decode_win.window.hide()
 
     def update_reg_vals(self):
+        cmd_list = []
+        for i, r in enumerate(self.dev.regs):
+            if i == self.selection and self.edit_val is not None:
+                continue
+            elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
+                cmd_list.append(r.read_cmd(self.dev))
+            else:
+                continue
+
+        read_vals = self.dev.ap.db.exec_cmd_list(cmd_list)
+
         self.reg_vals = []
         for i, r in enumerate(self.dev.regs):
             if i == self.selection and self.edit_val is not None:
                 self.reg_vals.append(self.edit_val)
             elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
-                self.reg_vals.append(r.read(self.dev))
+                self.reg_vals.append(read_vals.pop(0))
             else:
                 self.reg_vals.append(None)
 

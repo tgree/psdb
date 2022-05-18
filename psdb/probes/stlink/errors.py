@@ -22,6 +22,7 @@ SWD_AP_WDATA_ERROR          = 0x18
 SWD_AP_STICKY_ERROR         = 0x19
 SWD_AP_STICKY_OVERRUN_ERROR = 0x1A
 SWD_BAD_AP_ERROR            = 0x1D
+JTAG_CONF_CHANGED           = 0x40
 DEBUG_OK                    = 0x80
 DEBUG_FAULT                 = 0x81
 
