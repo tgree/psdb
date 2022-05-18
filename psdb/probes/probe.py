@@ -13,6 +13,7 @@ class Probe(object):
         self.aps    = {}
         self.cpus   = []
         self.target = None
+        self.dpidr  = None
 
     def assert_srst(self):
         raise NotImplementedError
