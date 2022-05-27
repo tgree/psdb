@@ -227,5 +227,5 @@ class XTSWD(usb_probe.Probe):
 
 def enumerate():
     devices = usb.core.find(find_all=True, idVendor=0x0483, idProduct=0xA34E,
-                            product='XtalX SWD')
+                            bDeviceClass=0xFF, bDeviceSubClass=0x03)
     return [XTSWD(d) for d in devices]
