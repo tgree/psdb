@@ -7,9 +7,19 @@ from builtins import range
 from struct import pack, unpack
 
 
+class Enumeration:
+    def __init__(self, cls):
+        self.cls = cls
+
+    def make_probe(self):
+        raise NotImplementedError
+
+    def show_info(self):
+        raise NotImplementedError
+
+
 class Probe(object):
-    def __init__(self, name):
-        self.name   = name
+    def __init__(self):
         self.aps    = {}
         self.cpus   = []
         self.target = None

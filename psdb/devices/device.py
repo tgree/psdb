@@ -114,6 +114,22 @@ class Reg32W(Reg):
         dev._write_32(v, self.offset)
 
 
+class Reg32S(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 4,
+                         Reg.WRITEABLE | Reg.READABLE | Reg.SIDE_EFFECTS,
+                         fields)
+
+    def read(self, dev):
+        return dev._read_32(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_32_cmd(self.offset)
+
+    def write(self, dev, v):
+        dev._write_32(v, self.offset)
+
+
 class Reg32RS(Reg):
     def __init__(self, name, offset, fields=[]):
         super().__init__(name, offset, 4, Reg.READABLE | Reg.SIDE_EFFECTS,
@@ -124,6 +140,36 @@ class Reg32RS(Reg):
 
     def read_cmd(self, dev):
         return dev._read_32_cmd(self.offset)
+
+
+class Reg8(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 1, Reg.READABLE | Reg.WRITEABLE, fields)
+
+    def read(self, dev):
+        return dev._read_8(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_8_cmd(self.offset)
+
+    def write(self, dev, v):
+        dev._write_8(v, self.offset)
+
+
+class Reg8S(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 1,
+                         Reg.READABLE | Reg.WRITEABLE | Reg.SIDE_EFFECTS,
+                         fields)
+
+    def read(self, dev):
+        return dev._read_8(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_8_cmd(self.offset)
+
+    def write(self, dev, v):
+        dev._write_8(v, self.offset)
 
 
 class AReg32(Reg32):
@@ -145,6 +191,14 @@ class AReg32R(Reg32R):
 class AReg32W(Reg32W):
     '''
     Same as Reg32W but uses first and last bit positions rather than length.
+    '''
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, convert_positional_to_adjacency(fields))
+
+
+class AReg32S(Reg32S):
+    '''
+    Same as Reg32S but uses first and last bit positions rather than length.
     '''
     def __init__(self, name, offset, fields=[]):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
@@ -230,11 +284,20 @@ class Device(object):
         else:
             super(Device, self).__setattr__(name, value)
 
+    def _read_8(self, offset):
+        return self.ap.read_8(self.dev_base + offset)
+
+    def _read_8_cmd(self, offset):
+        return ReadCommand(self.ap, self.dev_base + offset, 1)
+
     def _read_32(self, offset):
         return self.ap.read_32(self.dev_base + offset)
 
     def _read_32_cmd(self, offset):
         return ReadCommand(self.ap, self.dev_base + offset, 4)
+
+    def _write_8(self, v, offset):
+        self.ap.write_8(v, self.dev_base + offset)
 
     def _write_32(self, v, offset):
         self.ap.write_32(v, self.dev_base + offset)

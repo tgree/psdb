@@ -54,8 +54,8 @@ class STLink(usb_probe.Probe):
     for the STM32H7xx chip.  The USART3 device from the MCU is connected to the
     debug probe as a virtual COM port.
     '''
-    def __init__(self, usb_dev, name):
-        super().__init__(usb_dev, name)
+    def __init__(self, usb_dev):
+        super().__init__(usb_dev)
         self.features     = 0
         self.max_sg_ops   = 0
         self.max_swo_freq = 0

@@ -16,6 +16,7 @@ from .usb import USB
 from .usb_hs import USB_HS
 from .crs import CRS
 from .lpuart import LPUART
+from .qspi import QUADSPI
 from . import flash_type1
 
 
@@ -37,6 +38,7 @@ __all__ = ['ACT',
            'GPT16x4',
            'GPT32',
            'LPUART',
+           'QUADSPI',
            'USB',
            'USB_HS',
            ]
