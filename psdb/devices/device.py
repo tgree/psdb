@@ -114,6 +114,22 @@ class Reg32W(Reg):
         dev._write_32(v, self.offset)
 
 
+class Reg32S(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 4,
+                         Reg.WRITEABLE | Reg.READABLE | Reg.SIDE_EFFECTS,
+                         fields)
+
+    def read(self, dev):
+        return dev._read_32(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_32_cmd(self.offset)
+
+    def write(self, dev, v):
+        dev._write_32(v, self.offset)
+
+
 class Reg32RS(Reg):
     def __init__(self, name, offset, fields=[]):
         super().__init__(name, offset, 4, Reg.READABLE | Reg.SIDE_EFFECTS,
@@ -145,6 +161,14 @@ class AReg32R(Reg32R):
 class AReg32W(Reg32W):
     '''
     Same as Reg32W but uses first and last bit positions rather than length.
+    '''
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, convert_positional_to_adjacency(fields))
+
+
+class AReg32S(Reg32S):
+    '''
+    Same as Reg32S but uses first and last bit positions rather than length.
     '''
     def __init__(self, name, offset, fields=[]):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
