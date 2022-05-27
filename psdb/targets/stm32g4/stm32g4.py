@@ -233,6 +233,44 @@ class STM32G4(Target):
         rcc.enable_rtc()
         rtc.init()
 
+    def configure_qspi(self):
+        rcc   = self.devs['RCC']
+        gpioa = self.devs['GPIOA']
+        gpiob = self.devs['GPIOB']
+        rcc.enable_device('GPIOA')
+        rcc.enable_device('GPIOB')
+        gpioa._OSPEEDR.OSPEED6  = 2
+        gpioa._OSPEEDR.OSPEED7  = 2
+        gpiob._OSPEEDR.OSPEED0  = 2
+        gpiob._OSPEEDR.OSPEED1  = 2
+        gpiob._OSPEEDR.OSPEED10 = 2
+        gpiob._OSPEEDR.OSPEED11 = 2
+        gpioa._AFRL.AFSEL6      = 10
+        gpioa._AFRL.AFSEL7      = 10
+        gpiob._AFRL.AFSEL0      = 10
+        gpiob._AFRL.AFSEL1      = 10
+        gpiob._AFRH.AFSEL10     = 10
+        gpiob._AFRH.AFSEL11     = 10
+        gpioa._MODER.MODE6      = 2
+        gpioa._MODER.MODE7      = 2
+        gpiob._MODER.MODE0      = 2
+        gpiob._MODER.MODE1      = 2
+        gpiob._MODER.MODE10     = 2
+        gpiob._MODER.MODE11     = 2
+
+        qspi = self.devs['QUADSPI']
+        rcc.enable_device('QSPI')
+        return qspi
+
+    def probe_qspi(self, qspi_size):
+        qspi = self.configure_qspi()
+        qspi.set_flash_size(qspi_size)
+        dev_id = qspi.release_from_power_down_read_dev_id()
+        print('  Dev ID: 0x%02X' % dev_id)
+        m_id, d_id = qspi.read_identification()
+        print('JEDEC ID: Manufacturer 0x%02X Device 0x%04X' % (m_id, d_id))
+        return qspi
+
     @staticmethod
     def is_mcu(db):
         # Only APSEL 0 should be populated.
