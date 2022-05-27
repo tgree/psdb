@@ -142,6 +142,36 @@ class Reg32RS(Reg):
         return dev._read_32_cmd(self.offset)
 
 
+class Reg8(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 1, Reg.READABLE | Reg.WRITEABLE, fields)
+
+    def read(self, dev):
+        return dev._read_8(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_8_cmd(self.offset)
+
+    def write(self, dev, v):
+        dev._write_8(v, self.offset)
+
+
+class Reg8S(Reg):
+    def __init__(self, name, offset, fields=[]):
+        super().__init__(name, offset, 1,
+                         Reg.READABLE | Reg.WRITEABLE | Reg.SIDE_EFFECTS,
+                         fields)
+
+    def read(self, dev):
+        return dev._read_8(self.offset)
+
+    def read_cmd(self, dev):
+        return dev._read_8_cmd(self.offset)
+
+    def write(self, dev, v):
+        dev._write_8(v, self.offset)
+
+
 class AReg32(Reg32):
     '''
     Same as Reg32 but uses first and last bit positions rather than length.
@@ -254,11 +284,20 @@ class Device(object):
         else:
             super(Device, self).__setattr__(name, value)
 
+    def _read_8(self, offset):
+        return self.ap.read_8(self.dev_base + offset)
+
+    def _read_8_cmd(self, offset):
+        return ReadCommand(self.ap, self.dev_base + offset, 1)
+
     def _read_32(self, offset):
         return self.ap.read_32(self.dev_base + offset)
 
     def _read_32_cmd(self, offset):
         return ReadCommand(self.ap, self.dev_base + offset, 4)
+
+    def _write_8(self, v, offset):
+        self.ap.write_8(v, self.dev_base + offset)
 
     def _write_32(self, v, offset):
         self.ap.write_32(v, self.dev_base + offset)
