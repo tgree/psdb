@@ -41,6 +41,10 @@ class DeviceRegisterWindow:
             return None
         return self.reg_vals[self.selection]
 
+    def read_selected_reg(self):
+        v = self.dev.regs[self.selection].read(self.dev)
+        self.reg_vals[self.selection] = v
+
     def set_dev(self, dev):
         self.dev         = dev
         self.reg_vals    = [None] * len(self.dev.regs)
@@ -202,3 +206,7 @@ class DeviceRegisterWindow:
                 r = self.get_selected_reg()
                 r.write(self.dev, self.edit_val)
                 self.edit_val = None
+        elif c == ord(' '):
+            if self.edit_val is None:
+                self.read_selected_reg()
+                self.draw_item(self.selection)
