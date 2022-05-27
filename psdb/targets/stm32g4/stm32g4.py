@@ -91,6 +91,7 @@ DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
              (stm32.DAC_Saw,   'DAC2',        0x50000C00),
              (stm32.DAC_Saw,   'DAC3',        0x50001000),
              (stm32.DAC_Saw,   'DAC4',        0x50001400),
+             (stm32.QUADSPI,   'QUADSPI',     0xA0001000),
              (stm32g4.DBGMCU,  'DBGMCU',      0xE0042000),
              ]
 
@@ -136,6 +137,7 @@ DEVICES_4 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
              (stm32.ADC,       'ADC3',        0x50000400, 3, 1),
              (stm32.DAC_Saw,   'DAC1',        0x50000800),
              (stm32.DAC_Saw,   'DAC3',        0x50001000),
+             (stm32.QUADSPI,   'QUADSPI',     0xA0001000),
              (stm32g4.DBGMCU,  'DBGMCU',      0xE0042000),
              ]
 
