@@ -14,7 +14,7 @@ class DeviceRegisterWindow:
         self.selection    = 0
         self.pos          = 0
         self.dev          = None
-        self.reg_vals     = []
+        self.reg_vals     = None
         self.edit_val     = None
 
         self.window = it.workspace.make_anchored_window(
@@ -43,6 +43,7 @@ class DeviceRegisterWindow:
 
     def set_dev(self, dev):
         self.dev         = dev
+        self.reg_vals    = [None] * len(self.dev.regs)
         self.top         = 0
         self.selection   = 0
         self.pos         = 0
@@ -66,14 +67,11 @@ class DeviceRegisterWindow:
 
         read_vals = self.dev.ap.db.exec_cmd_list(cmd_list)
 
-        self.reg_vals = []
         for i, r in enumerate(self.dev.regs):
             if i == self.selection and self.edit_val is not None:
-                self.reg_vals.append(self.edit_val)
+                self.reg_vals[i] = self.edit_val
             elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
-                self.reg_vals.append(read_vals.pop(0))
-            else:
-                self.reg_vals.append(None)
+                self.reg_vals[i] = read_vals.pop(0)
 
     def draw_item(self, i):
         rows = self.window.content.height
