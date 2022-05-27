@@ -85,8 +85,10 @@ class XTSWDCommandException(psdb.ProbeException):
 
 
 class XTSWD(usb_probe.Probe):
+    NAME = 'XTSWD'
+
     def __init__(self, usb_dev):
-        super().__init__(usb_dev, 'XTSWD', usb_reset=True)
+        super().__init__(usb_dev, usb_reset=True)
         self.tag = random.randint(0, 65535)
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
 
@@ -216,16 +218,26 @@ class XTSWD(usb_probe.Probe):
         trace('CTRL/STAT: 0x%08X' % rsp.params[1])
         trace('CSW:       0x%08X' % self.read_ap_reg(0, 0x0))
 
-    def show_info(self):
-        super().show_info()
-        v = self.usb_dev.bcdDevice
-        print('         SHA1: %s' % self.git_sha1)
+    @staticmethod
+    def show_fw_version(usb_dev):
+        v = usb_dev.bcdDevice
         print(' Firmware Ver: %u.%u.%u' % ((v >> 8) & 0xF,
                                            (v >> 4) & 0xF,
                                            (v >> 0) & 0xF))
 
+    @classmethod
+    def show_info(cls, usb_dev):
+        super().show_info(usb_dev)
+        XTSWD.show_fw_version(usb_dev)
 
-def enumerate():
-    devices = usb.core.find(find_all=True, idVendor=0x0483, idProduct=0xA34E,
-                            bDeviceClass=0xFF, bDeviceSubClass=0x03)
-    return [XTSWD(d) for d in devices]
+    def show_detailed_info(self):
+        super().show_info(self.usb_dev)
+        print('         SHA1: %s' % self.git_sha1)
+        self.show_fw_version(self.usb_dev)
+
+
+def enumerate(**kwargs):
+    return [usb_probe.Enumeration(XTSWD, usb_dev)
+            for usb_dev in usb.core.find(find_all=True, idVendor=0x0483,
+                                         idProduct=0xA34E, bDeviceClass=0xFF,
+                                         bDeviceSubClass=0x03, **kwargs)]

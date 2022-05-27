@@ -5,9 +5,26 @@ from . import probe
 import psdb
 
 
+def usb_path(usb_dev):
+    return '%s:%s' % (
+        usb_dev.bus, '.'.join('%u' % n for n in usb_dev.port_numbers))
+
+
+class Enumeration(probe.Enumeration):
+    def __init__(self, cls, usb_dev):
+        super().__init__(cls)
+        self.usb_dev = usb_dev
+
+    def make_probe(self):
+        return self.cls(self.usb_dev)
+
+    def show_info(self):
+        return self.cls.show_info(self.usb_dev)
+
+
 class Probe(probe.Probe):
-    def __init__(self, usb_dev, name, usb_reset=False):
-        super().__init__(name)
+    def __init__(self, usb_dev, usb_reset=False):
+        super().__init__()
         self.usb_dev = usb_dev
         try:
             self.serial_num = usb_dev.serial_number
@@ -16,9 +33,6 @@ class Probe(probe.Probe):
                 raise psdb.ProbeException('Device has no langid; ensure '
                                           'running as root!')
 
-        self.usb_path = '%s:%s' % (
-                self.usb_dev.bus,
-                '.'.join('%u' % n for n in self.usb_dev.port_numbers))
         configurations = usb_dev.configurations()
         assert len(configurations) == 1
 
@@ -28,7 +42,7 @@ class Probe(probe.Probe):
         self._set_configuration(configurations[0].bConfigurationValue)
 
     def __str__(self):
-        return '%s Debug Probe at %s' % (self.name, self.usb_path)
+        return '%s Debug Probe at %s' % (self.NAME, usb_path(self.usb_dev))
 
     def _get_active_configuration(self):
         try:
@@ -45,12 +59,13 @@ class Probe(probe.Probe):
             usb.util.dispose_resources(self.usb_dev)
             self.usb_dev.set_configuration(bConfigurationValue)
 
-    def show_info(self):
+    @classmethod
+    def show_info(cls, usb_dev):
         print(('============= %s Bus 0x%02X Address 0x%02X %04X:%04X '
-               '=============' % (self.name, self.usb_dev.bus,
-                                  self.usb_dev.address, self.usb_dev.idVendor,
-                                  self.usb_dev.idProduct)))
-        print(' Manufacturer: %s' % self.usb_dev.manufacturer)
-        print('      Product: %s' % self.usb_dev.product)
-        print('Serial Number: %s' % self.usb_dev.serial_number)
-        print('     USB Path: %s' % self.usb_path)
+               '=============' % (cls.NAME, usb_dev.bus,
+                                  usb_dev.address, usb_dev.idVendor,
+                                  usb_dev.idProduct)))
+        print(' Manufacturer: %s' % usb_dev.manufacturer)
+        print('      Product: %s' % usb_dev.product)
+        print('Serial Number: %s' % usb_dev.serial_number)
+        print('     USB Path: %s' % usb_path(usb_dev))

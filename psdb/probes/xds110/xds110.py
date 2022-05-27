@@ -46,8 +46,10 @@ class XDS110CommandException(psdb.ProbeException):
 
 
 class XDS110(usb_probe.Probe):
+    NAME = 'XDS110'
+
     def __init__(self, usb_dev):
-        super().__init__(usb_dev, 'XDS110')
+        super().__init__(usb_dev)
         self.fw_version, self.hw_version = self.xds_version()
         self.csw_bases = {}
         if self.fw_version < MIN_FW_VERSION:
@@ -402,20 +404,13 @@ class XDS110(usb_probe.Probe):
             assert err == 0
         self.cmapi_acquire()
 
-    def show_info(self):
-        super().show_info()
+    def show_detailed_info(self):
+        super().show_info(self.usb_dev)
         print(' Hardware Ver: 0x%04X' % self.hw_version)
         print(' Firmware Ver: %s' % version_string(self.fw_version))
 
 
-def enumerate():
-    devices = usb.core.find(find_all=True, idVendor=0x0451, idProduct=0xBEF3)
-    good_devices = []
-    for d in devices:
-        try:
-            good_devices.append(XDS110(d))
-        except XDS110VersionException as e:
-            print('%s:%s: %s'
-                  % (d.bus, '.'.join('%u' % n for n in d.port_numbers), e))
-
-    return good_devices
+def enumerate(**kwargs):
+    return [usb_probe.Enumeration(XDS110, usb_dev)
+            for usb_dev in usb.core.find(find_all=True, idVendor=0x0451,
+                                         idProduct=0xBEF3, **kwargs)]

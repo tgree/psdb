@@ -4,6 +4,7 @@ import usb
 from . import stlink
 from . import cdb
 from . import errors
+from .. import usb_probe
 import psdb
 
 
@@ -32,8 +33,10 @@ class STLinkV3(stlink.STLink):
 
         0x3754 - STLINK-V3 in single-VCP mode (Nucleo)
     '''
+    NAME = 'STLinkV3'
+
     def __init__(self, usb_dev):
-        super().__init__(usb_dev, 'STLinkV3')
+        super().__init__(usb_dev)
         self._usb_version()
         assert self.ver_stlink == 3
 
@@ -103,17 +106,19 @@ class STLinkV3(stlink.STLink):
         '''
         return self._set_com_freq(freq_hz // 1000, is_jtag=False) * 1000
 
-    def show_info(self):
-        super().show_info()
+    def show_detailed_info(self):
+        super().show_info(self.usb_dev)
         print(' Firmware Ver: V%uJ%uM%uB%uS%u' % (
             self.ver_stlink, self.ver_jtag, self.ver_msd, self.ver_bridge,
             self.ver_swim))
 
 
-def is_stlink_v3(usb_dev):
-    return usb_dev.idVendor == 0x0483 and usb_dev.idProduct in V3_PIDS
+def enumerate(custom_match=None, **kwargs):
+    def is_stlink_v3(usb_dev):
+        if usb_dev.idProduct not in V3_PIDS:
+            return False
+        return custom_match(usb_dev) if custom_match is not None else True
 
-
-def enumerate():
-    devices = usb.core.find(find_all=True, custom_match=is_stlink_v3)
-    return [STLinkV3(d) for d in devices]
+    return [usb_probe.Enumeration(STLinkV3, usb_dev)
+            for usb_dev in usb.core.find(find_all=True, idVendor=0x0483,
+                                         custom_match=is_stlink_v3, **kwargs)]

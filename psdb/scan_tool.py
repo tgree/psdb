@@ -6,9 +6,19 @@ import sys
 
 
 def main():
-    for p in psdb.probes.get_probes():
-        p.show_info()
-        p.probe(verbose=True).resume()
+    for e in psdb.probes.enumerate_probes():
+        try:
+            p = e.make_probe()
+        except Exception as ex:
+            e.show_info()
+            print('Exception making probe: %s' % ex)
+            continue
+
+        p.show_detailed_info()
+        try:
+            p.probe(verbose=True).resume()
+        except Exception as ex:
+            print('Exception probing target: %s' % ex)
 
 
 def _main():
