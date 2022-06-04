@@ -58,6 +58,12 @@ install: psdb
 uninstall:
 	sudo $(PYTHON) -m pip uninstall psdb
 
+.PHONY: publish
+publish: psdb
+	$(PYTHON) -m twine upload \
+		dist/psdb-$(PSDB_VERS)-py3-none-any.whl \
+		dist/psdb-$(PSDB_VERS).tar.gz
+
 dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS) Makefile
 	$(PYTHON) setup.py --quiet sdist bdist_wheel
 	$(PYTHON) -m twine check $@
