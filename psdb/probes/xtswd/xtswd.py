@@ -12,6 +12,7 @@ import btype
 
 TX_EP   = 0x01
 RX_EP   = 0x82
+IMON_EP = 0x83
 
 TRACE_EN   = False
 FREQ_LIMIT = None
@@ -33,6 +34,7 @@ class Status(IntEnum):
     MISALIGNED_ADDR = 7
     PAGE_OVERFLOW   = 8
     BAD_CMD_LENGTH  = 9
+    ALREADY         = 10
 
     @staticmethod
     def rsp_to_status_str(rsp):
@@ -47,6 +49,10 @@ class Opcode(IntEnum):
     SET_FREQ    = 0x01
     CONNECT     = 0x02
     SET_SRST    = 0x03
+    ENABLE_INA  = 0x04
+    DISABLE_INA = 0x05
+    START_IMON  = 0x06
+    STOP_IMON   = 0x07
     READ_DP     = 0x10
     WRITE_DP    = 0x11
     READ_AP     = 0x20
@@ -76,6 +82,17 @@ class Response(btype.Struct):
     _EXPECTED_SIZE = 32
 
 
+class IMonData(btype.Struct):
+    tag             = btype.uint16_t()
+    oversample_log2 = btype.uint8_t()
+    rsrv            = btype.uint8_t()
+    seq             = btype.uint32_t()
+    freq_num        = btype.uint32_t()
+    freq_denom      = btype.uint32_t()
+    samples         = btype.Array(btype.uint16_t(), 10000)
+    _EXPECTED_SIZE  = 20016
+
+
 class XTSWDCommandException(psdb.ProbeException):
     def __init__(self, rsp, rx_data):
         super().__init__(
@@ -90,6 +107,7 @@ class XTSWD(usb_probe.Probe):
     def __init__(self, usb_dev):
         super().__init__(usb_dev, usb_reset=True)
         self.tag      = random.randint(0, 65535)
+        self.imon_tag = None
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
 
     def _exec_command(self, opcode, params=None, bulk_data=b'', timeout=1000,
@@ -163,6 +181,27 @@ class XTSWD(usb_probe.Probe):
             freq = min(freq, FREQ_LIMIT)
         rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq])
         return rsp.params[0]
+
+    def enable_instrumentation_amp(self):
+        self._exec_command(Opcode.ENABLE_INA)
+
+    def disable_instrumentation_amp(self):
+        self._exec_command(Opcode.DISABLE_INA)
+
+    def start_current_monitoring(self):
+        rsp, _ = self._exec_command(Opcode.START_IMON)
+        self.imon_tag = rsp.tag
+
+    def stop_current_monitoring(self):
+        self._exec_command(Opcode.STOP_IMON)
+
+    def read_current_monitor_data(self):
+        while True:
+            data = self.usb_dev.read(IMON_EP, IMonData._STRUCT.size,
+                                     timeout=1000)
+            idata = IMonData.unpack(data)
+            if idata.tag == self.imon_tag:
+                return idata, data[-20000:]
 
     def open_ap(self, apsel):
         pass
