@@ -10,8 +10,8 @@ import psdb
 import btype
 
 
-TX_EP = 0x01
-RX_EP = 0x82
+TX_EP   = 0x01
+RX_EP   = 0x82
 
 TRACE_EN   = False
 FREQ_LIMIT = None
@@ -44,21 +44,21 @@ class Status(IntEnum):
 
 
 class Opcode(IntEnum):
-    SET_FREQ   = 0x01
-    CONNECT    = 0x02
-    SET_SRST   = 0x03
-    READ_DP    = 0x10
-    WRITE_DP   = 0x11
-    READ_AP    = 0x20
-    WRITE_AP   = 0x21
-    READ8      = 0x30
-    WRITE8     = 0x31
-    READ16     = 0x32
-    WRITE16    = 0x33
-    READ32     = 0x34
-    WRITE32    = 0x35
-    BULK_READ  = 0x36
-    BULK_WRITE = 0x37
+    SET_FREQ    = 0x01
+    CONNECT     = 0x02
+    SET_SRST    = 0x03
+    READ_DP     = 0x10
+    WRITE_DP    = 0x11
+    READ_AP     = 0x20
+    WRITE_AP    = 0x21
+    READ8       = 0x30
+    WRITE8      = 0x31
+    READ16      = 0x32
+    WRITE16     = 0x33
+    READ32      = 0x34
+    WRITE32     = 0x35
+    BULK_READ   = 0x36
+    BULK_WRITE  = 0x37
 
 
 class Command(btype.Struct):
@@ -89,7 +89,7 @@ class XTSWD(usb_probe.Probe):
 
     def __init__(self, usb_dev):
         super().__init__(usb_dev, usb_reset=True)
-        self.tag = random.randint(0, 65535)
+        self.tag      = random.randint(0, 65535)
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
 
     def _exec_command(self, opcode, params=None, bulk_data=b'', timeout=1000,
