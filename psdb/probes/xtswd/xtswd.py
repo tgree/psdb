@@ -53,6 +53,7 @@ class Opcode(IntEnum):
     DISABLE_INA = 0x05
     START_IMON  = 0x06
     STOP_IMON   = 0x07
+    GET_STATS   = 0x08
     READ_DP     = 0x10
     WRITE_DP    = 0x11
     READ_AP     = 0x20
@@ -91,6 +92,14 @@ class IMonData(btype.Struct):
     freq_denom      = btype.uint32_t()
     samples         = btype.Array(btype.uint16_t(), 10000)
     _EXPECTED_SIZE  = 20016
+
+
+class Stats:
+    def __init__(self, rsp):
+        self.nreads       = rsp.params[0]
+        self.nread_waits  = rsp.params[1]
+        self.nwrites      = rsp.params[2]
+        self.nwrite_waits = rsp.params[3]
 
 
 class XTSWDCommandException(psdb.ProbeException):
@@ -202,6 +211,10 @@ class XTSWD(usb_probe.Probe):
             idata = IMonData.unpack(data)
             if idata.tag == self.imon_tag:
                 return idata, data[-20000:]
+
+    def get_stats(self):
+        rsp, _ = self._exec_command(Opcode.GET_STATS)
+        return Stats(rsp)
 
     def open_ap(self, apsel):
         pass
