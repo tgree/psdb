@@ -213,7 +213,7 @@ class FLASH(Device, Flash):
         bank = self.banks[n // self.sectors_per_bank]
         with self._flash_bank_unlocked(bank):
             bank._clear_errors()
-            v  = bank._CR.read()
+            v  = bank._CR.read() & ~0x00000700
             v |= ((n % self.sectors_per_bank) << 8) | (1 << 7) | (1 << 2)
             bank._CR = v
             bank._wait_prg_idle()
