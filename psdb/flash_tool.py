@@ -58,8 +58,10 @@ def main(rv):  # noqa: C901
         dt = time.time() - t0
         with open(rv.read_flash, 'wb') as f:
             f.write(data)
+        md5 = hashlib.md5(data)
         print('Read %u bytes in %.2f seconds (%.2f K/s).'
               % (len(data), dt, len(data) / (1024*dt)))
+        print('MD5: %s' % md5.hexdigest())
 
     # Dump options if requested.
     if rv.get_options or rv.option:
