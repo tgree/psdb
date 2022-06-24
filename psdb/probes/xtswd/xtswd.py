@@ -147,6 +147,7 @@ class XTSWD(usb_probe.Probe):
 
         rx_data = bytes(data[Response._STRUCT.size:])
         if rsp.status != Status.OK:
+            rsp.opcode = Opcode(rsp.opcode)
             raise XTSWDCommandException(rsp, rx_data)
 
         assert len(rx_data) == rx_len
