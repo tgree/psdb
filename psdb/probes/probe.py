@@ -106,7 +106,7 @@ class Probe(object):
 
         # For long transfers, align with 8-bit, then do 32-bit, then do 8-bit
         # for the tail.
-        mem         = bytes(b'')
+        mem         = bytearray()
         align_count = (4 - addr) & 3
         count       = min(align_count, size)
         if count:
