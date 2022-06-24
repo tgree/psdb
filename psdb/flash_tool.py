@@ -54,10 +54,10 @@ def main(rv):  # noqa: C901
     # Read a backup of flash if requested.
     if rv.read_flash:
         t0 = time.time()
-        with open(rv.read_flash, 'wb') as f:
-            data = target.flash.read_all()
-            f.write(data)
+        data = target.flash.read_all()
         dt = time.time() - t0
+        with open(rv.read_flash, 'wb') as f:
+            f.write(data)
         print('Read %u bytes in %.2f seconds (%.2f K/s).'
               % (len(data), dt, len(data) / (1024*dt)))
 
