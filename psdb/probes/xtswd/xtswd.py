@@ -11,7 +11,6 @@ import btype
 
 
 TRACE_EN   = False
-FREQ_LIMIT = None
 
 
 def trace(msg):
@@ -199,9 +198,6 @@ class XTSWD(usb_probe.Probe):
         self._exec_command(Opcode.SET_SRST, [0])
 
     def set_tck_freq(self, freq):
-        # Artifically limit frequency to 1 MHz due to Rhino bite issues.
-        if FREQ_LIMIT is not None:
-            freq = min(freq, FREQ_LIMIT)
         rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq])
         return rsp.params[0]
 
