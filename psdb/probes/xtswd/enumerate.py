@@ -4,6 +4,7 @@ import usb.core
 from .. import usb_probe
 
 from .xtswd_095 import XTSWD_095
+from .xtswd_096 import XTSWD_096
 
 
 def enumerate(**kwargs):
@@ -11,6 +12,9 @@ def enumerate(**kwargs):
                          bDeviceClass=0xFF, bDeviceSubClass=0x03, **kwargs)
     enums = []
     for d in devs:
-        cls = XTSWD_095
+        if d.bcdDevice <= 0x095:
+            cls = XTSWD_095
+        else:
+            cls = XTSWD_096
         enums.append(usb_probe.Enumeration(cls, d))
     return enums
