@@ -1,6 +1,6 @@
 # Copyright (c) 2022 Phase Advanced Sensor Systems, Inc.
-from . import xtswd
+from .enumerate import enumerate
 
-
-__all__ = ['xtswd',
-           ]
+__all__ = [
+    'enumerate',
+]

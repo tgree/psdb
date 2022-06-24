@@ -10,10 +10,6 @@ import psdb
 import btype
 
 
-CMD_EP  = 0x01
-RSP_EP  = 0x82
-IMON_EP = 0x83
-
 TRACE_EN   = False
 FREQ_LIMIT = None
 
@@ -122,8 +118,11 @@ class XTSWDCommandException(psdb.ProbeException):
 class XTSWD(usb_probe.Probe):
     NAME = 'XTSWD'
 
-    def __init__(self, usb_dev):
-        super().__init__(usb_dev, usb_reset=True)
+    def __init__(self, usb_dev, cmd_ep, rsp_ep, imon_ep, **kwargs):
+        super().__init__(usb_dev, **kwargs)
+        self.cmd_ep   = cmd_ep
+        self.rsp_ep   = rsp_ep
+        self.imon_ep  = imon_ep
         self.tag      = random.randint(0, 65535)
         self.imon_tag = None
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
@@ -143,15 +142,17 @@ class XTSWD(usb_probe.Probe):
         tag  = self._alloc_tag()
         cmd  = Command(opcode=opcode, tag=tag, params=params)
         data = cmd.pack()
-        self.usb_dev.write(CMD_EP, data + bulk_data, timeout=timeout)
+        size = self.usb_dev.write(self.cmd_ep, data + bulk_data,
+                                  timeout=timeout)
+        assert size == len(data) + len(bulk_data)
 
-        data = self.usb_dev.read(RSP_EP, Response._STRUCT.size + rx_len,
+        data = self.usb_dev.read(self.rsp_ep, Response._STRUCT.size + rx_len,
                                  timeout=timeout)
         assert len(data) >= Response._STRUCT.size
-        rsp = Response.unpack(data[:Response._STRUCT.size])
+
+        rsp, rx_data = self._decode_rsp(data)
         assert rsp.tag == tag
 
-        rx_data = bytes(data[Response._STRUCT.size:])
         if rsp.status != Status.OK:
             rsp.opcode = Opcode(rsp.opcode)
             raise XTSWDCommandException(rsp, rx_data)
@@ -219,7 +220,7 @@ class XTSWD(usb_probe.Probe):
 
     def read_current_monitor_data(self):
         while True:
-            data = self.usb_dev.read(IMON_EP, IMonData._STRUCT.size,
+            data = self.usb_dev.read(self.imon_ep, IMonData._STRUCT.size,
                                      timeout=1000)
             idata = IMonData.unpack(data)
             if idata.tag == self.imon_tag:
@@ -299,10 +300,3 @@ class XTSWD(usb_probe.Probe):
         super().show_info(self.usb_dev)
         print('         SHA1: %s' % self.git_sha1)
         self.show_fw_version(self.usb_dev)
-
-
-def enumerate(**kwargs):
-    return [usb_probe.Enumeration(XTSWD, usb_dev)
-            for usb_dev in usb.core.find(find_all=True, idVendor=0x0483,
-                                         idProduct=0xA34E, bDeviceClass=0xFF,
-                                         bDeviceSubClass=0x03, **kwargs)]
