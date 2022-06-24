@@ -65,5 +65,5 @@ publish: psdb
 		dist/psdb-$(PSDB_VERS).tar.gz
 
 dist/psdb-$(PSDB_VERS)-py3-none-any.whl: $(PSDB_DEPS) Makefile
-	$(PYTHON) setup.py --quiet sdist bdist_wheel
+	$(PYTHON) -m build
 	$(PYTHON) -m twine check $@
