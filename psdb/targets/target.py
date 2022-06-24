@@ -23,6 +23,13 @@ class Target(object):
     def pre_probe(db, verbose):
         pass
 
+    def get_fault_addr(self):
+        '''
+        Returns an address that can safely be accessed to generate an SWD FAULT
+        ACK response.
+        '''
+        raise NotImplementedError
+
     def set_max_tck_freq(self):
         '''
         Sets the debug probe to the target's maximum supported SWD frequency.

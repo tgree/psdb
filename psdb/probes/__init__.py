@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .xds110 import xds110
 from .stlink import stlink_v2_1, stlink_v3
-from .xtswd import xtswd
+from . import xtswd
 from .usb_probe import usb_path
 import psdb
 

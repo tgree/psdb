@@ -10,12 +10,7 @@ import psdb
 import btype
 
 
-TX_EP   = 0x01
-RX_EP   = 0x82
-IMON_EP = 0x83
-
 TRACE_EN   = False
-FREQ_LIMIT = None
 
 
 def trace(msg):
@@ -35,6 +30,8 @@ class Status(IntEnum):
     PAGE_OVERFLOW   = 8
     BAD_CMD_LENGTH  = 9
     ALREADY         = 10
+    DATA_OVERRUN    = 11
+    DATA_UNDERRUN   = 12
 
     @staticmethod
     def rsp_to_status_str(rsp):
@@ -53,6 +50,7 @@ class Opcode(IntEnum):
     DISABLE_INA = 0x05
     START_IMON  = 0x06
     STOP_IMON   = 0x07
+    GET_STATS   = 0x08
     READ_DP     = 0x10
     WRITE_DP    = 0x11
     READ_AP     = 0x20
@@ -65,6 +63,7 @@ class Opcode(IntEnum):
     WRITE32     = 0x35
     BULK_READ   = 0x36
     BULK_WRITE  = 0x37
+    BAD_OPCODE  = 0xCCCC
 
 
 class Command(btype.Struct):
@@ -93,6 +92,20 @@ class IMonData(btype.Struct):
     _EXPECTED_SIZE  = 20016
 
 
+class Stats:
+    def __init__(self, rsp):
+        self.nreads       = rsp.params[0]
+        self.nread_waits  = rsp.params[1]
+        self.nwrites      = rsp.params[2]
+        self.nwrite_waits = rsp.params[3]
+
+    def dump(self):
+        print('      nreads: %u' % self.nreads)
+        print(' nread_waits: %u' % self.nread_waits)
+        print('     nwrites: %u' % self.nwrites)
+        print('nwrite_waits: %u' % self.nwrite_waits)
+
+
 class XTSWDCommandException(psdb.ProbeException):
     def __init__(self, rsp, rx_data):
         super().__init__(
@@ -104,11 +117,19 @@ class XTSWDCommandException(psdb.ProbeException):
 class XTSWD(usb_probe.Probe):
     NAME = 'XTSWD'
 
-    def __init__(self, usb_dev):
-        super().__init__(usb_dev, usb_reset=True)
+    def __init__(self, usb_dev, cmd_ep, rsp_ep, imon_ep, **kwargs):
+        super().__init__(usb_dev, **kwargs)
+        self.cmd_ep   = cmd_ep
+        self.rsp_ep   = rsp_ep
+        self.imon_ep  = imon_ep
         self.tag      = random.randint(0, 65535)
         self.imon_tag = None
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
+
+    def _alloc_tag(self):
+        tag      = self.tag
+        self.tag = (self.tag + 1) & 0xFFFF
+        return tag
 
     def _exec_command(self, opcode, params=None, bulk_data=b'', timeout=1000,
                       rx_len=0):
@@ -117,21 +138,22 @@ class XTSWD(usb_probe.Probe):
         elif len(params) < 7:
             params = params + [0]*(7 - len(params))
 
-        tag      = self.tag
-        self.tag = (self.tag + 1) & 0xFFFF
-
+        tag  = self._alloc_tag()
         cmd  = Command(opcode=opcode, tag=tag, params=params)
         data = cmd.pack()
-        self.usb_dev.write(TX_EP, data + bulk_data, timeout=timeout)
+        size = self.usb_dev.write(self.cmd_ep, data + bulk_data,
+                                  timeout=timeout)
+        assert size == len(data) + len(bulk_data)
 
-        data = self.usb_dev.read(RX_EP, Response._STRUCT.size + rx_len,
+        data = self.usb_dev.read(self.rsp_ep, Response._STRUCT.size + rx_len,
                                  timeout=timeout)
         assert len(data) >= Response._STRUCT.size
-        rsp = Response.unpack(data[:Response._STRUCT.size])
+
+        rsp, rx_data = self._decode_rsp(data)
         assert rsp.tag == tag
 
-        rx_data = bytes(data[Response._STRUCT.size:])
         if rsp.status != Status.OK:
+            rsp.opcode = Opcode(rsp.opcode)
             raise XTSWDCommandException(rsp, rx_data)
 
         assert len(rx_data) == rx_len
@@ -176,9 +198,6 @@ class XTSWD(usb_probe.Probe):
         self._exec_command(Opcode.SET_SRST, [0])
 
     def set_tck_freq(self, freq):
-        # Artifically limit frequency to 1 MHz due to Rhino bite issues.
-        if FREQ_LIMIT is not None:
-            freq = min(freq, FREQ_LIMIT)
         rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq])
         return rsp.params[0]
 
@@ -197,11 +216,15 @@ class XTSWD(usb_probe.Probe):
 
     def read_current_monitor_data(self):
         while True:
-            data = self.usb_dev.read(IMON_EP, IMonData._STRUCT.size,
+            data = self.usb_dev.read(self.imon_ep, IMonData._STRUCT.size,
                                      timeout=1000)
             idata = IMonData.unpack(data)
             if idata.tag == self.imon_tag:
                 return idata, data[-20000:]
+
+    def get_stats(self):
+        rsp, _ = self._exec_command(Opcode.GET_STATS)
+        return Stats(rsp)
 
     def open_ap(self, apsel):
         pass
@@ -273,10 +296,3 @@ class XTSWD(usb_probe.Probe):
         super().show_info(self.usb_dev)
         print('         SHA1: %s' % self.git_sha1)
         self.show_fw_version(self.usb_dev)
-
-
-def enumerate(**kwargs):
-    return [usb_probe.Enumeration(XTSWD, usb_dev)
-            for usb_dev in usb.core.find(find_all=True, idVendor=0x0483,
-                                         idProduct=0xA34E, bDeviceClass=0xFF,
-                                         bDeviceSubClass=0x03, **kwargs)]

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-
+import argparse
 import sys
 
+import psdb.probes
 
-def main():
+
+def main(args):
     for e in psdb.probes.enumerate_probes():
         try:
             p = e.make_probe()
@@ -15,15 +16,20 @@ def main():
             continue
 
         p.show_detailed_info()
-        try:
-            p.probe(verbose=True).resume()
-        except Exception as ex:
-            print('Exception probing target: %s' % ex)
+        if args.probe_targets:
+            try:
+                p.probe(verbose=True).resume()
+            except Exception as ex:
+                print('Exception probing target: %s' % ex)
 
 
 def _main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--probe-targets', action='store_true')
+    args = parser.parse_args()
+
     try:
-        main()
+        main(args)
     except psdb.ProbeException as e:
         print(e)
         sys.exit(1)

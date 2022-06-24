@@ -1141,7 +1141,7 @@ class ScatterGatherOut(STLinkCommand):
 
     The maximum op list length is 64 entries on V2 and 1227 entries on V3.
 
-    Availability: V3J2, V2J26.
+    Availability: V3J2, V2J32.
 
     TX_EP (CDB):
         +----------------+----------------+---------------------------------+
@@ -1201,7 +1201,7 @@ class ScatterGatherIn(STLinkCommand):
         ...
         (CMDN, Error N, Payload N)
 
-    Availability: V3J2, V2J26.
+    Availability: V3J2, V2J32.
 
     TX_EP (CDB):
         +----------------+----------------+
@@ -1260,7 +1260,7 @@ class ScatterGatherGetMaxOps(STLinkCommand):
     Get the number of command opcodes that can be processed in a single scatter-
     gather command.  This command only works if the probe is in DEBUG mode.
 
-    Availability: V3J2, V2J26.
+    Availability: V3J2, V2J32.
 
     TX_EP (CDB):
         +----------------+----------------+

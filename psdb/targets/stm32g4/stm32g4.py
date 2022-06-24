@@ -181,6 +181,9 @@ class STM32G4(Target):
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
+    def get_fault_addr(self):
+        return 0xC0000000
+
     def halt(self):
         super().halt()
         self._set_fb_mode(self.fb_mode)

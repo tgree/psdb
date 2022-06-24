@@ -15,6 +15,28 @@ PATTERN = (b'0123456789ABCDEF'
            b'3210')
 
 
+def fault_read_test(t, rd):
+    try:
+        rd.ap.read_32(t.get_fault_addr())
+    except Exception:
+        return
+    raise Exception('Expected a read FAULT but none occurred.')
+
+
+def fault_write_test(t, rd):
+    try:
+        rd.ap.write_32(0xCCCCCCCC, t.get_fault_addr())
+    except Exception:
+        return
+    raise Exception('Expected a write FAULT but none occurred.')
+
+
+def fault_test(t, rv, rd):
+    fault_read_test(t, rd)
+    if rv.enable_fault_write_test:
+        fault_write_test(t, rd)
+
+
 def zap_pattern(rv, rd, pattern):
     rd.write_mem_block(pattern, rd.dev_base)
 
@@ -54,7 +76,7 @@ def test_pattern(rv, rd, pattern):
     assert rd.read_mem_block(rd.dev_base, len(pattern)) == pattern
 
 
-def test_sram(rd, rv):
+def test_sram(t, rd, rv):
     # Do many tests.
     print('Testing %s' % rd.name)
     global PATTERN
@@ -68,6 +90,7 @@ def test_sram(rd, rv):
 
             # Do bulk test.
             print('  Doing bulk test...')
+            fault_test(t, rv, rd)
             zap_pattern(rv, rd, zpattern)
             test_pattern(rv, rd, zpattern)
             write_pattern_bulk(rv, rd, start, pattern)
@@ -75,6 +98,7 @@ def test_sram(rd, rv):
 
             # Do 8-bit test.
             print('  Doing 8-bit test...')
+            fault_test(t, rv, rd)
             zap_pattern(rv, rd, zpattern)
             test_pattern(rv, rd, zpattern)
             write_pattern_8(rv, rd, start, pattern)
@@ -84,6 +108,7 @@ def test_sram(rd, rv):
             if (start % 2) or (len(pattern) % 2):
                 continue
             print('  Doing 16-bit test...')
+            fault_test(t, rv, rd)
             zap_pattern(rv, rd, zpattern)
             test_pattern(rv, rd, zpattern)
             write_pattern_16(rv, rd, start, pattern)
@@ -93,6 +118,7 @@ def test_sram(rd, rv):
             if (start % 4) or (len(pattern) % 4):
                 continue
             print('  Doing 32-bit test...')
+            fault_test(t, rv, rd)
             zap_pattern(rv, rd, zpattern)
             test_pattern(rv, rd, zpattern)
             write_pattern_32(rv, rd, start, pattern)
@@ -118,7 +144,7 @@ def main(rv):
 
     # Test all SRAMs.
     for rd in target.ram_devs.values():
-        test_sram(rd, rv)
+        test_sram(target, rd, rv)
 
 
 def _main():
@@ -128,6 +154,7 @@ def _main():
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--enable-fault-write-test', action='store_true')
     rv = parser.parse_args()
 
     try:
