@@ -18,6 +18,11 @@ class Enumeration:
         raise NotImplementedError
 
 
+class Stats:
+    def dump(self):
+        print("Statistics not supported.")
+
+
 class Probe(object):
     def __init__(self):
         self.aps    = {}
@@ -33,6 +38,12 @@ class Probe(object):
 
     def set_tck_freq(self, freq):
         raise NotImplementedError
+
+    def get_stats(self):
+        '''
+        Return accumulated stats since the last time get_stats was invoked.
+        '''
+        return Stats()
 
     def open_ap(self, ap_num):
         raise NotImplementedError
