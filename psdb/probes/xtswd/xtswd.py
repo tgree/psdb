@@ -35,6 +35,8 @@ class Status(IntEnum):
     PAGE_OVERFLOW   = 8
     BAD_CMD_LENGTH  = 9
     ALREADY         = 10
+    DATA_OVERRUN    = 11
+    DATA_UNDERRUN   = 12
 
     @staticmethod
     def rsp_to_status_str(rsp):
@@ -66,6 +68,7 @@ class Opcode(IntEnum):
     WRITE32     = 0x35
     BULK_READ   = 0x36
     BULK_WRITE  = 0x37
+    BAD_OPCODE  = 0xCCCC
 
 
 class Command(btype.Struct):
