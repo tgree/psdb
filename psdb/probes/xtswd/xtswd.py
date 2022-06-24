@@ -10,8 +10,8 @@ import psdb
 import btype
 
 
-TX_EP   = 0x01
-RX_EP   = 0x82
+CMD_EP  = 0x01
+RSP_EP  = 0x82
 IMON_EP = 0x83
 
 TRACE_EN   = False
@@ -137,9 +137,9 @@ class XTSWD(usb_probe.Probe):
 
         cmd  = Command(opcode=opcode, tag=tag, params=params)
         data = cmd.pack()
-        self.usb_dev.write(TX_EP, data + bulk_data, timeout=timeout)
+        self.usb_dev.write(CMD_EP, data + bulk_data, timeout=timeout)
 
-        data = self.usb_dev.read(RX_EP, Response._STRUCT.size + rx_len,
+        data = self.usb_dev.read(RSP_EP, Response._STRUCT.size + rx_len,
                                  timeout=timeout)
         assert len(data) >= Response._STRUCT.size
         rsp = Response.unpack(data[:Response._STRUCT.size])
