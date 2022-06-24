@@ -6,6 +6,11 @@ from .. import usb_probe
 import psdb
 
 
+V2_1_PIDS = [0x374B,
+             0x3752,
+             ]
+
+
 class STLinkV2_1(stlink.STLink):
     '''
     STLink V2.1 debug probe.  This can be found on the Nucleo 144 board we have
@@ -92,7 +97,12 @@ class STLinkV2_1(stlink.STLink):
                                             self.ver_swim))
 
 
-def enumerate(**kwargs):
+def enumerate(custom_match=None, **kwargs):
+    def is_stlink_v2_1(usb_dev):
+        if usb_dev.idProduct not in V2_1_PIDS:
+            return False
+        return custom_match(usb_dev) if custom_match is not None else True
+
     return [usb_probe.Enumeration(STLinkV2_1, usb_dev)
             for usb_dev in usb.core.find(find_all=True, idVendor=0x0483,
-                                         idProduct=0x374B, **kwargs)]
+                                         custom_match=is_stlink_v2_1, **kwargs)]
