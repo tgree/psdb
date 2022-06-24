@@ -128,6 +128,11 @@ class XTSWD(usb_probe.Probe):
         self.imon_tag = None
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
 
+    def _alloc_tag(self):
+        tag      = self.tag
+        self.tag = (self.tag + 1) & 0xFFFF
+        return tag
+
     def _exec_command(self, opcode, params=None, bulk_data=b'', timeout=1000,
                       rx_len=0):
         if not params:
@@ -135,9 +140,7 @@ class XTSWD(usb_probe.Probe):
         elif len(params) < 7:
             params = params + [0]*(7 - len(params))
 
-        tag      = self.tag
-        self.tag = (self.tag + 1) & 0xFFFF
-
+        tag  = self._alloc_tag()
         cmd  = Command(opcode=opcode, tag=tag, params=params)
         data = cmd.pack()
         self.usb_dev.write(CMD_EP, data + bulk_data, timeout=timeout)
