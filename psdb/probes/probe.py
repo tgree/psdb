@@ -110,10 +110,10 @@ class Probe(object):
 
         # Do 32-bit aligned transfers that don't cross TAR boundaries.
         while size >= 4:
-            count = min(size, 0x400 - (addr & 0x3FF))//4
+            count = min(size, 0x400 - (addr & 0x3FF)) // 4
             mem  += self._bulk_read_32(addr, count, ap_num)
-            addr += count*4
-            size -= count*4
+            addr += count * 4
+            size -= count * 4
 
         # Do any remaining bytes.
         if size:
