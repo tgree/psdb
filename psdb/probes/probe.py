@@ -99,27 +99,26 @@ class Probe(object):
         if not size:
             return bytes(b'')
 
-        # For short misaligned transfers, just do a single 8-bit access
-        # transaction.
-        if ((addr % 4) or (size % 4)) and size <= 64:
-            return self._bulk_read_8(addr, size, ap_num)
+        mem = bytearray()
 
-        # For long transfers, align with 8-bit, then do 32-bit, then do 8-bit
-        # for the tail.
-        mem         = bytearray()
-        align_count = (4 - addr) & 3
-        count       = min(align_count, size)
+        # Align us to a 32-bit boundary.
+        count = min(size, -addr & 3)
         if count:
             mem  += self._bulk_read_8(addr, count, ap_num)
             addr += count
             size -= count
+
+        # Do 32-bit aligned transfers that don't cross TAR boundaries.
         while size >= 4:
-            count = min(size, 0x400 - (addr & 0x3FF))//4
+            count = min(size, 0x400 - (addr & 0x3FF)) // 4
             mem  += self._bulk_read_32(addr, count, ap_num)
-            addr += count*4
-            size -= count*4
+            addr += count * 4
+            size -= count * 4
+
+        # Do any remaining bytes.
         if size:
             mem += self._bulk_read_8(addr, size, ap_num)
+
         return mem
 
     def write_bulk(self, data, addr, ap_num=0):
@@ -132,26 +131,25 @@ class Probe(object):
         if not data:
             return
 
-        # For short misaligned transfers, just do a single 8-bit bulk
-        # transaction.
-        if ((addr % 4) or (len(data) % 4)) and len(data) <= 64:
-            return self._bulk_write_8(data, addr, ap_num)
+        mv = memoryview(data)
 
-        # For long transfers, align with 8-bit, then do 32-bit, then do 8-bit
-        # for the tail.
-        align_count = (4 - addr) & 3
-        count       = min(align_count, len(data))
+        # Align us to a 32-bit boundary.
+        count = min(len(mv), -addr & 3)
         if count:
-            self._bulk_write_8(data[:count], addr, ap_num)
+            self._bulk_write_8(mv[:count], addr, ap_num)
             addr += count
-            data  = data[count:]
-        while len(data) >= 4:
-            count = min(len(data), 0x400 - (addr & 0x3FF))//4
-            self._bulk_write_32(data[:count*4], addr, ap_num)
-            addr += count*4
-            data  = data[count*4:]
-        if data:
-            self._bulk_write_8(data, addr, ap_num)
+            mv    = mv[count:]
+
+        # Do 32-bit aligned transfers that don't cross TAR boundaries.
+        while len(mv) >= 4:
+            count = min(len(mv), 0x400 - (addr & 0x3FF)) // 4
+            self._bulk_write_32(mv[:count * 4], addr, ap_num)
+            addr += count * 4
+            mv    = mv[count * 4:]
+
+        # Do any remaining bytes.
+        if mv:
+            self._bulk_write_8(mv, addr, ap_num)
 
     def exec_cmd_list(self, cmd_list):
         read_vals = []
