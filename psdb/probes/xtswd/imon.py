@@ -57,7 +57,7 @@ def main(rv):
         return
 
     # Find the target probe.
-    probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe = psdb.probes.xtswd.make_one_ns(rv)
 
     with open(rv.dump_file, 'wb') as f:
         # Put the target in reset if requested.
@@ -85,6 +85,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--dump-file')
     rv = parser.parse_args()

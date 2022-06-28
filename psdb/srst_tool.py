@@ -13,7 +13,7 @@ def main(rv):
 
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
-    probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe = psdb.probes.make_one_ns(rv)
 
     # SRST the target.
     if rv.hold:
@@ -26,6 +26,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     parser.add_argument('--hold', action='store_true')
     rv = parser.parse_args()
 

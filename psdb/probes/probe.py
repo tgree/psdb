@@ -8,14 +8,29 @@ from struct import pack, unpack
 
 
 class Enumeration:
-    def __init__(self, cls):
-        self.cls = cls
+    def __init__(self, cls, *args, **kwargs):
+        self.cls    = cls
+        self.args   = args
+        self.kwargs = kwargs
+
+    def __repr__(self):
+        return self.cls.NAME
+
+    def _match_kwargs(self, **kwargs):
+        return kwargs
 
     def make_probe(self):
-        raise NotImplementedError
+        return self.cls(*self.args, **self.kwargs)
 
     def show_info(self):
-        raise NotImplementedError
+        return self.cls.show_info(*self.args, **self.kwargs)
+
+    def match(self, **kwargs):
+        return not self._match_kwargs(**kwargs)
+
+    @staticmethod
+    def filter(enumerations, **kwargs):
+        return [e for e in enumerations if e.match(**kwargs)]
 
 
 class Stats:
@@ -29,6 +44,26 @@ class Probe(object):
         self.cpus   = []
         self.target = None
         self.dpidr  = None
+
+    @staticmethod
+    def find():
+        enumerations = []
+        for cls in psdb.probes.PROBE_CLASSES:
+            enumerations += cls.find()
+        return enumerations
+
+    @classmethod
+    def make_one(cls, **kwargs):
+        enumerations = Enumeration.filter(cls.find(), **kwargs)
+        if not enumerations:
+            raise psdb.ProbeException('No probe found.')
+        if len(enumerations) == 1:
+            return enumerations[0].make_probe()
+
+        print('Found probes:')
+        for e in enumerations:
+            e.show_info()
+        raise psdb.ProbeException('Multiple probes found.')
 
     def assert_srst(self):
         raise NotImplementedError

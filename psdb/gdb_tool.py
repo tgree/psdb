@@ -392,7 +392,7 @@ def main(rv):
         psdb.probes.dump_probes()
         return
 
-    probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe = psdb.probes.make_one_ns(rv)
     probe.set_tck_freq(rv.probe_freq)
 
     if rv.srst:
@@ -424,6 +424,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--port', type=int, default=3333)
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--dump', action='store_true')

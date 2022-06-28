@@ -11,15 +11,34 @@ def usb_path(usb_dev):
 
 
 class Enumeration(probe.Enumeration):
-    def __init__(self, cls, usb_dev):
-        super().__init__(cls)
+    def __init__(self, cls, usb_dev, *args, **kwargs):
+        super().__init__(cls, *args, **kwargs)
         self.usb_dev = usb_dev
 
+    def __repr__(self):
+        return self.cls.NAME + ' ' + self.usb_path + ' ' + self.serial_num
+
+    @property
+    def serial_num(self):
+        return self.usb_dev.serial_number
+
+    @property
+    def usb_path(self):
+        return usb_path(self.usb_dev)
+
+    def _match_kwargs(self, **kwargs):
+        kwargs = super()._match_kwargs(**kwargs)
+        if 'serial_num' in kwargs and self.serial_num == kwargs['serial_num']:
+            del kwargs['serial_num']
+        if 'usb_path' in kwargs and self.usb_path == kwargs['usb_path']:
+            del kwargs['usb_path']
+        return kwargs
+
     def make_probe(self):
-        return self.cls(self.usb_dev)
+        return self.cls(self.usb_dev, *self.args, **self.kwargs)
 
     def show_info(self):
-        return self.cls.show_info(self.usb_dev)
+        return self.cls.show_info(self.usb_dev, *self.args, **self.kwargs)
 
 
 class Probe(probe.Probe):
