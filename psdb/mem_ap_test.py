@@ -186,7 +186,8 @@ def _main():
     except KeyboardInterrupt:
         print()
     finally:
-        print('Initial seed was: %u' % SEED)
+        if SEED is not None:
+            print('Initial seed was: %u' % SEED)
 
 
 if __name__ == '__main__':
