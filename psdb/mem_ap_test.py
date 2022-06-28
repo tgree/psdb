@@ -10,6 +10,7 @@ import psdb.probes
 
 
 SEED = None
+EXCLUDE_SRAMS = ['Backup SRAM']
 
 
 class LCG:
@@ -156,9 +157,13 @@ def main(rv):
     SEED     = seed
     lcg      = LCG.make_std(seed)
     mem_name = rv.mem_name
+    if mem_name:
+        assert mem_name not in EXCLUDE_SRAMS
     while True:
         for rd in target.ram_devs.values():
             if mem_name is not None and mem_name != rd.name:
+                continue
+            if rd.name in EXCLUDE_SRAMS:
                 continue
 
             test_sram(target, rd, rv, lcg)
