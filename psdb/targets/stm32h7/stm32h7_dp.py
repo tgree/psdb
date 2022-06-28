@@ -104,6 +104,9 @@ class STM32H7_DP(Target):
     def __repr__(self):
         return 'STM32H7xx DP MCU_IDCODE 0x%08X' % self.mcu_idcode
 
+    def get_fault_addr(self):
+        return 0xA0000000
+
     def enable_and_measure_hse(self, nsamples=10):
         '''
         Measures the HSE to within around 100 kHz accuracy using TIM17.
