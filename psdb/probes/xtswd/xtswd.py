@@ -32,6 +32,7 @@ class Status(IntEnum):
     ALREADY         = 10
     DATA_OVERRUN    = 11
     DATA_UNDERRUN   = 12
+    ABORTED         = 13
 
     @staticmethod
     def rsp_to_status_str(rsp):
@@ -339,6 +340,7 @@ class XTSWD_096(XTSWD):
         transfer, so do a final illegal command and then check for the expected
         opcode and tag.
         '''
+        self._send_abort()
         tag  = self._alloc_tag()
         cmd  = Command(opcode=Opcode.BAD_OPCODE, tag=tag)
         data = cmd.pack()
@@ -366,3 +368,6 @@ class XTSWD_096(XTSWD):
         rsp     = Response.unpack(data[-Response._STRUCT.size:])
         rx_data = bytes(data[:-Response._STRUCT.size])
         return rsp, rx_data
+
+    def _send_abort(self):
+        self.usb_dev.write(self.CMD_EP, b'')
