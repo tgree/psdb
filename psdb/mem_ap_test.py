@@ -31,6 +31,7 @@ class LCG:
 def test_sram(t, rd, rv, lcg, timeout=10):
     print('Testing %s with seed %u' % (rd.name, lcg.x))
     ap         = rd.ap
+    ap_num     = ap.ap_num
     db         = ap.db
     ram_buf    = bytearray(rd.size)
     mv         = memoryview(ram_buf)
@@ -73,11 +74,11 @@ def test_sram(t, rd, rv, lcg, timeout=10):
             data = random.randbytes(pg_count)
             print('W8  0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count))
             mv[pg_offset:pg_offset + pg_count] = data
-            db._bulk_write_8(data, pg_addr)
+            db._bulk_write_8(data, pg_addr, ap_num=ap_num)
         elif choice == 3:
             # 8-bit read test.
             print('R8  0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count))
-            data = db._bulk_read_8(pg_addr, pg_count)
+            data = db._bulk_read_8(pg_addr, pg_count, ap_num=ap_num)
             assert data == mv[pg_offset:pg_offset + pg_count]
         elif choice == 4:
             # 16-bit write test.
@@ -87,14 +88,14 @@ def test_sram(t, rd, rv, lcg, timeout=10):
             data      = random.randbytes(pg_count * 2)
             print('W16 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 2))
             mv[pg_offset:pg_offset + pg_count * 2] = data
-            db._bulk_write_16(data, pg_addr)
+            db._bulk_write_16(data, pg_addr, ap_num=ap_num)
         elif choice == 5:
             # 16-bit read test.
             pg_addr   = (pg_addr & 0xFFFFFFFE)
             pg_offset = (pg_offset & 0xFFFFFFFE)
             pg_count  = math.ceil(pg_count / 2)
             print('R16 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 2))
-            data      = db._bulk_read_16(pg_addr, pg_count)
+            data      = db._bulk_read_16(pg_addr, pg_count, ap_num=ap_num)
             assert data == mv[pg_offset:pg_offset + pg_count * 2]
         elif choice == 6:
             # 32-bit write test.
@@ -104,14 +105,14 @@ def test_sram(t, rd, rv, lcg, timeout=10):
             data      = random.randbytes(pg_count * 4)
             print('W32 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 4))
             mv[pg_offset:pg_offset + pg_count * 4] = data
-            db._bulk_write_32(data, pg_addr)
+            db._bulk_write_32(data, pg_addr, ap_num=ap_num)
         elif choice == 7:
             # 32-bit read test.
             pg_addr   = (pg_addr & 0xFFFFFFFC)
             pg_offset = (pg_offset & 0xFFFFFFFC)
             pg_count  = math.ceil(pg_count / 4)
             print('R32 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 4))
-            data      = db._bulk_read_32(pg_addr, pg_count)
+            data      = db._bulk_read_32(pg_addr, pg_count, ap_num=ap_num)
             assert data == mv[pg_offset:pg_offset + pg_count * 4]
         elif choice == 8:
             # Read fault test.
