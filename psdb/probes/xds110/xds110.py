@@ -404,13 +404,12 @@ class XDS110(usb_probe.Probe):
             assert err == 0
         self.cmapi_acquire()
 
+    @staticmethod
+    def find():
+        devs = usb.core.find(find_all=True, idVendor=0x0451, idProduct=0xBEF3)
+        return [usb_probe.Enumeration(XDS110, d) for d in devs]
+
     def show_detailed_info(self):
         super().show_info(self.usb_dev)
         print(' Hardware Ver: 0x%04X' % self.hw_version)
         print(' Firmware Ver: %s' % version_string(self.fw_version))
-
-
-def enumerate(**kwargs):
-    return [usb_probe.Enumeration(XDS110, usb_dev)
-            for usb_dev in usb.core.find(find_all=True, idVendor=0x0451,
-                                         idProduct=0xBEF3, **kwargs)]

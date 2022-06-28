@@ -7,7 +7,7 @@ import psdb.probes
 
 
 def main(args):
-    for e in psdb.probes.enumerate_probes():
+    for e in psdb.probes.find():
         try:
             p = e.make_probe()
         except Exception as ex:

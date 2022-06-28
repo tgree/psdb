@@ -10,6 +10,7 @@ import psdb.probes
 
 
 SEED = None
+EXCLUDE_SRAMS = ['Backup SRAM']
 
 
 class LCG:
@@ -31,6 +32,7 @@ class LCG:
 def test_sram(t, rd, rv, lcg, timeout=10):
     print('Testing %s with seed %u' % (rd.name, lcg.x))
     ap         = rd.ap
+    ap_num     = ap.ap_num
     db         = ap.db
     ram_buf    = bytearray(rd.size)
     mv         = memoryview(ram_buf)
@@ -73,11 +75,11 @@ def test_sram(t, rd, rv, lcg, timeout=10):
             data = random.randbytes(pg_count)
             print('W8  0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count))
             mv[pg_offset:pg_offset + pg_count] = data
-            db._bulk_write_8(data, pg_addr)
+            db._bulk_write_8(data, pg_addr, ap_num=ap_num)
         elif choice == 3:
             # 8-bit read test.
             print('R8  0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count))
-            data = db._bulk_read_8(pg_addr, pg_count)
+            data = db._bulk_read_8(pg_addr, pg_count, ap_num=ap_num)
             assert data == mv[pg_offset:pg_offset + pg_count]
         elif choice == 4:
             # 16-bit write test.
@@ -87,14 +89,14 @@ def test_sram(t, rd, rv, lcg, timeout=10):
             data      = random.randbytes(pg_count * 2)
             print('W16 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 2))
             mv[pg_offset:pg_offset + pg_count * 2] = data
-            db._bulk_write_16(data, pg_addr)
+            db._bulk_write_16(data, pg_addr, ap_num=ap_num)
         elif choice == 5:
             # 16-bit read test.
             pg_addr   = (pg_addr & 0xFFFFFFFE)
             pg_offset = (pg_offset & 0xFFFFFFFE)
             pg_count  = math.ceil(pg_count / 2)
             print('R16 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 2))
-            data      = db._bulk_read_16(pg_addr, pg_count)
+            data      = db._bulk_read_16(pg_addr, pg_count, ap_num=ap_num)
             assert data == mv[pg_offset:pg_offset + pg_count * 2]
         elif choice == 6:
             # 32-bit write test.
@@ -104,14 +106,14 @@ def test_sram(t, rd, rv, lcg, timeout=10):
             data      = random.randbytes(pg_count * 4)
             print('W32 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 4))
             mv[pg_offset:pg_offset + pg_count * 4] = data
-            db._bulk_write_32(data, pg_addr)
+            db._bulk_write_32(data, pg_addr, ap_num=ap_num)
         elif choice == 7:
             # 32-bit read test.
             pg_addr   = (pg_addr & 0xFFFFFFFC)
             pg_offset = (pg_offset & 0xFFFFFFFC)
             pg_count  = math.ceil(pg_count / 4)
             print('R32 0x%08X:0x%08X %u' % (pg_addr, pg_offset, pg_count * 4))
-            data      = db._bulk_read_32(pg_addr, pg_count)
+            data      = db._bulk_read_32(pg_addr, pg_count, ap_num=ap_num)
             assert data == mv[pg_offset:pg_offset + pg_count * 4]
         elif choice == 8:
             # Read fault test.
@@ -137,7 +139,7 @@ def main(rv):
 
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
-    probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe = psdb.probes.make_one_ns(rv)
     f     = probe.set_tck_freq(rv.probe_freq)
     print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
 
@@ -155,9 +157,13 @@ def main(rv):
     SEED     = seed
     lcg      = LCG.make_std(seed)
     mem_name = rv.mem_name
+    if mem_name:
+        assert mem_name not in EXCLUDE_SRAMS
     while True:
         for rd in target.ram_devs.values():
             if mem_name is not None and mem_name != rd.name:
+                continue
+            if rd.name in EXCLUDE_SRAMS:
                 continue
 
             test_sram(target, rd, rv, lcg)
@@ -168,6 +174,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     parser.add_argument('--connect-under-reset', action='store_true')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
@@ -184,7 +191,8 @@ def _main():
     except KeyboardInterrupt:
         print()
     finally:
-        print('Initial seed was: %u' % SEED)
+        if SEED is not None:
+            print('Initial seed was: %u' % SEED)
 
 
 if __name__ == '__main__':

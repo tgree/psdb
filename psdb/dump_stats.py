@@ -12,7 +12,7 @@ def main(rv):
         psdb.probes.dump_probes()
 
     # Find the target probe and dump the stats.
-    probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe = psdb.probes.make_one_ns(rv)
     stats = probe.get_stats()
     stats.dump()
 
@@ -21,6 +21,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     rv = parser.parse_args()
 
     try:

@@ -32,7 +32,7 @@ def main(rv):  # noqa: C901
 
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
-    probe = psdb.probes.find_default(usb_path=rv.usb_path)
+    probe = psdb.probes.make_one_ns(rv)
     f     = probe.set_tck_freq(rv.probe_freq)
     print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
 
@@ -150,6 +150,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     parser.add_argument('--halt', action='store_true')
     parser.add_argument('--srst', action='store_true')
     parser.add_argument('--connect-under-reset', action='store_true')

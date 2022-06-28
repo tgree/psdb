@@ -308,3 +308,7 @@ class STLink(usb_probe.Probe):
         self.dpidr = self._read_dpidr()
         if self.features & FEATURE_SCATTERGATHER:
             self.max_sg_ops = self._get_max_sg_ops()
+
+    @staticmethod
+    def find():
+        return psdb.probes.stlink.find()

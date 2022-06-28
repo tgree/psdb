@@ -106,19 +106,16 @@ class STLinkV3(stlink.STLink):
         '''
         return self._set_com_freq(freq_hz // 1000, is_jtag=False) * 1000
 
+    @staticmethod
+    def find():
+        def is_stlink_v3(usb_dev):
+            return usb_dev.idProduct in V3_PIDS
+        devs = usb.core.find(find_all=True, idVendor=0x0483,
+                             custom_match=is_stlink_v3)
+        return [usb_probe.Enumeration(STLinkV3, d) for d in devs]
+
     def show_detailed_info(self):
         super().show_info(self.usb_dev)
         print(' Firmware Ver: V%uJ%uM%uB%uS%u' % (
             self.ver_stlink, self.ver_jtag, self.ver_msd, self.ver_bridge,
             self.ver_swim))
-
-
-def enumerate(custom_match=None, **kwargs):
-    def is_stlink_v3(usb_dev):
-        if usb_dev.idProduct not in V3_PIDS:
-            return False
-        return custom_match(usb_dev) if custom_match is not None else True
-
-    return [usb_probe.Enumeration(STLinkV3, usb_dev)
-            for usb_dev in usb.core.find(find_all=True, idVendor=0x0483,
-                                         custom_match=is_stlink_v3, **kwargs)]

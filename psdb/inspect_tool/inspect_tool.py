@@ -160,6 +160,7 @@ def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
+    parser.add_argument('--serial-num')
     parser.add_argument('--probe-freq', type=int, default=1000000)
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--srst', action='store_true')
@@ -169,7 +170,7 @@ def _main():
 
     # Find a debug probe.
     try:
-        args.probe = psdb.probes.find_default(usb_path=args.usb_path)
+        args.probe = psdb.probes.make_one_ns(args)
     except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
