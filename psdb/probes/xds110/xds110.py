@@ -94,7 +94,7 @@ class XDS110(usb_probe.Probe):
         cmd = pack('<cH', b'*', len(payload)) + payload
         assert self.write(cmd) == len(cmd)
 
-    def execute(self, cmd, expected_len=None, allowed_errs=[0]):
+    def execute(self, cmd, expected_len=None, allowed_errs=(0,)):
         self.send_command(cmd)
         rsp, err = self.get_response(allowed_errs)
         if err == 0 and expected_len is not None and expected_len != len(rsp):
