@@ -1,8 +1,8 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Reg32
 from ..stm32 import flash_type1
-
-import time
 
 
 class FLASH(flash_type1.FLASH):

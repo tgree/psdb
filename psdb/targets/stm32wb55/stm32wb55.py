@@ -1,10 +1,10 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+import struct
+
 import psdb
 from psdb.devices.stm32wb55.ipc import IPC
 from psdb.devices import MemDevice, RAMDevice, stm32, stm32wb55
 from psdb.targets import Target
-
-import struct
 
 
 DEVICES = [(RAMDevice,        'SRAM1',    0x20000000, 0x00030000),

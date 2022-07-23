@@ -1,10 +1,10 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb
-import psdb.targets
-
 import time
 from builtins import range
 from struct import pack, unpack
+
+import psdb
+import psdb.targets
 
 
 class Enumeration:

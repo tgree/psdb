@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.targets
-
 import argparse
 import sys
+
+import psdb.probes
+import psdb.targets
 
 
 SUPPORTED_PLATFORMS = (

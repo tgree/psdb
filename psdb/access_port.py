@@ -1,7 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from .component import Component
-
 import struct
+
+from .component import Component
 
 
 class AP:

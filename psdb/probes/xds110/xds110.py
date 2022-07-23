@@ -1,13 +1,13 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from .. import usb_probe
-import psdb
-
-import usb.core
-
 import errno
 import math
 from struct import pack, unpack, unpack_from
 from builtins import bytes, range
+
+import usb.core
+
+import psdb
+from .. import usb_probe
 
 
 MIN_FW_VERSION = 0x02030014

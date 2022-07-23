@@ -4,8 +4,8 @@ import argparse
 import time
 import sys
 
-import psdb.probes
 import btype
+import psdb.probes
 
 
 HDR      = None

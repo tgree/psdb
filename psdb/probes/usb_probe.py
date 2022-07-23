@@ -1,8 +1,8 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import usb.core
 
-from . import probe
 import psdb
+from . import probe
 
 
 def usb_path(usb_dev):

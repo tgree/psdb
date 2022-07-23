@@ -4,10 +4,10 @@ import random
 import usb.core
 import usb.util
 
-from .. import usb_probe
-import psdb
-
 import btype
+
+import psdb
+from .. import usb_probe
 
 
 TRACE_EN   = False

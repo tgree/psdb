@@ -1,12 +1,12 @@
 # Copyright (c) 2020-2021 by Phase Advanced Sensor Systems, Inc.
 import usb
 
+import psdb
+from psdb.targets.stm32u5 import STM32U5
 from . import stlink
 from . import cdb
 from . import errors
 from .. import usb_probe
-from psdb.targets.stm32u5 import STM32U5
-import psdb
 
 
 V3_PIDS = [0x374E,

@@ -4,10 +4,10 @@
 import argparse
 import struct
 
-from .imon import Header
-
 import matplotlib
 import matplotlib.pyplot as plt
+
+from .imon import Header
 
 
 matplotlib.rcParams['lines.linewidth'] = 1

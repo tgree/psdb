@@ -1,6 +1,7 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-from ..device import Device, Reg32
 import time
+
+from ..device import Device, Reg32
 
 
 class TimeoutError(Exception):

@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
-from .cortex_subdevice import CortexSubDevice
-
 import time
 import collections
+
+from .cortex_subdevice import CortexSubDevice
 
 
 class SCS(CortexSubDevice):

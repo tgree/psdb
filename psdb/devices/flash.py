@@ -1,10 +1,10 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from ..block import RAMBD, BlockOutOfRangeException
-import psdb
-
 import math
 import time
 from builtins import range
+
+import psdb
+from ..block import RAMBD, BlockOutOfRangeException
 
 
 class FlashException(Exception):

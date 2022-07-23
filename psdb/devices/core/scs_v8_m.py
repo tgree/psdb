@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2021 Phase Advanced Sensor Systems, Inc.
+import collections
+
 from psdb.devices import AReg32, AReg32R, AReg32W
 from . import scs_base
-
-import collections
 
 
 # The core registers and the selector value they map to in the DCRSR.

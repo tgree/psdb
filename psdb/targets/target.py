@@ -1,8 +1,8 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb
-
 import collections
 import time
+
+import psdb
 
 
 class MemRegion:

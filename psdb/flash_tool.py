@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.elf
-import psdb.hexfile
-
 import argparse
 import hashlib
 import time
 import sys
+
+import psdb.probes
+import psdb.elf
+import psdb.hexfile
 
 
 IMAGE_PARSERS = [psdb.elf.ELFBinary.from_path,

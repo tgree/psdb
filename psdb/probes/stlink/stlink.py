@@ -1,11 +1,11 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+from builtins import bytes, range
+import time
+
+import psdb
 from .. import usb_probe
 from . import cdb
 from . import errors
-import psdb
-
-from builtins import bytes, range
-import time
 
 # The STLINK works kind of like a SCSI device.  There are three types of
 # transaction, all of which begin with a command phase and are then followed by

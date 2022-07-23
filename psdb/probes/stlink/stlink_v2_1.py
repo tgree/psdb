@@ -1,9 +1,9 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import usb
+import psdb
 from . import stlink
 from . import cdb
 from .. import usb_probe
-import psdb
 
 
 V2_1_PIDS = [0x374B,

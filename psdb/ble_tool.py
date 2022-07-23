@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.targets
-from psdb.util import hexify
-
 import argparse
 import threading
 import struct
 import time
 import uuid
 import sys
+
+import psdb.probes
+import psdb.targets
+from psdb.util import hexify
 
 
 RUNNING = True

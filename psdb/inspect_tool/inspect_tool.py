@@ -5,9 +5,9 @@ import sys
 import time
 import curses
 
-import psdb.probes
 import tgcurses
 import tgcurses.ui
+import psdb.probes
 
 from .cpu_register_window import CPURegisterWindow
 from .device_register_window import DeviceRegisterWindow

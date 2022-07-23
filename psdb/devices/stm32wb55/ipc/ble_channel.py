@@ -15,12 +15,12 @@ client does need to be done with the event buffers before submitting a new
 command since the new command overwrites the completion buffer (not to mention
 the obvious race condition).
 '''
+import struct
+import uuid
+
 from . import packet
 from . import gatt
 from .. import ipcc
-
-import struct
-import uuid
 
 
 # HCI Commands
