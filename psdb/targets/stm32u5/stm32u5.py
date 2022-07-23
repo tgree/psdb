@@ -104,7 +104,7 @@ class STM32U5(Target):
     def probe(db):
         # Ensure this is an STM32U5 part.
         if not STM32U5.is_mcu(db):
-            return
+            return None
 
         # There should be exactly one CPU.
         if len(db.cpus) != 1:
