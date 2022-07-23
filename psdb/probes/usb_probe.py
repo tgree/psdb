@@ -41,7 +41,7 @@ class Enumeration(probe.Enumeration):
         return self.cls.show_info(self.usb_dev, *self.args, **self.kwargs)
 
 
-class Probe(probe.Probe):
+class Probe(probe.Probe):  # pylint: disable=W0223
     def __init__(self, usb_dev, usb_reset=False, bConfigurationValue=None):
         super().__init__()
         self.usb_dev = usb_dev

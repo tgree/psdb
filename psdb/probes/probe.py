@@ -39,6 +39,8 @@ class Stats:
 
 
 class Probe:
+    NAME = None
+
     def __init__(self):
         self.aps    = {}
         self.cpus   = []
