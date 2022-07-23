@@ -38,7 +38,7 @@ class UnlockedContextManager:
         self.flash._BANK0_MAIN_WEPROT = mask[0]
         self.flash._BANK1_MAIN_WEPROT = mask[1]
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._BANK0_MAIN_WEPROT = 0xFFFFFFFF
         self.flash._BANK1_MAIN_WEPROT = 0xFFFFFFFF
 

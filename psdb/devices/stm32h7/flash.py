@@ -131,7 +131,7 @@ class UnlockedContextManager:
         self.bank._pg_unlock()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.bank._pg_lock()
 
 
@@ -145,7 +145,7 @@ class UnlockedOptionsContextManager:
             self.flash._OPTKEYR = 0x4C5D6E7F
             assert not self.flash._OPTCR.OPTLOCK
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._OPTCR.OPTLOCK = 1
 
 

@@ -22,7 +22,7 @@ class UnlockedContextManager:
             self.flash._KEYR = 0xCDEF89AB
             assert not self.flash._CR.LOCK
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._CR.LOCK = 1
 
 
@@ -37,7 +37,7 @@ class UnlockedOptionsContextManager:
             self.flash._OPTKEYR = 0x4C5D6E7F
             assert not self.flash._CR.OPTLOCK
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._CR.OPTLOCK = 1
 
 
