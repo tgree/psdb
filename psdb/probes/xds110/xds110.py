@@ -205,7 +205,8 @@ class XDS110(usb_probe.Probe):
         '''Switch from SWD to JTAG connection'''
         self.execute(pack('<B', 0x18), 0)
 
-    def _make_dap_cmd(self, cmd):
+    @staticmethod
+    def _make_dap_cmd(cmd):
         par = (cmd >> 4) ^ (cmd & 0x0F)
         par = (par >> 2) ^ (par & 0x03)
         par = (par >> 1) ^ (par & 0x01)
