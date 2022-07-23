@@ -191,8 +191,8 @@ class STM32G4(Target):
     def get_fault_addr(self):
         return 0xC0000000
 
-    def halt(self):
-        super().halt()
+    def halt(self, cpus=None):
+        super().halt(cpus=cpus)
         if self.flash.nbanks > 1:
             self._set_fb_mode(self.fb_mode)
 
@@ -202,10 +202,10 @@ class STM32G4(Target):
             self.orig_fb_mode = self._get_fb_mode()
             self.fb_mode      = self._synchronize_fb_mode()
 
-    def resume(self):
+    def resume(self, cpus=None):
         if self.flash.nbanks > 1:
             self._set_fb_mode(self.orig_fb_mode)
-        super().resume()
+        super().resume(cpus=cpus)
 
     def _set_fb_mode(self, v):
         assert self.flash.nbanks > 1
