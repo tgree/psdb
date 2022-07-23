@@ -39,7 +39,7 @@ class Flash:
         end      = addr + length + (-(addr + length) & self.sector_mask)
         nsectors = (end - begin) // self.sector_size
         fbit     = (begin - self.mem_base) // self.sector_size
-        assert 0 <= fbit and fbit < self.nsectors
+        assert 0 <= fbit < self.nsectors
         assert 0 <= nsectors and fbit + nsectors <= self.nsectors
         return ((1 << nsectors) - 1) << fbit
 

@@ -77,7 +77,7 @@ class FLASH(Device, Flash):
         '''
         Erases the nth sector in flash.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
 
         addr = self.mem_base + n * self.sector_size
         if verbose:

@@ -122,7 +122,7 @@ class FLASH_3(flash_type1.FLASH):
         This checks if the flash banks are swapped and erases the appropriate
         sector if it needs to reverse the numbers.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
 
         addr = self.mem_base + n * self.sector_size
         if verbose:

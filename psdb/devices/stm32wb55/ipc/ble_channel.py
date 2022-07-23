@@ -236,9 +236,9 @@ class BLEChannel:
         return self.wait_and_pop_all_events()
 
     def hci_le_set_default_phy(self, all_phys, tx_phys, rx_phys):
-        assert 0 <= all_phys and all_phys <= 3
-        assert 0 <= tx_phys and tx_phys <= 3
-        assert 0 <= rx_phys and rx_phys <= 3
+        assert 0 <= all_phys <= 3
+        assert 0 <= tx_phys <= 3
+        assert 0 <= rx_phys <= 3
         payload = struct.pack('<BBB', all_phys, tx_phys, rx_phys)
         self._start_ble_command(HCI_LE_SET_DEFAULT_PHY, payload)
         rsp = self.wait_and_pop_all_events()
@@ -328,7 +328,7 @@ class BLEChannel:
 
     def aci_hal_set_tx_power_level(self, enable_high_power, pa_level):
         assert isinstance(enable_high_power, bool)
-        assert 0x00 <= pa_level and pa_level <= 0x1F
+        assert 0x00 <= pa_level <= 0x1F
         payload = struct.pack('<BB', int(enable_high_power), pa_level)
         self._start_ble_command(ACI_HAL_SET_TX_POWER_LEVEL, payload)
         rsp = self.wait_and_pop_all_events()
@@ -415,7 +415,7 @@ class BLEChannel:
         return gap_service, dev_name_char, appearance_char
 
     def aci_gap_set_io_capability(self, io_capability):
-        assert 0 <= io_capability and io_capability <= 4
+        assert 0 <= io_capability <= 4
         payload = struct.pack('<B', io_capability)
         self._start_ble_command(ACI_GAP_SET_IO_CAPABILITY, payload)
         rsp = self.wait_and_pop_all_events()
@@ -435,7 +435,7 @@ class BLEChannel:
         assert sc_support in (0, 1, 2)
         assert keypress_notification_support in (0, 1)
         assert use_fixed_pin in (0, 1)
-        assert 0 <= fixed_pin and fixed_pin <= 999999
+        assert 0 <= fixed_pin <= 999999
         assert identity_address_type in (0, 1)
         payload = struct.pack('<BBBBBBBLB', bonding_mode, mitm_mode, sc_support,
                               keypress_notification_support,

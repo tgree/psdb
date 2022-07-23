@@ -404,7 +404,7 @@ class FLCTL(Device, flash.Flash):
         Erases the nth sector in flash.
         The sector is verified to be erased before returning.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
         self.erase_sectors(1 << n, verbose)
 
     def read(self, addr, length):
