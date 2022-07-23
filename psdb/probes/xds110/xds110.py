@@ -365,18 +365,18 @@ class XDS110(usb_probe.Probe):
         '''Releases the target from reset.'''
         self.xds_set_srst(1)
 
-    def set_write_tck_freq(self, target):
+    def set_write_tck_freq(self, flash):
         return self.set_max_tck_freq()
 
     def set_max_tck_freq(self):
         return self.set_tck_freq(2730000)
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         '''
         Sets TCK to the nearest frequency that doesn't exceed the requested
         one.  Returns the actual frequency in Hz.
         '''
-        p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq - 5.5))
+        p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq_hz - 5.5))
         return 1000000000./p_ns
 
     def open_ap(self, ap_num):

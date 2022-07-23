@@ -201,8 +201,8 @@ class XTSWD(usb_probe.Probe):
     def set_max_tck_freq(self):
         return self.set_tck_freq(32000000)
 
-    def set_tck_freq(self, freq):
-        rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq])
+    def set_tck_freq(self, freq_hz):
+        rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq_hz])
         return rsp.params[0]
 
     def enable_instrumentation_amp(self):
