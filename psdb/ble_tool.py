@@ -218,7 +218,7 @@ def main(rv):
         thread.join()
 
 
-if __name__ == '__main__':
+def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
@@ -232,3 +232,7 @@ if __name__ == '__main__':
     except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    _main()
