@@ -181,7 +181,8 @@ class FLASH(Device, Flash):
         self.sectors_per_bank = self.nsectors // nbanks
         self.bank_size        = self.sector_size * self.sectors_per_bank
 
-    def _flash_bank_unlocked(self, bank):
+    @staticmethod
+    def _flash_bank_unlocked(bank):
         return UnlockedContextManager(bank)
 
     def _options_unlocked(self):
