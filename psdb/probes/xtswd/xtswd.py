@@ -230,7 +230,7 @@ class XTSWD(usb_probe.Probe):
         rsp, _ = self._exec_command(Opcode.GET_STATS)
         return Stats(rsp)
 
-    def open_ap(self, apsel):
+    def open_ap(self, ap_num):
         pass
 
     def read_dp_reg(self, addr):
@@ -240,12 +240,12 @@ class XTSWD(usb_probe.Probe):
     def write_dp_reg(self, addr, value):
         self._exec_command(Opcode.WRITE_DP, [addr, value])
 
-    def read_ap_reg(self, apsel, addr):
-        rsp, _ = self._exec_command(Opcode.READ_AP, [apsel, addr])
+    def read_ap_reg(self, ap_num, addr):
+        rsp, _ = self._exec_command(Opcode.READ_AP, [ap_num, addr])
         return rsp.params[0]
 
-    def write_ap_reg(self, apsel, addr, value):
-        self._exec_command(Opcode.WRITE_AP, [apsel, addr, value])
+    def write_ap_reg(self, ap_num, addr, value):
+        self._exec_command(Opcode.WRITE_AP, [ap_num, addr, value])
 
     def read_32(self, addr, ap_num=0):
         trace('READ32 0x%08X' % addr)

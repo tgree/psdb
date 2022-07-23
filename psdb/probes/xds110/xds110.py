@@ -379,7 +379,7 @@ class XDS110(usb_probe.Probe):
         p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq - 5.5))
         return 1000000000./p_ns
 
-    def open_ap(self, apsel):
+    def open_ap(self, ap_num):
         pass
 
     def read_dp_reg(self, addr):
@@ -390,13 +390,13 @@ class XDS110(usb_probe.Probe):
         '''Write a 32-bit register in the DP address space. '''
         self.cmapi_write_dap_reg(1, 0, addr, value)
 
-    def read_ap_reg(self, apsel, addr):
+    def read_ap_reg(self, ap_num, addr):
         '''Read a 32-bit register from the AP address space.'''
-        return self.cmapi_read_dap_reg(0, apsel, addr)
+        return self.cmapi_read_dap_reg(0, ap_num, addr)
 
-    def write_ap_reg(self, apsel, addr, value):
+    def write_ap_reg(self, ap_num, addr, value):
         '''Write a 32-bit register in the AP address space.'''
-        self.cmapi_write_dap_reg(0, apsel, addr, value)
+        self.cmapi_write_dap_reg(0, ap_num, addr, value)
 
     def connect(self):
         # Switch to Serial-Wire debug and connect.  The cmapi_connect() call

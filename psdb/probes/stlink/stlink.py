@@ -226,10 +226,10 @@ class STLink(usb_probe.Probe):
         '''Releases the target from reset.'''
         self._cmd_allow_retry(cdb.SetSRST(False))
 
-    def open_ap(self, apsel):
+    def open_ap(self, ap_num):
         '''Prepares the AP for use.'''
         if self.features & FEATURE_OPEN_AP:
-            self._cmd_allow_retry(cdb.OpenAP(apsel))
+            self._cmd_allow_retry(cdb.OpenAP(ap_num))
 
     def read_dp_reg(self, addr):
         '''
@@ -243,15 +243,15 @@ class STLink(usb_probe.Probe):
         '''Write a 32-bit register in the DP address space. '''
         return self.write_ap_reg(0xFFFF, addr, value)
 
-    def read_ap_reg(self, apsel, addr):
+    def read_ap_reg(self, ap_num, addr):
         '''Read a 32-bit register from the AP address space.'''
         assert self.features & FEATURE_AP
-        return self._cmd_allow_retry(cdb.ReadAPReg(apsel, addr))
+        return self._cmd_allow_retry(cdb.ReadAPReg(ap_num, addr))
 
-    def write_ap_reg(self, apsel, addr, value):
+    def write_ap_reg(self, ap_num, addr, value):
         '''Write a 32-bit register in the AP address space.'''
         assert self.features & FEATURE_AP
-        self._cmd_allow_retry(cdb.WriteAPReg(apsel, addr, value))
+        self._cmd_allow_retry(cdb.WriteAPReg(ap_num, addr, value))
 
     def read_32(self, addr, ap_num=0):
         '''
