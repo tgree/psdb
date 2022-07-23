@@ -1542,6 +1542,7 @@ class RCC(Device):
             return self.f_hse
         if sws == 3:
             return self.f_pll1_p_clk
+        return 0
 
     @property
     def f_sys_d1cpre_ck(self):
