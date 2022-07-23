@@ -126,11 +126,11 @@ class GDBConnection:
                 if csum == checksum:
                     self.send_ack()
                     return pkt
-                else:
-                    self.send_nack()
-                    if self.verbose:
-                        print("Discarding (expected %02X): '%s'" % (csum, pkt))
-                    pkt = ''
+
+                self.send_nack()
+                if self.verbose:
+                    print("Discarding (expected %02X): '%s'" % (csum, pkt))
+                pkt = ''
 
     def poll_break(self, timeout):
         assert not self.data
@@ -139,7 +139,7 @@ class GDBConnection:
         if data is None:
             print('Receive timed out after %.3f seconds' % (time.time() - t0))
             return False
-        elif data == b'':
+        if data == b'':
             raise ConnectionClosedException()
 
         assert data == b'\x03'
