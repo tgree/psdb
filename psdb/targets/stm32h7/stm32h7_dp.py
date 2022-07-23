@@ -30,7 +30,7 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (stm32.DMAMUX,       'DMAMUX1',      0x40020800, 16, 8),
            (stm32.ADC16,        'ADC12',        0x40022000, 1, 2),
            (stm32h7.FLASH_DP,   'FLASH',        0x52002000, 0x08000000,
-                                                3300000),  # noqa: E127
+                                                8000000),  # noqa: E127
            (stm32.USB_HS,       'USB1',         0x40040000),
            (stm32.USB_HS,       'USB2',         0x40080000),
            (stm32h7.RCC,        'RCC_M7',       0x58024400),

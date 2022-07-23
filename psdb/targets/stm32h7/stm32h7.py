@@ -13,7 +13,7 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
            (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
            (stm32h7.FLASH_UP,   'FLASH',        0x52002000, 0x08000000,
-                                                3300000),  # noqa: E127
+                                                8000000),  # noqa: E127
            ]
 
 # AP1 devices are ones accessible in the D3 domain; we can access these via AP1
