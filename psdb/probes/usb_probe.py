@@ -42,7 +42,7 @@ class Enumeration(probe.Enumeration):
 
 
 class Probe(probe.Probe):
-    def __init__(self, usb_dev, usb_reset=False):
+    def __init__(self, usb_dev, usb_reset=False, bConfigurationValue=None):
         super().__init__()
         self.usb_dev = usb_dev
         try:
@@ -52,13 +52,15 @@ class Probe(probe.Probe):
                 raise psdb.ProbeException('Device has no langid; ensure '
                                           'running as root!')
 
-        configurations = usb_dev.configurations()
-        assert len(configurations) == 1
+        if bConfigurationValue is None:
+            configurations = usb_dev.configurations()
+            assert len(configurations) == 1
+            bConfigurationValue = configurations[0].bConfigurationValue
 
         if usb_reset:
             usb_dev.reset()
 
-        self._set_configuration(configurations[0].bConfigurationValue)
+        self._set_configuration(bConfigurationValue)
 
     def __str__(self):
         return '%s Debug Probe at %s' % (self.NAME, usb_path(self.usb_dev))
