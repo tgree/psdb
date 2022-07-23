@@ -129,6 +129,9 @@ class XTSWD(usb_probe.Probe):
         self.tag = (self.tag + 1) & 0xFFFF
         return tag
 
+    def _decode_rsp(self, data):
+        raise NotImplementedError
+
     def _exec_command(self, opcode, params=None, bulk_data=b'', timeout=1000,
                       rx_len=0):
         if not params:
