@@ -139,10 +139,12 @@ class FLASH_3(flash_type1.FLASH):
         with self._flash_unlocked():
             self._clear_errors()
             self._CR = ((n << 3) | (1 << 1) | bker)
-            self._CR = ((1 << 16) | (n << 3) | (1 << 1) | bker)
-            self._wait_bsy_clear()
-            self._check_errors()
-            self._CR = 0
+            try:
+                self._CR = ((1 << 16) | (n << 3) | (1 << 1) | bker)
+                self._wait_bsy_clear()
+                self._check_errors()
+            finally:
+                self._CR = 0
 
     def swap_banks_and_reset_no_connect(self):
         '''
