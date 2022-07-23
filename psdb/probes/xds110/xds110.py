@@ -72,7 +72,7 @@ class XDS110(usb_probe.Probe):
         assert len(buf) >= 7
         assert buf[0] == ord('*')
         size = buf[1] + (buf[2] << 8)
-        assert (4 <= size <= USB_PAYLOAD_SIZE)
+        assert 4 <= size <= USB_PAYLOAD_SIZE
         assert len(buf) - 3 <= size
 
         rsp   = buf[3:]
