@@ -219,6 +219,23 @@ class FLASH(Device, Flash):
             bank._wait_prg_idle()
             bank._check_errors()
 
+    def erase_all(self, verbose=True):
+        '''
+        Erases the entire flash.
+        '''
+        if verbose:
+            print('Erasing entire flash...')
+        with self._flash_bank_unlocked(self.banks[0]):
+            with self._flash_bank_unlocked(self.banks[1]):
+                with self._options_unlocked():
+                    self.banks[0]._clear_errors()
+                    self.banks[1]._clear_errors()
+                    self._OPTCR.MER = 1
+                    self.banks[0]._wait_prg_idle()
+                    self.banks[1]._wait_prg_idle()
+                    self.banks[0]._check_errors()
+                    self.banks[1]._check_errors()
+
     def read(self, addr, length):
         '''
         Reads a region from the flash.
