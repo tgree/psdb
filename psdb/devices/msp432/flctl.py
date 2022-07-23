@@ -27,9 +27,9 @@ def and_bytes(l, r):
 
 
 class UnlockedContextManager:
-    def __init__(self, flash, mask):
+    def __init__(self, _flash, mask):
         assert (mask & 0xFFFFFFFFFFFFFFFF) == mask
-        self.flash = flash
+        self.flash = _flash
         self.mask  = mask
 
     def __enter__(self):
@@ -428,9 +428,9 @@ class FLCTL(Device, flash.Flash):
         except flash.FlashWriteException as e:
             # Hack until we implement proper pulsing in _write_bulk.
             if (addr & self.sector_mask) != 0:
-                raise Exception('not aligned')
+                raise Exception('not aligned') from e
             if len(data) % 64:
-                raise Exception('not 64-byte multiple')
+                raise Exception('not 64-byte multiple') from e
 
             print('Exception doing bulk write; attempting burst writes')
             print('-- Exception: %s' % e)
