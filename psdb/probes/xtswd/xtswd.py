@@ -4,10 +4,10 @@ import random
 import usb.core
 import usb.util
 
-from .. import usb_probe
-import psdb
-
 import btype
+
+import psdb
+from .. import usb_probe
 
 
 TRACE_EN   = False
@@ -116,13 +116,53 @@ class XTSWDCommandException(psdb.ProbeException):
 
 
 class XTSWD(usb_probe.Probe):
-    NAME = 'XTSWD'
+    NAME    = 'XTSWD'
+    RSP_EP  = 0x81
+    CMD_EP  = 0x02
+    IMON_EP = 0x83
 
     def __init__(self, usb_dev, **kwargs):
-        super().__init__(usb_dev, **kwargs)
-        self.tag      = random.randint(0, 65535)
-        self.imon_tag = None
-        self.git_sha1 = usb.util.get_string(usb_dev, 6)
+        super().__init__(usb_dev, bConfigurationValue=0x30, **kwargs)
+        self.tag         = random.randint(0, 65535)
+        self.imon_tag    = None
+        self.git_sha1    = usb.util.get_string(usb_dev, 6)
+        self.njunk_bytes = self._synchronize()
+
+    def _synchronize(self):
+        '''
+        Recover the connection if it was interrupted previously.  There could
+        be a bunch of data posted on the RSP EP from a previous lifetime, so
+        we post illegal commands to the probe until we get a 32-byte response.
+        However, that 32-byte response could be the end of the previous life's
+        transfer, so do a final illegal command and then check for the expected
+        opcode and tag.
+        '''
+        self._send_abort()
+        tag  = self._alloc_tag()
+        cmd  = Command(opcode=Opcode.BAD_OPCODE, tag=tag)
+        data = cmd.pack()
+        junk = 0
+        while True:
+            self.usb_dev.write(self.CMD_EP, data)
+            rsp = self.usb_dev.read(self.RSP_EP, 64)
+            if len(rsp) == 32:
+                break
+
+            junk += len(rsp)
+
+        self.usb_dev.write(self.CMD_EP, data)
+        data = self.usb_dev.read(self.RSP_EP, 64)
+        assert len(data) == 32
+
+        rsp = Response.unpack(data)
+        assert rsp.tag    == tag
+        assert rsp.opcode == Opcode.BAD_OPCODE
+        assert rsp.status == Status.BAD_OPCODE
+
+        return junk
+
+    def _send_abort(self):
+        self.usb_dev.write(self.CMD_EP, b'')
 
     def _alloc_tag(self):
         tag      = self.tag
@@ -147,7 +187,9 @@ class XTSWD(usb_probe.Probe):
                                  timeout=timeout)
         assert len(data) >= Response._STRUCT.size
 
-        rsp, rx_data = self._decode_rsp(data)
+        rsp = Response.unpack(
+                data[-Response._STRUCT.size:])          # pylint: disable=E1130
+        rx_data = bytes(data[:-Response._STRUCT.size])  # pylint: disable=E1130
         assert rsp.tag == tag
 
         if rsp.status != Status.OK:
@@ -195,8 +237,8 @@ class XTSWD(usb_probe.Probe):
     def deassert_srst(self):
         self._exec_command(Opcode.SET_SRST, [0])
 
-    def set_tck_freq(self, freq):
-        rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq])
+    def set_tck_freq(self, freq_hz):
+        rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq_hz])
         return rsp.params[0]
 
     def enable_instrumentation_amp(self):
@@ -224,7 +266,7 @@ class XTSWD(usb_probe.Probe):
         rsp, _ = self._exec_command(Opcode.GET_STATS)
         return Stats(rsp)
 
-    def open_ap(self, apsel):
+    def open_ap(self, ap_num):
         pass
 
     def read_dp_reg(self, addr):
@@ -234,12 +276,12 @@ class XTSWD(usb_probe.Probe):
     def write_dp_reg(self, addr, value):
         self._exec_command(Opcode.WRITE_DP, [addr, value])
 
-    def read_ap_reg(self, apsel, addr):
-        rsp, _ = self._exec_command(Opcode.READ_AP, [apsel, addr])
+    def read_ap_reg(self, ap_num, addr):
+        rsp, _ = self._exec_command(Opcode.READ_AP, [ap_num, addr])
         return rsp.params[0]
 
-    def write_ap_reg(self, apsel, addr, value):
-        self._exec_command(Opcode.WRITE_AP, [apsel, addr, value])
+    def write_ap_reg(self, ap_num, addr, value):
+        self._exec_command(Opcode.WRITE_AP, [ap_num, addr, value])
 
     def read_32(self, addr, ap_num=0):
         trace('READ32 0x%08X' % addr)
@@ -273,22 +315,17 @@ class XTSWD(usb_probe.Probe):
 
     def connect(self):
         rsp, _ = self._exec_command(Opcode.CONNECT)
-        self.dpidr = rsp.params[0]
-        trace('DPIDR:     0x%08X' % self.dpidr)
+        dpidr  = rsp.params[0]
+        trace('DPIDR:     0x%08X' % dpidr)
         trace('CTRL/STAT: 0x%08X' % rsp.params[1])
         trace('CSW:       0x%08X' % self.read_ap_reg(0, 0x0))
+        return dpidr
 
     @staticmethod
     def find():
         devs = usb.core.find(find_all=True, idVendor=0x0483, idProduct=0xA34E,
                              bDeviceClass=0xFF, bDeviceSubClass=0x03)
-        enums = []
-        for d in devs:
-            if d.bcdDevice <= 0x095:
-                enums.append(usb_probe.Enumeration(XTSWD_095, d))
-            else:
-                enums.append(usb_probe.Enumeration(XTSWD_096, d))
-        return enums
+        return [usb_probe.Enumeration(XTSWD, d) for d in devs]
 
     @staticmethod
     def show_fw_version(usb_dev):
@@ -306,68 +343,3 @@ class XTSWD(usb_probe.Probe):
         super().show_info(self.usb_dev)
         print('         SHA1: %s' % self.git_sha1)
         self.show_fw_version(self.usb_dev)
-
-
-class XTSWD_095(XTSWD):
-    CMD_EP  = 0x01
-    RSP_EP  = 0x82
-    IMON_EP = 0x83
-
-    def __init__(self, usb_dev):
-        super().__init__(usb_dev, usb_reset=True)
-
-    def _decode_rsp(self, data):
-        rsp     = Response.unpack(data[:Response._STRUCT.size])
-        rx_data = bytes(data[Response._STRUCT.size:])
-        return rsp, rx_data
-
-
-class XTSWD_096(XTSWD):
-    RSP_EP  = 0x81
-    CMD_EP  = 0x02
-    IMON_EP = 0x83
-
-    def __init__(self, usb_dev):
-        super().__init__(usb_dev)
-        self.njunk_bytes = self._synchronize()
-
-    def _synchronize(self):
-        '''
-        Recover the connection if it was interrupted previously.  There could
-        be a bunch of data posted on the RSP EP from a previous lifetime, so
-        we post illegal commands to the probe until we get a 32-byte response.
-        However, that 32-byte response could be the end of the previous life's
-        transfer, so do a final illegal command and then check for the expected
-        opcode and tag.
-        '''
-        self._send_abort()
-        tag  = self._alloc_tag()
-        cmd  = Command(opcode=Opcode.BAD_OPCODE, tag=tag)
-        data = cmd.pack()
-        junk = 0
-        while True:
-            self.usb_dev.write(self.CMD_EP, data)
-            rsp = self.usb_dev.read(self.RSP_EP, 64)
-            if len(rsp) == 32:
-                break
-
-            junk += len(rsp)
-
-        self.usb_dev.write(self.CMD_EP, data)
-        data = self.usb_dev.read(self.RSP_EP, 64)
-        assert len(data) == 32
-
-        rsp = Response.unpack(data)
-        assert rsp.tag    == tag
-        assert rsp.opcode == Opcode.BAD_OPCODE
-        assert rsp.status == Status.BAD_OPCODE
-
-        return junk
-
-    def _decode_rsp(self, data):
-        rsp     = Response.unpack(data[-Response._STRUCT.size:])
-        rx_data = bytes(data[:-Response._STRUCT.size])
-        return rsp, rx_data
-
-    def _send_abort(self):
-        self.usb_dev.write(self.CMD_EP, b'')

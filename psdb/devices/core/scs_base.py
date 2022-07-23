@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
-from .cortex_subdevice import CortexSubDevice
-
 import time
 import collections
+
+from .cortex_subdevice import CortexSubDevice
 
 
 class SCS(CortexSubDevice):
@@ -11,7 +11,7 @@ class SCS(CortexSubDevice):
     devices.
     '''
     def __init__(self, component, subtype, dev_regs, core_regs):
-        super(SCS, self).__init__('SCS', dev_regs, component, subtype)
+        super().__init__('SCS', dev_regs, component, subtype)
         self.core_regs = core_regs
 
         # Enable DHCSR.C_DEBUGEN so that we have debug control of the CPU.
@@ -48,7 +48,7 @@ class SCS(CortexSubDevice):
             time.sleep(0.001)
 
     def is_halted(self):
-        return (self._DHCSR.S_HALT != 0)
+        return self._DHCSR.S_HALT != 0
 
     def halt(self):
         self._DHCSR = (0xA05F0000 | (1 << 1) | (1 << 0))

@@ -158,4 +158,4 @@ class USB(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(USB, self).__init__(target, ap, addr, name, USB.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, USB.REGS, **kwargs)

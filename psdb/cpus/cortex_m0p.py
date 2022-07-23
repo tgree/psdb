@@ -4,4 +4,4 @@ from . import cortex
 
 class CortexM0P(cortex.Cortex):
     def __init__(self, component, subtype):
-        super(CortexM0P, self).__init__(component, subtype, 'M0+')
+        super().__init__(component, subtype, 'M0+')

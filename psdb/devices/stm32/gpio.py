@@ -197,4 +197,4 @@ class GPIO(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(GPIO, self).__init__(target, ap, addr, name, GPIO.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, GPIO.REGS, **kwargs)

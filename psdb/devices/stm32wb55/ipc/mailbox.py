@@ -5,7 +5,7 @@ from .circular_queue import Queue
 from . import packet
 
 
-class Mailbox(object):
+class Mailbox:
     '''
     Mailbox class for managing data structures used for interfacing with CPU2
     firmware.  Located somwhere in SRAM2a, according to the IPCCDBA address.
@@ -188,7 +188,7 @@ class Mailbox(object):
         '''
         Returns the stack type field when the WS firmware is running.
         '''
-        return (self.read_stack_info() & 0xFF)
+        return self.read_stack_info() & 0xFF
 
     def write_sys_command(self, opcode, payload):
         '''

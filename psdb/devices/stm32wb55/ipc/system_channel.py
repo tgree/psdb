@@ -19,9 +19,9 @@ The only safe way to process the queue is to repeatedly pop_front() under a
 while(!sys_table->sys_queue.empty()) loop.  The BLE firmware does not have this
 bug and its queue pointers are in the MM BLE Pool area instead.
 '''
-from .. import ipcc
-
 import struct
+
+from .. import ipcc
 
 
 FUS_GET_STATE               = 0xFC52
@@ -49,9 +49,9 @@ def is_fus_ready_event(event):
             event.payload == EVT_PAYLOAD_FUS_RUNNING)
 
 
-class SystemChannel(object):
+class SystemChannel:
     def __init__(self, ipc, cmd_rsp_channel, event_channel):
-        super(SystemChannel, self).__init__()
+        super().__init__()
         self.ipc             = ipc
         self.cmd_rsp_channel = cmd_rsp_channel
         self.event_channel   = event_channel

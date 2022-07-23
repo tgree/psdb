@@ -26,8 +26,7 @@ class FLASH_UP(FLASH):
                 Reg32 ('WPSN_PRG2R',    0x13C),
                 ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 **kwargs):
-        super(FLASH_UP, self).__init__(target, ap, name, dev_base, mem_base,
-                                       max_write_freq, FLASH_UP.OPT_REGS,
-                                       **kwargs)
+    def __init__(self, target, ap, name, dev_base, mem_base,
+                 max_nowait_write_freq, **kwargs):
+        super().__init__(target, ap, name, dev_base, mem_base,
+                         max_nowait_write_freq, FLASH_UP.OPT_REGS, **kwargs)

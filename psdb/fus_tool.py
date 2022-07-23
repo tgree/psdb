@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.targets
-
 import argparse
 import sys
+
+import psdb.probes
+import psdb.targets
 
 
 SUPPORTED_PLATFORMS = (
@@ -29,7 +29,7 @@ def main(rv):
     assert isinstance(target, SUPPORTED_PLATFORMS)
 
     # Use the best clock frequency.
-    f      = target.set_max_tck_freq()
+    f      = probe.set_max_target_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Flash and IPCC info.

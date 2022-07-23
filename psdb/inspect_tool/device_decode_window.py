@@ -13,7 +13,7 @@ class Field:
         self.mask     = ((1 << width) - 1)
 
     def extract(self, reg_val):
-        return ((reg_val >> self.shift) & self.mask)
+        return (reg_val >> self.shift) & self.mask
 
 
 class DeviceDecodeWindow:

@@ -9,21 +9,21 @@ class InvalidFormatException(HEXFileException):
     pass
 
 
-class HEXFile(object):
+class HEXFile:
     def __init__(self, path):
         self.path     = path
-        self.hex_file = open(self.path, 'r')
         self.flash_dv = []
 
-        self._parse()
+        with open(self.path, 'r', encoding='utf8') as f:
+            self._parse(f)
 
     def _raise_inval_format(self, i, err):
         raise InvalidFormatException('%s:%u: %s' % (self.path, i, err))
 
-    def _parse(self):
+    def _parse(self, f):
         base_address = 0
         try:
-            lines = self.hex_file.readlines()
+            lines = f.readlines()
         except UnicodeDecodeError:
             self._raise_inval_format(0, 'Non-UTF8 characters.')
         for i, l in enumerate(lines):
@@ -40,7 +40,7 @@ class HEXFile(object):
             offset      = (record_hex[1] << 8) | record_hex[2]
             record_type = record_hex[3]
             data        = bytes(record_hex[4:-1])
-            if (sum(record_hex) & 0xFF):
+            if sum(record_hex) & 0xFF:
                 self._raise_inval_format(i, 'Invalid checksum.')
 
             if record_type == 0x00:

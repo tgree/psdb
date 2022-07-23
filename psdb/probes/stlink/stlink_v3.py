@@ -1,11 +1,12 @@
 # Copyright (c) 2020-2021 by Phase Advanced Sensor Systems, Inc.
 import usb
 
+import psdb
+from psdb.targets.stm32u5 import STM32U5
 from . import stlink
 from . import cdb
 from . import errors
 from .. import usb_probe
-import psdb
 
 
 V3_PIDS = [0x374E,
@@ -32,6 +33,23 @@ class STLinkV3(stlink.STLink):
     board from MSD+VCP to just VCP mode:
 
         0x3754 - STLINK-V3 in single-VCP mode (Nucleo)
+
+    The STLINK-V3 supports a fixed set of frequencies:
+
+        --------
+        24.0 MHz
+         8.0 MHz
+         3.3 MHz
+         1.0 MHz
+        --------
+         200 KHz
+          50 KHz
+           5 KHz
+        --------
+
+    The STLINK-V3 may support up to 24 MHz for reads, however on the H7 if you
+    try to flash at 24 MHz it errors out.  I think the ST firmware doesn't deal
+    with WAIT acknowledgements properly.
     '''
     NAME = 'STLinkV3'
 
@@ -46,6 +64,13 @@ class STLinkV3(stlink.STLink):
             self.max_rw8 = 512
         else:
             self.max_rw8 = 64
+
+        # Before J10, if you went too fast while writing to flash you would get
+        # WAIT acknowledgements on the SWD bus and the STLINK would blow up.
+        # After J10, it seems to handle the WAIT states properly and you can
+        # write an H7 at 24 MHz without it dieing.
+        if self.ver_jtag >= 10:
+            self.features |= stlink.FEATURE_SWD_WAIT_OK
 
         self.features    |= stlink.FEATURE_BULK_READ_16
         self.features    |= stlink.FEATURE_BULK_WRITE_16
@@ -97,6 +122,18 @@ class STLinkV3(stlink.STLink):
         raise psdb.ProbeException('Requested SWD frequency %u kHz too low; '
                                   'minimum is %u kHz.'
                                   % (freq_khz, self._swd_freqs_khz[-1]))
+
+    def set_max_burn_tck_freq(self, flash):
+        # We really have to hack it here.  Before J10, the U5 errors out if you
+        # try to write faster than 3.3 MHz.  With J10, then U5 errors out if
+        # you try to write faster than 8 MHz.  On all the other platforms I've
+        # tested, J10 allows you to go at the max probe speed of 24 MHz, so not
+        # sure why it fails on U5.
+        if not self.features & stlink.FEATURE_SWD_WAIT_OK:
+            return self.set_tck_freq(flash.max_nowait_write_freq)
+        if isinstance(self.target, STM32U5):
+            return self.set_tck_freq(8000000)
+        return self.set_max_target_tck_freq()
 
     def set_tck_freq(self, freq_hz):
         '''

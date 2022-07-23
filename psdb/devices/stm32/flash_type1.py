@@ -12,7 +12,7 @@ def write_in_region(addr, data, region_base, region_len):
     return block_in_region(addr, len(data), region_base, region_len)
 
 
-class UnlockedContextManager(object):
+class UnlockedContextManager:
     def __init__(self, flash):
         self.flash = flash
 
@@ -22,11 +22,11 @@ class UnlockedContextManager(object):
             self.flash._KEYR = 0xCDEF89AB
             assert not self.flash._CR.LOCK
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._CR.LOCK = 1
 
 
-class UnlockedOptionsContextManager(object):
+class UnlockedOptionsContextManager:
     def __init__(self, flash):
         self.flash = flash
 
@@ -37,7 +37,7 @@ class UnlockedOptionsContextManager(object):
             self.flash._OPTKEYR = 0x4C5D6E7F
             assert not self.flash._CR.OPTLOCK
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._CR.OPTLOCK = 1
 
 
@@ -46,15 +46,14 @@ class FLASH(Device, Flash):
     Common base class for many STM32 flash devices.
     '''
     def __init__(self, target, regs, sector_size, ap, name, dev_base, mem_base,
-                 max_write_freq, otp_base, otp_len, **kwargs):
+                 max_nowait_write_freq, otp_base, otp_len, **kwargs):
         Device.__init__(self, target, ap, dev_base, name, regs, **kwargs)
         Flash.__init__(self, mem_base, sector_size,
-                       target.flash_size // sector_size)
+                       target.flash_size // sector_size, max_nowait_write_freq)
 
-        self.target         = target
-        self.max_write_freq = max_write_freq
-        self.otp_base       = otp_base
-        self.otp_len        = otp_len
+        self.target   = target
+        self.otp_base = otp_base
+        self.otp_len  = otp_len
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
@@ -74,21 +73,11 @@ class FLASH(Device, Flash):
         while self._SR.BSY:
             pass
 
-    def set_swd_freq_write(self, verbose=True):
-        f = self.target.db.set_tck_freq(self.max_write_freq)
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
-
-    def set_swd_freq_read(self, verbose=True):
-        f = self.target.set_max_tck_freq()
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
-
     def erase_sector(self, n, verbose=True):
         '''
         Erases the nth sector in flash.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
 
         addr = self.mem_base + n * self.sector_size
         if verbose:
@@ -100,6 +89,22 @@ class FLASH(Device, Flash):
             self._CR = ((n << 3) | (1 << 1))
             try:
                 self._CR = ((1 << 16) | (n << 3) | (1 << 1))
+                self._wait_bsy_clear()
+                self._check_errors()
+            finally:
+                self._CR = 0
+
+    def erase_all(self, verbose=True):
+        '''
+        Erases the entire flash.
+        '''
+        if verbose:
+            print('Erasing entire flash...')
+        with self._flash_unlocked():
+            self._clear_errors()
+            self._CR = (1 << 15) | (1 << 2)
+            try:
+                self._CR = (1 << 15) | (1 << 2) | (1 << 16)
                 self._wait_bsy_clear()
                 self._check_errors()
             finally:
@@ -148,14 +153,15 @@ class FLASH(Device, Flash):
         assert offset + size <= self.otp_len
         return self.ap.read_bulk(self.otp_base + offset, size)
 
-    def is_otp_writeable(self, offset, size, verbose=True):
+    def is_otp_writeable(self, offset, size,
+                         verbose=True):  # pylint: disable=W0613
         '''
         Determines if the selected region of one-time-programmable memory is
         still writeable.
         '''
         return self.read_otp(offset, size) == (b'\xFF'*size)
 
-    def write_otp(self, offset, data, verbose=True):
+    def write_otp(self, offset, data, verbose=True):  # pylint: disable=W0613
         '''
         Writes 8-byte lines of data to the one-time-programmable area in flash.
         The address must be 8-byte aligned and the data to write must be a
@@ -188,7 +194,7 @@ class FLASH(Device, Flash):
                 self._wait_bsy_clear()
                 self._check_errors()
 
-    def _trigger_obl_launch(self, **kwargs):
+    def _trigger_obl_launch(self, **kwargs):  # pylint: disable=W0613
         '''
         Set OBL_LAUNCH to trigger an uncatchable reset of the device using the
         new options.  This reset triggers a disconnect of the debug probe, and

@@ -2,7 +2,7 @@
 from . import matcher
 
 
-class Component(object):
+class Component:
     def __init__(self, parent, ap, addr, subtype=''):
         self.parent   = parent
         self.ap       = ap
@@ -62,7 +62,7 @@ class Component(object):
         #   E   - generic IP component
         #   F   - PrimeCell peripheral
         self.children = []
-        if ((self.cidr & 0xFFFF0FFF) != 0xB105000D):
+        if (self.cidr & 0xFFFF0FFF) != 0xB105000D:
             return
         if ((self.cidr >> 12) & 0xF) != 1:
             return

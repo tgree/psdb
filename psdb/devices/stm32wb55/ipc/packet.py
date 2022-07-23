@@ -9,9 +9,9 @@ event pointer is straight to the TL_EvtSerial_t payload.
 In all cases, the maximum payload length is 255 bytes - the presence or absence
 of the linked-list pointers doesn't limit the size of the rest of the packet.
 '''
-from psdb.util import hexify
-
 import struct
+
+from psdb.util import hexify
 
 
 def write_sys_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):
@@ -39,7 +39,7 @@ def write_sys_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):
     ap.write_bulk(data, addr)
 
 
-class SysResponse(object):
+class SysResponse:
     '''
     Response data type for the system channel.  Response packets on the system
     channel do NOT include the doubly-linked-list link header (next/prev
@@ -76,7 +76,7 @@ class SysResponse(object):
                                    self.payload))
 
 
-class SysEvent(object):
+class SysEvent:
     '''
     Asynchronous event on the system channel.
 
@@ -144,7 +144,7 @@ def write_ble_command(ap, addr, opcode, payload, next_ptr=0, prev_ptr=0):
     ap.write_bulk(data, addr)
 
 
-class BLECommandStatus(object):
+class BLECommandStatus:
     '''
     Asynchronous command status event on the BLE event channel.
 
@@ -164,7 +164,7 @@ class BLECommandStatus(object):
     Elsewhere, it is noted that this field indicates the number of commands
     that the BLE is willing to accept at once; typically this value is 1.
     '''
-    def __init__(self, ap, addr, data):
+    def __init__(self, _ap, addr, data):
         self.addr = addr
 
         (plen,
@@ -178,7 +178,7 @@ class BLECommandStatus(object):
                 'cmdcode: 0x%04X})' % (self.status, self.numcmd, self.cmdcode))
 
 
-class BLECommandComplete(object):
+class BLECommandComplete:
     '''
     Asynchronous command complete event on the BLE event channel.
 
@@ -213,7 +213,7 @@ class BLECommandComplete(object):
                                      hexify(self.payload)))
 
 
-class BLE_VS_Event(object):
+class BLE_VS_Event:
     '''
     Some sort of asynch event which seems to have the same structure as a
     system channel event.
@@ -243,7 +243,7 @@ class BLE_VS_Event(object):
                 % (self.subevtcode, hexify(self.payload)))
 
 
-class LEMetaEvent(object):
+class LEMetaEvent:
     '''
         +-------------------------------------------------------------------+
         |                             NEXT PTR                              |
@@ -270,7 +270,7 @@ class LEMetaEvent(object):
                 % (self.subevtcode, hexify(self.payload)))
 
 
-class DisconnectCompleteEvent(object):
+class DisconnectCompleteEvent:
     '''
     Notification that a connection has terminated.
 
@@ -286,7 +286,7 @@ class DisconnectCompleteEvent(object):
 
     MM Free Required: Yes.
     '''
-    def __init__(self, ap, addr, data):
+    def __init__(self, _ap, addr, data):
         self.addr = addr
 
         (self.status,

@@ -1483,7 +1483,7 @@ class RCC(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(RCC, self).__init__(target, ap, addr, name, RCC.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, RCC.REGS, **kwargs)
 
         self._f_hse = None
 
@@ -1495,7 +1495,7 @@ class RCC(Device):
     def f_hsi(self):
         while self._CR.HSIDIVF == 0:
             time.sleep(0.01)
-        return (64000000 >> self._CR.HSIDIV)
+        return 64000000 >> self._CR.HSIDIV
 
     def set_f_hse(self, f):
         '''
@@ -1542,6 +1542,7 @@ class RCC(Device):
             return self.f_hse
         if sws == 3:
             return self.f_pll1_p_clk
+        return 0
 
     @property
     def f_sys_d1cpre_ck(self):
@@ -1681,7 +1682,7 @@ class RCC(Device):
         f_pllref = f_pllsrc / M
         assert 1 <= M <= 63
         assert 4 <= N <= 512
-        assert P and not (P % 2)
+        assert P and not P % 2
         assert 2000000 <= f_pllref <= 16000000
 
         self._PLLCKSELR.DIVM1 = M

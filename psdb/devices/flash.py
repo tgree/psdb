@@ -1,10 +1,10 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
-from ..block import RAMBD, BlockOutOfRangeException
-import psdb
-
 import math
 import time
 from builtins import range
+
+import psdb
+from ..block import RAMBD, BlockOutOfRangeException
 
 
 class FlashException(Exception):
@@ -19,14 +19,16 @@ class FlashWriteException(Exception):
     pass
 
 
-class Flash(object):
-    def __init__(self, mem_base, sector_size, nsectors):
-        super(Flash, self).__init__()
-        self.mem_base    = mem_base
-        self.sector_size = sector_size
-        self.sector_mask = sector_size - 1
-        self.flash_size  = sector_size * nsectors
-        self.nsectors    = nsectors
+class Flash:
+    def __init__(self, mem_base, sector_size, nsectors, max_nowait_write_freq):
+        super().__init__()
+        self.mem_base              = mem_base
+        self.sector_size           = sector_size
+        self.sector_mask           = sector_size - 1
+        self.flash_size            = sector_size * nsectors
+        self.nsectors              = nsectors
+        self.all_mask              = (1 << nsectors) - 1
+        self.max_nowait_write_freq = max_nowait_write_freq
 
     def _mask_for_alp(self, addr, length):
         '''
@@ -37,7 +39,7 @@ class Flash(object):
         end      = addr + length + (-(addr + length) & self.sector_mask)
         nsectors = (end - begin) // self.sector_size
         fbit     = (begin - self.mem_base) // self.sector_size
-        assert 0 <= fbit and fbit < self.nsectors
+        assert 0 <= fbit < self.nsectors
         assert 0 <= nsectors and fbit + nsectors <= self.nsectors
         return ((1 << nsectors) - 1) << fbit
 
@@ -53,25 +55,6 @@ class Flash(object):
         assert (addr < midpoint) == (addr + len(data) <= midpoint)
         return (addr + halfsize) if addr < midpoint else (addr - halfsize)
 
-    def set_swd_freq_write(self, verbose=True):
-        '''
-        Sets the probe's SWD clock frequency to one supported by the target for
-        writing to flash.
-
-        Only needs to be implemented if the max read/write frequencies differ.
-        '''
-        pass
-
-    def set_swd_freq_read(self, verbose=True):
-        '''
-        Sets the probe's SWD clock frequency to one supported by the target for
-        reading from flash.  This is typically the maximum SWD frequency
-        supported by the target.
-
-        Only needs to be implemented if the max read/write frequencies differ.
-        '''
-        pass
-
     def erase_sector(self, n, verbose=True):
         '''
         Erases the nth sector.
@@ -82,9 +65,13 @@ class Flash(object):
         '''
         Erases the sectors specified in the bit mask.
         '''
+        if mask == self.all_mask:
+            self.erase_all(verbose=verbose)
+            return
+
         sectors = []
         for i in range(int(math.floor(math.log(mask, 2))) + 1):
-            if (mask & (1 << i)):
+            if mask & (1 << i):
                 sectors.append(i)
         for i in psdb.piter(sectors, verbose=verbose):
             self.erase_sector(i, verbose=False)
@@ -101,7 +88,8 @@ class Flash(object):
         '''
         Erases the entire flash.
         '''
-        self.erase(self.mem_base, self.flash_size, verbose=verbose)
+        for i in psdb.piter(range(self.nsectors), verbose=verbose):
+            self.erase_sector(i, verbose=False)
 
     def read(self, addr, length):
         '''
@@ -170,7 +158,9 @@ class Flash(object):
                 mask |= self._mask_for_alp(block.addr, len(block.data))
             self.erase_sectors(mask, verbose=verbose)
 
-        self.set_swd_freq_write(verbose=verbose)
+        f = self.ap.db.set_max_burn_tck_freq(self)  # pylint: disable=E1101
+        if verbose:
+            print('Set SWD frequency to %.3f MHz' % (f / 1.e6))
 
         t0 = time.time()
         total_len = 0
@@ -187,7 +177,9 @@ class Flash(object):
             print('Wrote %u bytes in %.2f seconds (%.2f K/s).' %
                   (total_len, elapsed, total_len / (1024*elapsed)))
 
-        self.set_swd_freq_read(verbose=verbose)
+        f = self.ap.db.set_max_target_tck_freq()  # pylint: disable=E1101
+        if verbose:
+            print('Set SWD frequency to %.3f MHz' % (f / 1.e6))
 
         if verbose:
             print('Verifying flash...')

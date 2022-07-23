@@ -5,6 +5,9 @@ from psdb.targets import Target
 from . import dbgmcu
 
 
+# Verified with Nucleo-G431RB and V3J7M2B0S0 that flash writes faster than 3.3
+# MHz error out.  After upgrading to V3J10M3B0S0 flash writes work at 24 MHz
+# (but performance is the same; it just handles the WAIT states properly now).
 DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00004000),
@@ -47,6 +50,9 @@ DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              (stm32g4.DBGMCU,  'DBGMCU',      0xE0042000),
              ]
 
+# Verified with Nucleo-G474RE and V3J9M3B0S0 that flash writes faster than 3.3
+# MHz error out.  After upgrading to V3J10M3B0S0 flash writes work at 24 MHz
+# (but again, performance is unchanged from 3.3 MHz).
 DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
              (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00014000),
@@ -144,7 +150,8 @@ DEVICES_4 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
 
 class STM32G4(Target):
     def __init__(self, db):
-        super(STM32G4, self).__init__(db, 24000000)
+        # Max SWD speed is not specified in the data sheet.
+        super().__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FFF75E0) & 0x0000FFFF)*1024
@@ -175,8 +182,9 @@ class STM32G4(Target):
         MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
                   self.flash.otp_len)
 
-        self.orig_fb_mode = self._get_fb_mode()
-        self.fb_mode      = self._synchronize_fb_mode()
+        if self.flash.nbanks > 1:
+            self.orig_fb_mode = self._get_fb_mode()
+            self.fb_mode      = self._synchronize_fb_mode()
 
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
@@ -184,20 +192,24 @@ class STM32G4(Target):
     def get_fault_addr(self):
         return 0xC0000000
 
-    def halt(self):
-        super().halt()
-        self._set_fb_mode(self.fb_mode)
+    def halt(self, cpus=None):
+        super().halt(cpus=cpus)
+        if self.flash.nbanks > 1:
+            self._set_fb_mode(self.fb_mode)
 
     def reset_halt(self):
         super().reset_halt()
-        self.orig_fb_mode = self._get_fb_mode()
-        self.fb_mode      = self._synchronize_fb_mode()
+        if self.flash.nbanks > 1:
+            self.orig_fb_mode = self._get_fb_mode()
+            self.fb_mode      = self._synchronize_fb_mode()
 
-    def resume(self):
-        self._set_fb_mode(self.orig_fb_mode)
-        super().resume()
+    def resume(self, cpus=None):
+        if self.flash.nbanks > 1:
+            self._set_fb_mode(self.orig_fb_mode)
+        super().resume(cpus=cpus)
 
     def _set_fb_mode(self, v):
+        assert self.flash.nbanks > 1
         rcc                    = self.devs['RCC']
         syscfg                 = self.devs['SYSCFG']
         syscfgen               = rcc._APB2ENR.SYSCFGEN
@@ -206,6 +218,7 @@ class STM32G4(Target):
         rcc._APB2ENR.SYSCFGEN  = syscfgen
 
     def _get_fb_mode(self):
+        assert self.flash.nbanks > 1
         rcc                    = self.devs['RCC']
         syscfg                 = self.devs['SYSCFG']
         syscfgen               = rcc._APB2ENR.SYSCFGEN
@@ -220,6 +233,7 @@ class STM32G4(Target):
         with BFB2=1).  This is critical for just about anything that touches
         flash.
         '''
+        assert self.flash.nbanks > 1
         bfb2 = self.flash.get_options()['bfb2']
         self._set_fb_mode(bfb2)
         return bfb2

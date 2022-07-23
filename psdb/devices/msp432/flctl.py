@@ -26,10 +26,10 @@ def and_bytes(l, r):
     return ''.join(chr(ord(lc) & ord(rc)) for lc, rc in zip(l, r))
 
 
-class UnlockedContextManager(object):
-    def __init__(self, flash, mask):
+class UnlockedContextManager:
+    def __init__(self, _flash, mask):
         assert (mask & 0xFFFFFFFFFFFFFFFF) == mask
-        self.flash = flash
+        self.flash = _flash
         self.mask  = mask
 
     def __enter__(self):
@@ -38,7 +38,7 @@ class UnlockedContextManager(object):
         self.flash._BANK0_MAIN_WEPROT = mask[0]
         self.flash._BANK1_MAIN_WEPROT = mask[1]
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._BANK0_MAIN_WEPROT = 0xFFFFFFFF
         self.flash._BANK1_MAIN_WEPROT = 0xFFFFFFFF
 
@@ -117,7 +117,7 @@ class FLCTL(Device, flash.Flash):
 
     def __init__(self, target, ap, name, addr, flash_tlv_addr, **kwargs):
         Device.__init__(self, target, ap, addr, name, FLCTL.REGS, **kwargs)
-        flash.Flash.__init__(self, 0x00000000, 4096, 64)
+        flash.Flash.__init__(self, 0x00000000, 4096, 64, None)
         self.target    = target
         self.flash_tlv = [self.ap.read_32(flash_tlv_addr + i*4)
                           for i in range(4)]
@@ -131,10 +131,9 @@ class FLCTL(Device, flash.Flash):
         bank = addr // 0x00020000
         if bank == 0:
             return self._BANK0_RDCTL.read()
-        elif bank == 1:
+        if bank == 1:
             return self._BANK1_RDCTL.read()
-        else:
-            raise Exception('Address 0x%08X not in flash!' % addr)
+        raise Exception('Address 0x%08X not in flash!' % addr)
 
     def _write_rdctl(self, v, addr):
         bank = addr // 0x00020000
@@ -212,7 +211,7 @@ class FLCTL(Device, flash.Flash):
             self._PRGBRST_STARTADDR = addr
             self._PRGBRST_CTLSTAT   = (verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
-            assert not (ctlstat & (1 << 21))
+            assert not ctlstat & (1 << 21)
 
             if (ctlstat & ((1 << 19) | (1 << 20))) == 0:
                 return
@@ -384,7 +383,7 @@ class FLCTL(Device, flash.Flash):
                 self._set_erase_idle()
                 self._ERASE_CTLSTAT = ((1 << 1) | (1 << 0))
                 ctlstat = self._wait_erase_complete()
-                assert not (ctlstat & (1 << 18))
+                assert not ctlstat & (1 << 18)
 
             for i in range(64):
                 if (mask & (1 << i)) and self._verify_sector_erased(4096*i):
@@ -404,7 +403,7 @@ class FLCTL(Device, flash.Flash):
         Erases the nth sector in flash.
         The sector is verified to be erased before returning.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
         self.erase_sectors(1 << n, verbose)
 
     def read(self, addr, length):
@@ -429,9 +428,9 @@ class FLCTL(Device, flash.Flash):
         except flash.FlashWriteException as e:
             # Hack until we implement proper pulsing in _write_bulk.
             if (addr & self.sector_mask) != 0:
-                raise Exception('not aligned')
+                raise Exception('not aligned') from e
             if len(data) % 64:
-                raise Exception('not 64-byte multiple')
+                raise Exception('not 64-byte multiple') from e
 
             print('Exception doing bulk write; attempting burst writes')
             print('-- Exception: %s' % e)

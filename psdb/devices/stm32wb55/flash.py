@@ -1,8 +1,8 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Reg32
 from ..stm32 import flash_type1
-
-import time
 
 
 class FLASH(flash_type1.FLASH):
@@ -159,11 +159,11 @@ class FLASH(flash_type1.FLASH):
                                          ]),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 otp_base, otp_len, **kwargs):
-        super(FLASH, self).__init__(target, FLASH.REGS, 4096, ap, name,
-                                    dev_base, mem_base, max_write_freq,
-                                    otp_base, otp_len, **kwargs)
+    def __init__(self, target, ap, name, dev_base, mem_base,
+                 max_nowait_write_freq, otp_base, otp_len, **kwargs):
+        super().__init__(target, FLASH.REGS, 4096, ap, name, dev_base,
+                         mem_base, max_nowait_write_freq, otp_base, otp_len,
+                         **kwargs)
 
         optr = self._OPTR.read()
         if optr == 0:
@@ -171,18 +171,18 @@ class FLASH(flash_type1.FLASH):
                             'try using --srst')
         sfr = self._SFR.read()
 
-        if (optr & (1 << 8)) and not (sfr & (1 << 8)):
+        if optr & (1 << 8) and not sfr & (1 << 8):
             self.secure_flash_base = mem_base + ((sfr & 0x000000FF) * 4096)
         else:
             self.secure_flash_base = mem_base + self.target.flash_size
         self.user_flash_size = self.secure_flash_base - mem_base
 
         srrvr = self._SRRVR.read()
-        if not (srrvr & (1 << 23)):
+        if not srrvr & (1 << 23):
             self.user_sram2a_size = ((srrvr >> 18) & 0x1F)*1024
         else:
             self.user_sram2a_size = self.target.devs['SRAM2a'].size
-        if not (srrvr & (1 << 30)):
+        if not srrvr & (1 << 30):
             self.user_sram2b_size = ((srrvr >> 25) & 0x1F)*1024
         else:
             self.user_sram2b_size = self.target.devs['SRAM2b'].size

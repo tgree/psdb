@@ -4,9 +4,9 @@ import time
 import psdb
 
 
-class WSClient(object):
+class WSClient:
     def __init__(self, ipc, stack_type, fw_name):
-        super(WSClient, self).__init__()
+        super().__init__()
         self.ipc        = ipc
         self.stack_type = stack_type
         self.fw_name    = fw_name

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.devices
-
 import argparse
 import sys
+
+import psdb.probes
+import psdb.devices
 
 
 def main(rv):
@@ -20,12 +20,12 @@ def main(rv):
 
     # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose, connect_under_reset=False)
-    f      = target.set_max_tck_freq()
+    f      = probe.set_max_target_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Iterate over all devices to get peripheral registers.
     print('Dumping device registers to %s...' % rv.output_path)
-    with open(rv.output_path, 'w') as f:
+    with open(rv.output_path, 'w', encoding='utf8') as f:
         block = 0
         for d in target.devs.values():
             if isinstance(d, psdb.devices.MemDevice):
@@ -38,9 +38,9 @@ def main(rv):
             for r in d.regs:
                 addr = d.dev_base + r.offset
                 f.write('0x%08X: ' % addr)
-                if not (r.flags & r.READABLE):
+                if not r.flags & r.READABLE:
                     f.write('--Wr Onl--')
-                elif (r.flags & r.SIDE_EFFECTS):
+                elif r.flags & r.SIDE_EFFECTS:
                     f.write('--SideFx--')
                 else:
                     v    = r.read(d)

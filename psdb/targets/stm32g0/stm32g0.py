@@ -4,15 +4,18 @@ from psdb.devices import MemDevice, RAMDevice, stm32g0
 from psdb.targets import Target
 
 
+# Verified with Nucleo-G071RB and V2J39S27 that flash writes work at 4 MHz, the
+# fastest speed available on the STLINK-V2E debugger.
 DEVICES = [
-           (stm32g0.FLASH,  'FLASH',    0x40022000, 0x08000000, 3300000,
+           (stm32g0.FLASH,  'FLASH',    0x40022000, 0x08000000, 4000000,
                                         0x1FFF7000, 1024),  # noqa: E127
            ]
 
 
 class STM32G0(Target):
     def __init__(self, db):
-        super(STM32G0, self).__init__(db, 24000000)
+        # Max SWD speed is not specified in the data sheet.
+        super().__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FFF75E0) & 0x0000FFFF)*1024

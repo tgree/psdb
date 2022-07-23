@@ -1,9 +1,9 @@
 # Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
+import psdb
 from . import stlink_v2_1
 from . import stlink_v3
 from . import stlink
 from .cdb import CMD_ADDRESS, CMD_WRITE, CMD_READ, CMD_APNUM
-import psdb
 
 
 __all__ = ['CMD_ADDRESS',

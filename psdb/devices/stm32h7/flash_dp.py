@@ -68,11 +68,10 @@ class FLASH_DP(FLASH):
                 Reg32 ('WPSN_PRG2R',    0x13C),
                 ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 **kwargs):
-        super(FLASH_DP, self).__init__(target, ap, name, dev_base, mem_base,
-                                       max_write_freq, FLASH_DP.OPT_REGS,
-                                       **kwargs)
+    def __init__(self, target, ap, name, dev_base, mem_base,
+                 max_nowait_write_freq, **kwargs):
+        super().__init__(target, ap, name, dev_base, mem_base,
+                         max_nowait_write_freq, FLASH_DP.OPT_REGS, **kwargs)
 
     def get_options_reg(self):
         '''Returns the contents of the options register.'''
@@ -111,7 +110,9 @@ class FLASH_DP(FLASH):
             print('Flash completed (OPTSR_CUR=0x%08X, OPTSR_PRG=0x%08X)' %
                   (self._OPTSR_CUR.read(), self._OPTSR_PRG.read()))
 
-    def set_options(self, options, verbose=True, connect_under_reset=False):
+    def set_options(self, options,
+                    verbose=True,                # pylint: disable=W0613
+                    connect_under_reset=False):  # pylint: disable=W0613
         '''
         This sets the specified option bits in the OPTSR_PRG register and then
         triggers an option-byte load.  No reset takes place, but for

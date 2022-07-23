@@ -96,4 +96,4 @@ class TAMP(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(TAMP, self).__init__(target, ap, addr, name, TAMP.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, TAMP.REGS, **kwargs)

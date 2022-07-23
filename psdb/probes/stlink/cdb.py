@@ -1,4 +1,5 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+# pylint: disable=C0302
 from struct import pack, unpack, unpack_from
 from builtins import bytes
 
@@ -42,10 +43,11 @@ class STLinkCommand:
     '''
     Attempt at documenting the SLINK command protocol.
     '''
+    CMD_FLAGS = None
+
     def __init__(self, cmd):
-        assert hasattr(self, 'CMD_FLAGS')
         if self.CMD_FLAGS & HAS_DATA_IN_PHASE:
-            assert not (self.CMD_FLAGS & HAS_DATA_OUT_PHASE)
+            assert not self.CMD_FLAGS & HAS_DATA_OUT_PHASE
             assert hasattr(self, 'RSP_LEN')
         else:
             assert not hasattr(self, 'RSP_LEN')
@@ -55,7 +57,7 @@ class STLinkCommand:
         self.cmd = cmd
         self.cdb = cmd + bytes(b'\x00'*(16 - len(cmd)))
 
-    def decode(self, rsp):
+    def decode(self, _rsp):
         assert self.CMD_FLAGS & HAS_DATA_IN_PHASE
 
 

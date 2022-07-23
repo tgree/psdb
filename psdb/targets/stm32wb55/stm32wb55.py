@@ -1,10 +1,10 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
+import struct
+
 import psdb
 from psdb.devices.stm32wb55.ipc import IPC
 from psdb.devices import MemDevice, RAMDevice, stm32, stm32wb55
 from psdb.targets import Target
-
-import struct
 
 
 DEVICES = [(RAMDevice,        'SRAM1',    0x20000000, 0x00030000),
@@ -32,7 +32,10 @@ DEVICES = [(RAMDevice,        'SRAM1',    0x20000000, 0x00030000),
 
 class STM32WB55(Target):
     def __init__(self, db):
-        super(STM32WB55, self).__init__(db, 24000000)
+        # Max SWD speed is:
+        #   55.0 MHz for 2.70V < VDD < 3.6V
+        #   35.0 MHz for 1.65V < VDD < 3.6V
+        super().__init__(db, 35000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FFF75E0) & 0x0000FFFF)*1024

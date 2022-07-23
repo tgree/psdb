@@ -17,4 +17,4 @@ class VREF(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(VREF, self).__init__(target, ap, addr, name, VREF.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, VREF.REGS, **kwargs)

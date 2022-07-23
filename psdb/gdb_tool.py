@@ -36,10 +36,10 @@ REG_REV_MAP = {
 
 class ConnectionClosedException(Exception):
     def __init__(self):
-        super(ConnectionClosedException, self).__init__('Connection closed')
+        super().__init__('Connection closed')
 
 
-class GDBConnection(object):
+class GDBConnection:
     WAIT_DOLLAR = 1
     WAIT_SHARP  = 2
     WAIT_CHECK0 = 3
@@ -126,11 +126,11 @@ class GDBConnection(object):
                 if csum == checksum:
                     self.send_ack()
                     return pkt
-                else:
-                    self.send_nack()
-                    if self.verbose:
-                        print("Discarding (expected %02X): '%s'" % (csum, pkt))
-                    pkt = ''
+
+                self.send_nack()
+                if self.verbose:
+                    print("Discarding (expected %02X): '%s'" % (csum, pkt))
+                pkt = ''
 
     def poll_break(self, timeout):
         assert not self.data
@@ -139,14 +139,14 @@ class GDBConnection(object):
         if data is None:
             print('Receive timed out after %.3f seconds' % (time.time() - t0))
             return False
-        elif data == b'':
+        if data == b'':
             raise ConnectionClosedException()
 
         assert data == b'\x03'
         return True
 
 
-class GDBServer(object):
+class GDBServer:
     STATE_HALTED  = 1
     STATE_RUNNING = 2
 
@@ -244,16 +244,16 @@ class GDBServer(object):
 
         gc.send_packet(b'S05')
 
-    def _handle_unimplemented(self, pkt):
+    def _handle_unimplemented(self, _pkt):
         return b''
 
-    def _handle_question(self, pkt):
+    def _handle_question(self, _pkt):
         '''
         Returns the reason we stopped; we return signal 5 (TRAP).
         '''
         return b'S05'
 
-    def _handle_read_registers(self, pkt):
+    def _handle_read_registers(self, _pkt):
         '''
         Returns the concatenation of all registers defined in the REG_MAP list.
         '''
@@ -267,7 +267,7 @@ class GDBServer(object):
                                            (v >> 24) & 0xFF)
         return data
 
-    def _handle_write_registers(self, pkt):
+    def _handle_write_registers(self, _pkt):
         return b''
 
     def _handle_read_memory(self, pkt):
@@ -308,7 +308,7 @@ class GDBServer(object):
             print('Write threw exception.')
         return b'E01'
 
-    def _handle_continue(self, pkt):
+    def _handle_continue(self, _pkt):
         '''
         Resumes execution.  The response is sent when/if the target halts in
         the future - either because the user interrupted us via Ctrl-C or we
@@ -317,7 +317,7 @@ class GDBServer(object):
         '''
         self._resume()
 
-    def _handle_step_instruction(self, pkt):
+    def _handle_step_instruction(self, _pkt):
         '''
         Resumes execution for a single instruction.
         '''
@@ -352,15 +352,15 @@ class GDBServer(object):
         self.cpu.bpu.insert_breakpoint(addr)
         return b'OK'
 
-    def _handle_insert_write_watchpoint(self, pkt):
+    def _handle_insert_write_watchpoint(self, _pkt):
         print('Write watchpoints not supported!')
         return b'E01'
 
-    def _handle_insert_read_watchpoint(self, pkt):
+    def _handle_insert_read_watchpoint(self, _pkt):
         print('Read watchpoints not supported!')
         return b'E01'
 
-    def _handle_insert_access_watchpoint(self, pkt):
+    def _handle_insert_access_watchpoint(self, _pkt):
         print('Access watchpoints not supported!')
         return b'E01'
 
@@ -401,7 +401,7 @@ def main(rv):
     print('Starting server on port %s for %s' % (rv.port, probe))
     target = probe.probe(verbose=rv.verbose,
                          connect_under_reset=rv.connect_under_reset)
-    target.set_max_tck_freq()
+    probe.set_max_target_tck_freq()
 
     c = target.cpus[rv.cpu]
     if c.bpu is not None:

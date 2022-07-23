@@ -1,8 +1,8 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
+import collections
+
 from psdb.devices import Reg32, Reg32R, Reg32W
 from . import scs_base
-
-import collections
 
 
 # The core registers and the selector value they map to in the DCRSR.
@@ -125,7 +125,7 @@ class SCS(scs_base.SCS):
             ]
 
     def __init__(self, component, subtype):
-        super(SCS, self).__init__(component, subtype, SCS.REGS, CORE_REGISTERS)
+        super().__init__(component, subtype, SCS.REGS, CORE_REGISTERS)
 
         # Enable DEMCR.DWTENA so we can probe further.
         self._DEMCR.DWTENA = 1

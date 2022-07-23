@@ -1,13 +1,13 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-from .. import usb_probe
-import psdb
-
-import usb.core
-
 import errno
 import math
 from struct import pack, unpack, unpack_from
 from builtins import bytes, range
+
+import usb.core
+
+import psdb
+from .. import usb_probe
 
 
 MIN_FW_VERSION = 0x02030014
@@ -59,7 +59,7 @@ class XDS110(usb_probe.Probe):
         return self.usb_dev.read(ENDPOINT_IN, n, timeout=40000)
 
     def write(self, data):
-        for retry in range(3):
+        for _ in range(3):
             try:
                 return self.usb_dev.write(ENDPOINT_OUT, data)
             except usb.core.USBError as e:
@@ -72,7 +72,7 @@ class XDS110(usb_probe.Probe):
         assert len(buf) >= 7
         assert buf[0] == ord('*')
         size = buf[1] + (buf[2] << 8)
-        assert (4 <= size and size <= USB_PAYLOAD_SIZE)
+        assert 4 <= size <= USB_PAYLOAD_SIZE
         assert len(buf) - 3 <= size
 
         rsp   = buf[3:]
@@ -90,11 +90,11 @@ class XDS110(usb_probe.Probe):
         return s[4:], err
 
     def send_command(self, payload):
-        assert (len(payload) <= 4096 + 60)
+        assert len(payload) <= 4096 + 60
         cmd = pack('<cH', b'*', len(payload)) + payload
         assert self.write(cmd) == len(cmd)
 
-    def execute(self, cmd, expected_len=None, allowed_errs=[0]):
+    def execute(self, cmd, expected_len=None, allowed_errs=(0,)):
         self.send_command(cmd)
         rsp, err = self.get_response(allowed_errs)
         if err == 0 and expected_len is not None and expected_len != len(rsp):
@@ -205,7 +205,8 @@ class XDS110(usb_probe.Probe):
         '''Switch from SWD to JTAG connection'''
         self.execute(pack('<B', 0x18), 0)
 
-    def _make_dap_cmd(self, cmd):
+    @staticmethod
+    def _make_dap_cmd(cmd):
         par = (cmd >> 4) ^ (cmd & 0x0F)
         par = (par >> 2) ^ (par & 0x03)
         par = (par >> 1) ^ (par & 0x01)
@@ -365,15 +366,15 @@ class XDS110(usb_probe.Probe):
         '''Releases the target from reset.'''
         self.xds_set_srst(1)
 
-    def set_tck_freq(self, freq):
+    def set_tck_freq(self, freq_hz):
         '''
         Sets TCK to the nearest frequency that doesn't exceed the requested
         one.  Returns the actual frequency in Hz.
         '''
-        p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq - 5.5))
+        p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq_hz - 5.5))
         return 1000000000./p_ns
 
-    def open_ap(self, apsel):
+    def open_ap(self, ap_num):
         pass
 
     def read_dp_reg(self, addr):
@@ -384,25 +385,26 @@ class XDS110(usb_probe.Probe):
         '''Write a 32-bit register in the DP address space. '''
         self.cmapi_write_dap_reg(1, 0, addr, value)
 
-    def read_ap_reg(self, apsel, addr):
+    def read_ap_reg(self, ap_num, addr):
         '''Read a 32-bit register from the AP address space.'''
-        return self.cmapi_read_dap_reg(0, apsel, addr)
+        return self.cmapi_read_dap_reg(0, ap_num, addr)
 
-    def write_ap_reg(self, apsel, addr, value):
+    def write_ap_reg(self, ap_num, addr, value):
         '''Write a 32-bit register in the AP address space.'''
-        self.cmapi_write_dap_reg(0, apsel, addr, value)
+        self.cmapi_write_dap_reg(0, ap_num, addr, value)
 
     def connect(self):
         # Switch to Serial-Wire debug and connect.  The cmapi_connect() call
         # fails if somebody left DPBANKSEL != 0, so nuke it if we get an error
         # and retry.
         self.swd_connect()
-        self.dpidr, err = self.cmapi_connect()
+        dpidr, err = self.cmapi_connect()
         if err == -1141:
             self.write_dp_reg(0x8, 0x00000000)
-            self.dpidr, err = self.cmapi_connect()
+            dpidr, err = self.cmapi_connect()
             assert err == 0
         self.cmapi_acquire()
+        return dpidr
 
     @staticmethod
     def find():

@@ -1,10 +1,10 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb
-import psdb.targets
-
 import time
 from builtins import range
 from struct import pack, unpack
+
+import psdb
+import psdb.targets
 
 
 class Enumeration:
@@ -38,12 +38,13 @@ class Stats:
         print("Statistics not supported.")
 
 
-class Probe(object):
+class Probe:
+    NAME = None
+
     def __init__(self):
         self.aps    = {}
         self.cpus   = []
         self.target = None
-        self.dpidr  = None
 
     @staticmethod
     def find():
@@ -65,13 +66,22 @@ class Probe(object):
             e.show_info()
         raise psdb.ProbeException('Multiple probes found.')
 
+    def connect(self):
+        raise NotImplementedError
+
     def assert_srst(self):
         raise NotImplementedError
 
     def deassert_srst(self):
         raise NotImplementedError
 
-    def set_tck_freq(self, freq):
+    def set_max_target_tck_freq(self):
+        return self.set_tck_freq(self.target.max_tck_freq)
+
+    def set_max_burn_tck_freq(self, _flash):
+        return self.set_max_target_tck_freq()
+
+    def set_tck_freq(self, freq_hz):
         raise NotImplementedError
 
     def get_stats(self):
@@ -251,16 +261,16 @@ class Probe(object):
         else:
             self.deassert_srst()
 
-        self.connect()
+        dpidr = self.connect()
 
-        dpver = ((self.dpidr & 0x0000F000) >> 12)
+        dpver = ((dpidr & 0x0000F000) >> 12)
         if dpver == 1:
             self._probe_dp_v1(verbose=verbose)
         elif dpver == 2:
             self._probe_dp_v2(verbose=verbose)
         else:
             raise psdb.ProbeException('Unsupported DP version %u (0x%08X)' % (
-                                      dpver, self.dpidr))
+                                      dpver, dpidr))
 
         psdb.targets.pre_probe(self, verbose)
 

@@ -15,6 +15,7 @@ def convert_positional_to_adjacency(fields):
     inserting padding fields as necessary.  Note that bit_pos_0 <= bit_pos_1,
     i.e. the lower-numbered bit comes first.
     '''
+    fields           = fields or []
     sorted_fields    = sorted(fields, key=lambda f: f[1])
     pos              = 0
     generated_fields = []
@@ -50,12 +51,13 @@ class ReadCommand:
         self.size = size
 
 
-class Reg(object):
+class Reg:
     READABLE     = (1 << 0)
     WRITEABLE    = (1 << 1)
     SIDE_EFFECTS = (1 << 2)
 
     def __init__(self, name, offset, size, flags, fields):
+        fields      = fields or []
         self.name   = name
         self.offset = offset
         self.size   = size
@@ -63,7 +65,7 @@ class Reg(object):
         self.fields = fields
         if size is not None:
             nbits       = sum(f[1] for f in fields)
-            assert(nbits <= size*8)
+            assert nbits <= size*8
             if nbits < size*8:
                 self.fields = self.fields + [('', size*8 - nbits)]
 
@@ -82,7 +84,7 @@ class RegDiv(Reg):
 
 
 class Reg32(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 4, Reg.READABLE | Reg.WRITEABLE, fields)
 
     def read(self, dev):
@@ -96,7 +98,7 @@ class Reg32(Reg):
 
 
 class Reg32R(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 4, Reg.READABLE, fields)
 
     def read(self, dev):
@@ -107,7 +109,7 @@ class Reg32R(Reg):
 
 
 class Reg32W(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 4, Reg.WRITEABLE, fields)
 
     def write(self, dev, v):
@@ -115,7 +117,7 @@ class Reg32W(Reg):
 
 
 class Reg32S(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 4,
                          Reg.WRITEABLE | Reg.READABLE | Reg.SIDE_EFFECTS,
                          fields)
@@ -131,7 +133,7 @@ class Reg32S(Reg):
 
 
 class Reg32RS(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 4, Reg.READABLE | Reg.SIDE_EFFECTS,
                          fields)
 
@@ -143,7 +145,7 @@ class Reg32RS(Reg):
 
 
 class Reg8(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 1, Reg.READABLE | Reg.WRITEABLE, fields)
 
     def read(self, dev):
@@ -157,7 +159,7 @@ class Reg8(Reg):
 
 
 class Reg8S(Reg):
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, 1,
                          Reg.READABLE | Reg.WRITEABLE | Reg.SIDE_EFFECTS,
                          fields)
@@ -176,7 +178,7 @@ class AReg32(Reg32):
     '''
     Same as Reg32 but uses first and last bit positions rather than length.
     '''
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
@@ -184,7 +186,7 @@ class AReg32R(Reg32R):
     '''
     Same as Reg32R but uses first and last bit positions rather than length.
     '''
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
@@ -192,7 +194,7 @@ class AReg32W(Reg32W):
     '''
     Same as Reg32W but uses first and last bit positions rather than length.
     '''
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
@@ -200,7 +202,7 @@ class AReg32S(Reg32S):
     '''
     Same as Reg32S but uses first and last bit positions rather than length.
     '''
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
@@ -208,11 +210,11 @@ class AReg32RS(Reg32RS):
     '''
     Same as Reg32RS but uses first and last bit positions rather than length.
     '''
-    def __init__(self, name, offset, fields=[]):
+    def __init__(self, name, offset, fields=None):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
-class RDCapture(object):
+class RDCapture:
     def __init__(self, reg, dev, dev_base):
         object.__setattr__(self, 'reg', reg)
         object.__setattr__(self, 'dev', dev)
@@ -250,9 +252,9 @@ class RDCapture(object):
         self.reg.write(self.dev, v)
 
 
-class Device(object):
+class Device:
     def __init__(self, owner, ap, dev_base, name, regs, path=None):
-        super(Device, self).__setattr__(
+        super().__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self, dev_base)
                             for r in regs if not isinstance(r, RegDiv)})
 
@@ -282,7 +284,7 @@ class Device(object):
             else:
                 rd.write(value)
         else:
-            super(Device, self).__setattr__(name, value)
+            super().__setattr__(name, value)
 
     def _read_8(self, offset):
         return self.ap.read_8(self.dev_base + offset)
@@ -305,7 +307,7 @@ class Device(object):
     def _set_field(self, v, width, shift, offset):
         assert width + shift <= 32
         mask = (1 << width) - 1
-        assert ((v & ~mask) == 0)
+        assert (v & ~mask) == 0
         curr = self._read_32(offset)
         curr &= ~(mask << shift)
         curr |= (v << shift)
@@ -330,7 +332,7 @@ class MemDevice(Device):
     Base class for memory-type devices.
     '''
     def __init__(self, target, ap, name, addr, size, **kwargs):
-        super(MemDevice, self).__init__(target, ap, addr, name, [], **kwargs)
+        super().__init__(target, ap, addr, name, [], **kwargs)
         self.size = size
 
     def read_mem_block(self, addr, size):

@@ -29,3 +29,15 @@ def make_one_ns(ns, cls=Probe):
     keys = {k : v for k, v in vars(ns).items()
             if k in PROBE_KEYS and v is not None}
     return make_one(cls=cls, **keys)
+
+
+def dump_probes():
+    for e in find():
+        try:
+            p = e.make_probe()
+        except Exception as ex:
+            e.show_info()
+            print('Exception making probe: %s' % ex)
+            continue
+
+        p.show_detailed_info()

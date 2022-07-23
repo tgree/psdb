@@ -5,9 +5,9 @@ import sys
 import time
 import curses
 
-import psdb.probes
 import tgcurses
 import tgcurses.ui
+import psdb.probes
 
 from .cpu_register_window import CPURegisterWindow
 from .device_register_window import DeviceRegisterWindow
@@ -24,7 +24,7 @@ DEV_TYPE_MEMORY   = 1
 def get_dev_type(dev):
     if dev.regs:
         return DEV_TYPE_REGISTER
-    elif hasattr(dev, 'size'):
+    if hasattr(dev, 'size'):
         return DEV_TYPE_MEMORY
     raise Exception('Unknown device type!')
 
@@ -122,7 +122,7 @@ class InspectTool:
             c = self.workspace.canvas.getch()
             if c == ord('q'):
                 break
-            elif c in (ord('\t'), curses.KEY_BTAB):
+            if c in (ord('\t'), curses.KEY_BTAB):
                 self.focus_list[0].focus_lost()
 
                 while True:
@@ -187,7 +187,7 @@ def _main():
                                    connect_under_reset=args.connect_under_reset)
 
     # Set the max clock frequency.
-    args.target.set_max_tck_freq()
+    args.probe.set_max_target_tck_freq()
 
     # Interact with the UI.
     tgcurses.wrapper(main, args)

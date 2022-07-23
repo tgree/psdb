@@ -1,11 +1,11 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
+from builtins import bytes, range
+import time
+
+import psdb
 from .. import usb_probe
 from . import cdb
 from . import errors
-import psdb
-
-from builtins import bytes, range
-import time
 
 # The STLINK works kind of like a SCSI device.  There are three types of
 # transaction, all of which begin with a command phase and are then followed by
@@ -46,6 +46,7 @@ FEATURE_AP            = (1 << 5)
 FEATURE_OPEN_AP       = (1 << 6)
 FEATURE_SCATTERGATHER = (1 << 7)
 FEATURE_TRACE         = (1 << 8)
+FEATURE_SWD_WAIT_OK   = (1 << 9)
 
 
 class STLink(usb_probe.Probe):
@@ -57,6 +58,7 @@ class STLink(usb_probe.Probe):
     def __init__(self, usb_dev):
         super().__init__(usb_dev)
         self.features     = 0
+        self.max_rw8      = None
         self.max_sg_ops   = 0
         self.max_swo_freq = 0
 
@@ -225,10 +227,10 @@ class STLink(usb_probe.Probe):
         '''Releases the target from reset.'''
         self._cmd_allow_retry(cdb.SetSRST(False))
 
-    def open_ap(self, apsel):
+    def open_ap(self, ap_num):
         '''Prepares the AP for use.'''
         if self.features & FEATURE_OPEN_AP:
-            self._cmd_allow_retry(cdb.OpenAP(apsel))
+            self._cmd_allow_retry(cdb.OpenAP(ap_num))
 
     def read_dp_reg(self, addr):
         '''
@@ -242,15 +244,15 @@ class STLink(usb_probe.Probe):
         '''Write a 32-bit register in the DP address space. '''
         return self.write_ap_reg(0xFFFF, addr, value)
 
-    def read_ap_reg(self, apsel, addr):
+    def read_ap_reg(self, ap_num, addr):
         '''Read a 32-bit register from the AP address space.'''
         assert self.features & FEATURE_AP
-        return self._cmd_allow_retry(cdb.ReadAPReg(apsel, addr))
+        return self._cmd_allow_retry(cdb.ReadAPReg(ap_num, addr))
 
-    def write_ap_reg(self, apsel, addr, value):
+    def write_ap_reg(self, ap_num, addr, value):
         '''Write a 32-bit register in the AP address space.'''
         assert self.features & FEATURE_AP
-        self._cmd_allow_retry(cdb.WriteAPReg(apsel, addr, value))
+        self._cmd_allow_retry(cdb.WriteAPReg(ap_num, addr, value))
 
     def read_32(self, addr, ap_num=0):
         '''
@@ -305,9 +307,10 @@ class STLink(usb_probe.Probe):
 
     def connect(self):
         self._swd_connect()
-        self.dpidr = self._read_dpidr()
+        dpidr = self._read_dpidr()
         if self.features & FEATURE_SCATTERGATHER:
             self.max_sg_ops = self._get_max_sg_ops()
+        return dpidr
 
     @staticmethod
     def find():

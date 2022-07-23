@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.devices
-import psdb.elf
-
 import argparse
 import struct
 import sys
+
+import psdb.probes
+import psdb.devices
+import psdb.elf
 
 
 def main(rv):
@@ -22,7 +22,7 @@ def main(rv):
 
     # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose, connect_under_reset=False)
-    f      = target.set_max_tck_freq()
+    f      = probe.set_max_target_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Generate the core file.
@@ -45,7 +45,7 @@ def main(rv):
                 assert r.size == 4
                 pad          = r.offset - len(region_data)
                 region_data += b'\xCA'*pad
-                if (r.flags & r.READABLE):
+                if r.flags & r.READABLE:
                     region_data += struct.pack('<L', r.read(d))
                 else:
                     region_data += struct.pack('<L', 0xCACACACA)

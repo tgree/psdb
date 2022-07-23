@@ -29,7 +29,7 @@ class LCG:
         return LCG(48271, 0, 0x7FFFFFFF, seed)
 
 
-def test_sram(t, rd, rv, lcg, timeout=10):
+def test_sram(t, rd, _rv, lcg, timeout=10):
     print('Testing %s with seed %u' % (rd.name, lcg.x))
     ap         = rd.ap
     ap_num     = ap.ap_num
@@ -146,7 +146,7 @@ def main(rv):
     # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose,
                          connect_under_reset=rv.connect_under_reset)
-    f      = target.set_max_tck_freq()
+    f      = probe.set_max_target_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Test all SRAMs.

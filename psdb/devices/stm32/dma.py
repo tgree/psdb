@@ -43,7 +43,7 @@ class DMA(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(DMA, self).__init__(target, ap, addr, name, DMA.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, DMA.REGS, **kwargs)
 
 
 class DMA_DBM(Device):
@@ -129,5 +129,4 @@ class DMA_DBM(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(DMA_DBM, self).__init__(target, ap, addr, name, DMA_DBM.REGS,
-                                      **kwargs)
+        super().__init__(target, ap, addr, name, DMA_DBM.REGS, **kwargs)

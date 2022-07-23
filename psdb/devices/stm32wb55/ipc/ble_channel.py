@@ -15,12 +15,12 @@ client does need to be done with the event buffers before submitting a new
 command since the new command overwrites the completion buffer (not to mention
 the obvious race condition).
 '''
+import struct
+import uuid
+
 from . import packet
 from . import gatt
 from .. import ipcc
-
-import struct
-import uuid
 
 
 # HCI Commands
@@ -211,9 +211,9 @@ WRITE_CONFIG_DATA_OFFSETS = {
     }
 
 
-class BLEChannel(object):
+class BLEChannel:
     def __init__(self, ipc, cmd_channel, event_channel):
-        super(BLEChannel, self).__init__()
+        super().__init__()
         self.ipc           = ipc
         self.cmd_channel   = cmd_channel
         self.event_channel = event_channel
@@ -236,9 +236,9 @@ class BLEChannel(object):
         return self.wait_and_pop_all_events()
 
     def hci_le_set_default_phy(self, all_phys, tx_phys, rx_phys):
-        assert 0 <= all_phys and all_phys <= 3
-        assert 0 <= tx_phys and tx_phys <= 3
-        assert 0 <= rx_phys and rx_phys <= 3
+        assert 0 <= all_phys <= 3
+        assert 0 <= tx_phys <= 3
+        assert 0 <= rx_phys <= 3
         payload = struct.pack('<BBB', all_phys, tx_phys, rx_phys)
         self._start_ble_command(HCI_LE_SET_DEFAULT_PHY, payload)
         rsp = self.wait_and_pop_all_events()
@@ -328,7 +328,7 @@ class BLEChannel(object):
 
     def aci_hal_set_tx_power_level(self, enable_high_power, pa_level):
         assert isinstance(enable_high_power, bool)
-        assert 0x00 <= pa_level and pa_level <= 0x1F
+        assert 0x00 <= pa_level <= 0x1F
         payload = struct.pack('<BB', int(enable_high_power), pa_level)
         self._start_ble_command(ACI_HAL_SET_TX_POWER_LEVEL, payload)
         rsp = self.wait_and_pop_all_events()
@@ -394,7 +394,7 @@ class BLEChannel(object):
         assert rsp[0].payload[0] == 0x00
 
     def aci_gap_init(self, role, privacy_enabled, device_name):
-        assert not (role & ~0xF)
+        assert not role & ~0xF
         assert isinstance(privacy_enabled, bool)
         payload = struct.pack('<BBB', role, int(privacy_enabled),
                               len(device_name) + 2)
@@ -415,7 +415,7 @@ class BLEChannel(object):
         return gap_service, dev_name_char, appearance_char
 
     def aci_gap_set_io_capability(self, io_capability):
-        assert 0 <= io_capability and io_capability <= 4
+        assert 0 <= io_capability <= 4
         payload = struct.pack('<B', io_capability)
         self._start_ble_command(ACI_GAP_SET_IO_CAPABILITY, payload)
         rsp = self.wait_and_pop_all_events()
@@ -435,7 +435,7 @@ class BLEChannel(object):
         assert sc_support in (0, 1, 2)
         assert keypress_notification_support in (0, 1)
         assert use_fixed_pin in (0, 1)
-        assert 0 <= fixed_pin and fixed_pin <= 999999
+        assert 0 <= fixed_pin <= 999999
         assert identity_address_type in (0, 1)
         payload = struct.pack('<BBBBBBBLB', bonding_mode, mitm_mode, sc_support,
                               keypress_notification_support,

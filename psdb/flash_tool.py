@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.elf
-import psdb.hexfile
-
 import argparse
 import hashlib
 import time
 import sys
+
+import psdb.probes
+import psdb.elf
+import psdb.hexfile
 
 
 IMAGE_PARSERS = [psdb.elf.ELFBinary.from_path,
@@ -43,7 +43,7 @@ def main(rv):  # noqa: C901
     # Use the probe to detect a target platform.
     target = probe.probe(verbose=rv.verbose,
                          connect_under_reset=rv.connect_under_reset)
-    f      = target.set_max_tck_freq()
+    f      = probe.set_max_target_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Flash info if verbose.
@@ -97,11 +97,12 @@ def main(rv):  # noqa: C901
     # Write a new ELF image to flash if requested.
     if rv.flash:
         dv = []
-        for f in rv.flash:
-            print('Burning "%s"...' % f)
-            md5 = hashlib.md5(open(f, 'rb').read())
+        for path in rv.flash:
+            print('Burning "%s"...' % path)
+            with open(path, 'rb') as f:
+                md5 = hashlib.md5(f.read())
             print('MD5: %s' % md5.hexdigest())
-            img = parse_image(f)
+            img = parse_image(path)
             pdv = target.flash.prune_dv(img.flash_dv)
             dv  = psdb.elf.dv.merge_dvs(dv, pdv)
         target.flash.burn_dv(dv, verbose=True, bank_swap=rv.flash_inactive)

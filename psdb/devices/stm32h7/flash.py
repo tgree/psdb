@@ -89,10 +89,10 @@ class FlashBank(Device):
             ]
 
     def __init__(self, flash, bank_num, **kwargs):
-        super(FlashBank, self).__init__(flash.target, flash.ap,
-                                        flash.dev_base + 0x100*bank_num,
-                                        '%s:BANK%u' % (flash.name, bank_num),
-                                        FlashBank.REGS, **kwargs)
+        super().__init__(flash.target, flash.ap,
+                         flash.dev_base + 0x100*bank_num,
+                         '%s:BANK%u' % (flash.name, bank_num), FlashBank.REGS,
+                         **kwargs)
 
     def _clear_errors(self):
         self._CCR = 0x0FEF0000
@@ -112,8 +112,8 @@ class FlashBank(Device):
             self._KEYR = 0x45670123
             self._KEYR = 0xCDEF89AB
             v = self._CR.read()
-            assert not (v & 1)
-        if not (v & 2):
+            assert not v & 1
+        if not v & 2:
             self._CR = (v | 2)
 
         return self
@@ -123,7 +123,7 @@ class FlashBank(Device):
         self._CR = ((v & ~2) | 1)
 
 
-class UnlockedContextManager(object):
+class UnlockedContextManager:
     def __init__(self, bank):
         self.bank = bank
 
@@ -131,11 +131,11 @@ class UnlockedContextManager(object):
         self.bank._pg_unlock()
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.bank._pg_lock()
 
 
-class UnlockedOptionsContextManager(object):
+class UnlockedOptionsContextManager:
     def __init__(self, flash):
         self.flash = flash
 
@@ -145,7 +145,7 @@ class UnlockedOptionsContextManager(object):
             self.flash._OPTKEYR = 0x4C5D6E7F
             assert not self.flash._OPTCR.OPTLOCK
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, _type, value, traceback):
         self.flash._OPTCR.OPTLOCK = 1
 
 
@@ -166,44 +166,34 @@ class FLASH(Device, Flash):
             Reg32 ('OPTCCR',        0x024),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 opt_regs, **kwargs):
+    def __init__(self, target, ap, name, dev_base, mem_base,
+                 max_nowait_write_freq, opt_regs, **kwargs):
         sector_size = 128*1024
         Device.__init__(self, target, ap, dev_base, name, FLASH.REGS + opt_regs,
                         **kwargs)
         Flash.__init__(self, mem_base, sector_size,
-                       target.flash_size // sector_size)
+                       target.flash_size // sector_size, max_nowait_write_freq)
 
-        self.target          = target
-        self.max_write_freq   = max_write_freq
+        self.target           = target
         nbanks                = 1 if self.target.flash_size == 128*1024 else 2
         self.banks            = [FlashBank(self, i, **kwargs)
                                  for i in range(nbanks)]
         self.sectors_per_bank = self.nsectors // nbanks
         self.bank_size        = self.sector_size * self.sectors_per_bank
 
-    def _flash_bank_unlocked(self, bank):
+    @staticmethod
+    def _flash_bank_unlocked(bank):
         return UnlockedContextManager(bank)
 
     def _options_unlocked(self):
         return UnlockedOptionsContextManager(self)
-
-    def set_swd_freq_write(self, verbose=True):
-        f = self.target.db.set_tck_freq(self.max_write_freq)
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
-
-    def set_swd_freq_read(self, verbose=True):
-        f = self.target.set_max_tck_freq()
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     def erase_sector(self, n, verbose=True):
         '''
         Erases the nth sector in flash.
         The sector is verified to be erased before returning.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
 
         addr = self.mem_base + n * self.sector_size
         if verbose:
@@ -218,6 +208,23 @@ class FLASH(Device, Flash):
             bank._CR = v
             bank._wait_prg_idle()
             bank._check_errors()
+
+    def erase_all(self, verbose=True):
+        '''
+        Erases the entire flash.
+        '''
+        if verbose:
+            print('Erasing entire flash...')
+        with self._flash_bank_unlocked(self.banks[0]):
+            with self._flash_bank_unlocked(self.banks[1]):
+                with self._options_unlocked():
+                    self.banks[0]._clear_errors()
+                    self.banks[1]._clear_errors()
+                    self._OPTCR.MER = 1
+                    self.banks[0]._wait_prg_idle()
+                    self.banks[1]._wait_prg_idle()
+                    self.banks[0]._check_errors()
+                    self.banks[1]._check_errors()
 
     def read(self, addr, length):
         '''

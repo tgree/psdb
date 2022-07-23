@@ -12,9 +12,9 @@ reuse and clear the TX flag when the queue can be used to release more buffers.
 '''
 
 
-class MMChannel(object):
+class MMChannel:
     def __init__(self, ipc, cmd_channel):
-        super(MMChannel, self).__init__()
+        super().__init__()
         self.ipc           = ipc
         self.cmd_channel   = cmd_channel
         self.posted_events = []

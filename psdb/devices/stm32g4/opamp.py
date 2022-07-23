@@ -21,5 +21,4 @@ class OPAMP(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(OPAMP, self).__init__(target, ap, addr, name, OPAMP.REGS,
-                                    **kwargs)
+        super().__init__(target, ap, addr, name, OPAMP.REGS, **kwargs)

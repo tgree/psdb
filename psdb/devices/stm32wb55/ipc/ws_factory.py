@@ -3,7 +3,7 @@ from .ws_client import WSClient
 from .ble_client import BLEClient
 
 
-class WS_TYPE(object):
+class WS_TYPE:
     '''
     These are all defined in the STM32CubeWB git repository under:
 

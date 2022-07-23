@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # Copyright (c) 2018-2020 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-
 import argparse
 import sys
+
+import psdb.probes
 
 
 def main(rv):

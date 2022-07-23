@@ -107,5 +107,4 @@ class TIM17(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(TIM17, self).__init__(target, ap, addr, name, TIM17.REGS,
-                                    **kwargs)
+        super().__init__(target, ap, addr, name, TIM17.REGS, **kwargs)

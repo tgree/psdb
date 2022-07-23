@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-import psdb.probes
-import psdb.targets
-from psdb.util import hexify
-
 import argparse
 import threading
 import struct
 import time
 import uuid
 import sys
+
+import psdb.probes
+import psdb.targets
+from psdb.util import hexify
 
 
 RUNNING = True
@@ -24,7 +24,7 @@ PSDB_UUID      = uuid.UUID('f4182738-aaed-11ea-9ce0-784f435eb986')
 PSDB_CHAR      = uuid.UUID('210c8390-aaf5-11ea-9ce0-784f435eb986')
 
 
-def gen_manuf_data(client, mac_addr):
+def gen_manuf_data(_client, mac_addr):
     data = struct.pack('<BBBBBBBB6B',
                        13, 0xFF, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
                        mac_addr[0], mac_addr[1], mac_addr[2],
@@ -98,7 +98,7 @@ def ble_hci_gap_gatt_init(client):
 
     # Initialize GAP.
     print('Initializing GAP...')
-    (gap_service,
+    (_gap_service,
      dev_name_char,
      appearance_char) = client.ipc.ble_channel.aci_gap_init(0x01, False,
                                                             DEV_NAME)
@@ -181,7 +181,7 @@ def main(rv):
     target = probe.probe(verbose=rv.verbose, connect_under_reset=True)
 
     # Use the best clock frequency.
-    f      = target.set_max_tck_freq()
+    f      = probe.set_max_target_tck_freq()
     print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     # Flash and IPCC info.
@@ -218,7 +218,7 @@ def main(rv):
         thread.join()
 
 
-if __name__ == '__main__':
+def _main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dump-debuggers', '-d', action='store_true')
     parser.add_argument('--usb-path')
@@ -232,3 +232,7 @@ if __name__ == '__main__':
     except psdb.ProbeException as e:
         print(e)
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    _main()

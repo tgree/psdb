@@ -31,5 +31,4 @@ class GPT32(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(GPT32, self).__init__(target, ap, addr, name, GPT32.REGS,
-                                    **kwargs)
+        super().__init__(target, ap, addr, name, GPT32.REGS, **kwargs)

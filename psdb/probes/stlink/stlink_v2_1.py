@@ -1,9 +1,9 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 import usb
+import psdb
 from . import stlink
 from . import cdb
 from .. import usb_probe
-import psdb
 
 
 V2_1_PIDS = [0x374B,
@@ -66,6 +66,9 @@ class STLinkV2_1(stlink.STLink):
         assert self.ver_stlink > 1
         assert self.ver_jtag >= 22
         self._cmd_allow_retry(cdb.SetSWDCLKDivisor(divisor))
+
+    def set_max_burn_tck_freq(self, flash):
+        return self.set_tck_freq(flash.max_nowait_write_freq)
 
     def set_tck_freq(self, freq_hz):
         '''

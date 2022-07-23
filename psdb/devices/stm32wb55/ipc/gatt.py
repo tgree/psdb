@@ -1,7 +1,7 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 
 
-class Service(object):
+class Service:
     def __init__(self, ble_channel, service_handle):
         self.ble_channel    = ble_channel
         self.service_handle = service_handle
@@ -18,7 +18,7 @@ class Service(object):
                                                     val_offset)
 
 
-class Characteristic(object):
+class Characteristic:
     def __init__(self, service, char_handle):
         self.service     = service
         self.char_handle = char_handle

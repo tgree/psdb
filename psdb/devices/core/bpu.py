@@ -19,7 +19,7 @@ class BPU(CortexSubDevice):
             ]
 
     def __init__(self, component, subtype):
-        super(BPU, self).__init__('BPU', BPU.REGS, component, subtype)
+        super().__init__('BPU', BPU.REGS, component, subtype)
         bp_ctrl       = self._BP_CTRL.read()
         self.ncode    = ((bp_ctrl >> 4) & 0x0F)
 
@@ -27,7 +27,7 @@ class BPU(CortexSubDevice):
         self.active_breakpoints = {}
 
     def __repr__(self):
-        return super(BPU, self).__repr__() + (' (%u breakpoints)' % self.ncode)
+        return super().__repr__() + (' (%u breakpoints)' % self.ncode)
 
     def _write_comp(self, v, index):
         self._write_32(v, 0x08 + 4*index)
@@ -36,7 +36,7 @@ class BPU(CortexSubDevice):
         if addr in self.active_breakpoints:
             return
 
-        assert ((addr & 0xE0000001) == 0)
+        assert (addr & 0xE0000001) == 0
         index    = self.free_breakpoints.pop(0)
         bp_match = (1 if not (addr & 2) else 2)
         comp     = (addr & 0x1FFFFFFC)

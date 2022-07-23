@@ -1,9 +1,10 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
-from ..device import Device, Reg32
 import time
 
+from ..device import Device, Reg32
 
-class TimeoutError(Exception):
+
+class TimeoutError(Exception):  # pylint: disable=W0622
     pass
 
 
@@ -92,7 +93,7 @@ class IPCC(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(IPCC, self).__init__(target, ap, addr, name, IPCC.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, IPCC.REGS, **kwargs)
 
     def set_tx_flag(self, channel):
         '''

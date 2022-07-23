@@ -64,17 +64,15 @@ class DeviceRegisterWindow:
         for i, r in enumerate(self.dev.regs):
             if i == self.selection and self.edit_val is not None:
                 continue
-            elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
+            if r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
                 cmd_list.append(r.read_cmd(self.dev))
-            else:
-                continue
 
         read_vals = self.dev.ap.db.exec_cmd_list(cmd_list)
 
         for i, r in enumerate(self.dev.regs):
             if i == self.selection and self.edit_val is not None:
                 self.reg_vals[i] = self.edit_val
-            elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
+            elif r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
                 self.reg_vals[i] = read_vals.pop(0)
 
     def draw_item(self, i):
@@ -87,7 +85,7 @@ class DeviceRegisterWindow:
             rv = '--------'
         elif self.reg_vals[i] is not None:
             rv = '%08X' % self.reg_vals[i]
-        elif not (r.flags & Reg.READABLE):
+        elif not r.flags & Reg.READABLE:
             rv = '-WrOnly-'
         else:
             rv = '-SideFx-'
@@ -146,7 +144,7 @@ class DeviceRegisterWindow:
 
     def edit_field(self, width, shift, v):
         mask = ((1 << width) - 1)
-        if (v & ~mask):
+        if v & ~mask:
             self.inspect_tool.status('Value too large for field')
             return
 
@@ -155,7 +153,7 @@ class DeviceRegisterWindow:
             if not r.flags & Reg.WRITEABLE:
                 self.inspect_tool.status('Register not writeable')
                 return
-            elif (r.flags & Reg.READABLE) and not (r.flags & Reg.SIDE_EFFECTS):
+            if r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
                 self.edit_val = r.read(self.dev)
             else:
                 self.edit_val = 0

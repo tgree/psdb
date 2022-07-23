@@ -2,7 +2,7 @@
 from elftools.elf.elffile import ELFFile
 
 
-class ELFBinary(object):
+class ELFBinary:
     '''
     Class used for reading the contents of an existing ELF file; typically used
     by flashing code to analyze an ELF executable and figure out which blocks

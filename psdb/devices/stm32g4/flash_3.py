@@ -112,9 +112,9 @@ class FLASH_3(flash_type1.FLASH):
                             'try using --srst')
         sector_size = 2048 if optr & (1<<22) else 4096
 
-        super(FLASH_3, self).__init__(target, FLASH_3.REGS, sector_size, ap,
-                                      name, dev_base, mem_base, max_write_freq,
-                                      otp_base, otp_len, **kwargs)
+        super().__init__(target, FLASH_3.REGS, sector_size, ap, name, dev_base,
+                         mem_base, max_write_freq, otp_base, otp_len, **kwargs)
+        self.nbanks = (2 if sector_size == 2048 else 1)
 
     def erase_sector(self, n, verbose=True):
         '''
@@ -122,7 +122,7 @@ class FLASH_3(flash_type1.FLASH):
         This checks if the flash banks are swapped and erases the appropriate
         sector if it needs to reverse the numbers.
         '''
-        assert 0 <= n and n < self.nsectors
+        assert 0 <= n < self.nsectors
 
         addr = self.mem_base + n * self.sector_size
         if verbose:
@@ -139,10 +139,12 @@ class FLASH_3(flash_type1.FLASH):
         with self._flash_unlocked():
             self._clear_errors()
             self._CR = ((n << 3) | (1 << 1) | bker)
-            self._CR = ((1 << 16) | (n << 3) | (1 << 1) | bker)
-            self._wait_bsy_clear()
-            self._check_errors()
-            self._CR = 0
+            try:
+                self._CR = ((1 << 16) | (n << 3) | (1 << 1) | bker)
+                self._wait_bsy_clear()
+                self._check_errors()
+            finally:
+                self._CR = 0
 
     def swap_banks_and_reset_no_connect(self):
         '''

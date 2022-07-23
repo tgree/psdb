@@ -13,7 +13,7 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
            (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
            (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
            (stm32h7.FLASH_UP,   'FLASH',        0x52002000, 0x08000000,
-                                                3300000),  # noqa: E127
+                                                8000000),  # noqa: E127
            ]
 
 # AP1 devices are ones accessible in the D3 domain; we can access these via AP1
@@ -29,7 +29,10 @@ AP2DEVS = []
 
 class STM32H7(Target):
     def __init__(self, db):
-        super(STM32H7, self).__init__(db, 24000000)
+        # Max SWD speed is:
+        #   71.0 MHz for 2.70V < VDD < 3.6V
+        #   52.5 MHz for 1.62V < VDD < 3.6V
+        super().__init__(db, 52500000)
         self.ahb_ap     = self.db.aps[0]
         self.apbd_ap    = self.db.aps[2]
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)

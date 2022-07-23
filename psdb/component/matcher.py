@@ -2,7 +2,7 @@
 MATCHERS = []
 
 
-class Matcher(object):
+class Matcher:
     def __init__(self, cls, cidr, pidr, cidr_mask=0xFFFFFFFF,
                  pidr_mask=0xFFFFFFFFFFFFFFFF, subtype=''):
         self.cls       = cls
@@ -25,14 +25,14 @@ class Matcher(object):
 
 class StaticMatcher(Matcher):
     def __init__(self, cls, apsel, addr, cidr, pidr, **kwargs):
-        super(StaticMatcher, self).__init__(cls, cidr, pidr, **kwargs)
+        super().__init__(cls, cidr, pidr, **kwargs)
         self.apsel = apsel
         self.addr  = addr
 
     def score(self, c):
         if self.apsel != c.ap.ap_num or self.addr != c.addr:
             return 0
-        return super(StaticMatcher, self).score(c)*2
+        return super().score(c)*2
 
 
 class M33Matcher(Matcher):
