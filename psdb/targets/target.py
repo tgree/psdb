@@ -30,15 +30,6 @@ class Target:
         '''
         raise NotImplementedError
 
-    def set_max_tck_freq(self):
-        '''
-        Sets the debug probe to the target's maximum supported SWD frequency.
-        Note that this frequency may need to be throttled under some conditions
-        such as during flash writes.
-        '''
-        print('Requesting SWD frequency of %.3f MHz' % (self.max_tck_freq/1.e6))
-        return self.db.set_tck_freq(self.max_tck_freq)
-
     def is_halted(self, cpus=None):
         cpus = cpus or self.cpus
         for c in cpus:

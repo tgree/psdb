@@ -187,7 +187,7 @@ def _main():
                                    connect_under_reset=args.connect_under_reset)
 
     # Set the max clock frequency.
-    args.target.set_max_tck_freq()
+    args.probe.set_max_target_tck_freq()
 
     # Interact with the UI.
     tgcurses.wrapper(main, args)

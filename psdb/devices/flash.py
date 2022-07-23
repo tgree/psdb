@@ -158,7 +158,7 @@ class Flash:
                 mask |= self._mask_for_alp(block.addr, len(block.data))
             self.erase_sectors(mask, verbose=verbose)
 
-        f = self.ap.db.set_write_tck_freq(self)  # pylint: disable=E1101
+        f = self.ap.db.set_max_burn_tck_freq(self)  # pylint: disable=E1101
         if verbose:
             print('Set SWD frequency to %.3f MHz' % (f / 1.e6))
 
@@ -177,7 +177,7 @@ class Flash:
             print('Wrote %u bytes in %.2f seconds (%.2f K/s).' %
                   (total_len, elapsed, total_len / (1024*elapsed)))
 
-        f = self.ap.db.set_max_tck_freq()  # pylint: disable=E1101
+        f = self.ap.db.set_max_target_tck_freq()  # pylint: disable=E1101
         if verbose:
             print('Set SWD frequency to %.3f MHz' % (f / 1.e6))
 

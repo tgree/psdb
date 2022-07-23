@@ -401,7 +401,7 @@ def main(rv):
     print('Starting server on port %s for %s' % (rv.port, probe))
     target = probe.probe(verbose=rv.verbose,
                          connect_under_reset=rv.connect_under_reset)
-    target.set_max_tck_freq()
+    probe.set_max_target_tck_freq()
 
     c = target.cpus[rv.cpu]
     if c.bpu is not None:

@@ -67,11 +67,8 @@ class STLinkV2_1(stlink.STLink):
         assert self.ver_jtag >= 22
         self._cmd_allow_retry(cdb.SetSWDCLKDivisor(divisor))
 
-    def set_write_tck_freq(self, flash):
+    def set_max_burn_tck_freq(self, flash):
         return self.set_tck_freq(flash.max_nowait_write_freq)
-
-    def set_max_tck_freq(self):
-        return self.set_tck_freq(4000000)
 
     def set_tck_freq(self, freq_hz):
         '''

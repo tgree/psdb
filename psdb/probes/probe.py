@@ -75,11 +75,11 @@ class Probe:
     def deassert_srst(self):
         raise NotImplementedError
 
-    def set_write_tck_freq(self, flash):
-        raise NotImplementedError
+    def set_max_target_tck_freq(self):
+        return self.set_tck_freq(self.target.max_tck_freq)
 
-    def set_max_tck_freq(self):
-        raise NotImplementedError
+    def set_max_burn_tck_freq(self, _flash):
+        return self.set_max_target_tck_freq()
 
     def set_tck_freq(self, freq_hz):
         raise NotImplementedError

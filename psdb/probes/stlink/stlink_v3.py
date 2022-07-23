@@ -123,21 +123,17 @@ class STLinkV3(stlink.STLink):
                                   'minimum is %u kHz.'
                                   % (freq_khz, self._swd_freqs_khz[-1]))
 
-    def set_write_tck_freq(self, flash):
+    def set_max_burn_tck_freq(self, flash):
         # We really have to hack it here.  Before J10, the U5 errors out if you
         # try to write faster than 3.3 MHz.  With J10, then U5 errors out if
         # you try to write faster than 8 MHz.  On all the other platforms I've
         # tested, J10 allows you to go at the max probe speed of 24 MHz, so not
         # sure why it fails on U5.
-        if self.features & stlink.FEATURE_SWD_WAIT_OK:
-            if isinstance(flash.target, STM32U5):
-                return self.set_tck_freq(8000000)
-            if not isinstance(flash.target, STM32U5):
-                return self.set_max_tck_freq()
-        return self.set_tck_freq(flash.max_nowait_write_freq)
-
-    def set_max_tck_freq(self):
-        return self.set_tck_freq(24000000)
+        if not self.features & stlink.FEATURE_SWD_WAIT_OK:
+            return self.set_tck_freq(flash.max_nowait_write_freq)
+        if isinstance(self.target, STM32U5):
+            return self.set_tck_freq(8000000)
+        return self.set_max_target_tck_freq()
 
     def set_tck_freq(self, freq_hz):
         '''
