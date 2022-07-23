@@ -122,7 +122,7 @@ class Target:
         while True:
             try:
                 t = self.db.probe(**kwargs)
-                assert type(t) == type(self)
+                assert type(t) is type(self)
                 assert t.is_halted()
                 return t
             except psdb.ProbeException:
