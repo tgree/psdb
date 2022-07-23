@@ -12,18 +12,18 @@ class InvalidFormatException(HEXFileException):
 class HEXFile:
     def __init__(self, path):
         self.path     = path
-        self.hex_file = open(self.path, 'r')
         self.flash_dv = []
 
-        self._parse()
+        with open(self.path, 'r') as f:
+            self._parse(f)
 
     def _raise_inval_format(self, i, err):
         raise InvalidFormatException('%s:%u: %s' % (self.path, i, err))
 
-    def _parse(self):
+    def _parse(self, f):
         base_address = 0
         try:
-            lines = self.hex_file.readlines()
+            lines = f.readlines()
         except UnicodeDecodeError:
             self._raise_inval_format(0, 'Non-UTF8 characters.')
         for i, l in enumerate(lines):
