@@ -67,6 +67,9 @@ class Probe:
             e.show_info()
         raise psdb.ProbeException('Multiple probes found.')
 
+    def connect(self):
+        raise NotImplementedError
+
     def assert_srst(self):
         raise NotImplementedError
 
