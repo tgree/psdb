@@ -52,8 +52,7 @@ class MemAP(AP):
         self.base_component = None
 
     def __repr__(self):
-        features = [MemAP.FLAGS_TABLE[f]
-                    for f in MemAP.FLAGS_TABLE if self.flags & f]
+        features = [v for k, v in MemAP.FLAGS_TABLE.items() if self.flags & k]
         return '%s AP %u [%s]' % (self.typ, self.ap_num, ' '.join(features))
 
     def read_32(self, addr):
