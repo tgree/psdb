@@ -244,16 +244,16 @@ class GDBServer:
 
         gc.send_packet(b'S05')
 
-    def _handle_unimplemented(self, pkt):
+    def _handle_unimplemented(self, _pkt):
         return b''
 
-    def _handle_question(self, pkt):
+    def _handle_question(self, _pkt):
         '''
         Returns the reason we stopped; we return signal 5 (TRAP).
         '''
         return b'S05'
 
-    def _handle_read_registers(self, pkt):
+    def _handle_read_registers(self, _pkt):
         '''
         Returns the concatenation of all registers defined in the REG_MAP list.
         '''
@@ -267,7 +267,7 @@ class GDBServer:
                                            (v >> 24) & 0xFF)
         return data
 
-    def _handle_write_registers(self, pkt):
+    def _handle_write_registers(self, _pkt):
         return b''
 
     def _handle_read_memory(self, pkt):
@@ -308,7 +308,7 @@ class GDBServer:
             print('Write threw exception.')
         return b'E01'
 
-    def _handle_continue(self, pkt):
+    def _handle_continue(self, _pkt):
         '''
         Resumes execution.  The response is sent when/if the target halts in
         the future - either because the user interrupted us via Ctrl-C or we
@@ -317,7 +317,7 @@ class GDBServer:
         '''
         self._resume()
 
-    def _handle_step_instruction(self, pkt):
+    def _handle_step_instruction(self, _pkt):
         '''
         Resumes execution for a single instruction.
         '''
@@ -352,15 +352,15 @@ class GDBServer:
         self.cpu.bpu.insert_breakpoint(addr)
         return b'OK'
 
-    def _handle_insert_write_watchpoint(self, pkt):
+    def _handle_insert_write_watchpoint(self, _pkt):
         print('Write watchpoints not supported!')
         return b'E01'
 
-    def _handle_insert_read_watchpoint(self, pkt):
+    def _handle_insert_read_watchpoint(self, _pkt):
         print('Read watchpoints not supported!')
         return b'E01'
 
-    def _handle_insert_access_watchpoint(self, pkt):
+    def _handle_insert_access_watchpoint(self, _pkt):
         print('Access watchpoints not supported!')
         return b'E01'
 

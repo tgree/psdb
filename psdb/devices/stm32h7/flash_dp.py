@@ -110,7 +110,9 @@ class FLASH_DP(FLASH):
             print('Flash completed (OPTSR_CUR=0x%08X, OPTSR_PRG=0x%08X)' %
                   (self._OPTSR_CUR.read(), self._OPTSR_PRG.read()))
 
-    def set_options(self, options, verbose=True, connect_under_reset=False):
+    def set_options(self, options,
+                    verbose=True,                # pylint: disable=W0613
+                    connect_under_reset=False):  # pylint: disable=W0613
         '''
         This sets the specified option bits in the OPTSR_PRG register and then
         triggers an option-byte load.  No reset takes place, but for

@@ -164,7 +164,7 @@ class BLECommandStatus:
     Elsewhere, it is noted that this field indicates the number of commands
     that the BLE is willing to accept at once; typically this value is 1.
     '''
-    def __init__(self, ap, addr, data):
+    def __init__(self, _ap, addr, data):
         self.addr = addr
 
         (plen,
@@ -286,7 +286,7 @@ class DisconnectCompleteEvent:
 
     MM Free Required: Yes.
     '''
-    def __init__(self, ap, addr, data):
+    def __init__(self, _ap, addr, data):
         self.addr = addr
 
         (self.status,

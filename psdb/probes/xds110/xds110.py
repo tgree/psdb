@@ -59,7 +59,7 @@ class XDS110(usb_probe.Probe):
         return self.usb_dev.read(ENDPOINT_IN, n, timeout=40000)
 
     def write(self, data):
-        for retry in range(3):
+        for _ in range(3):
             try:
                 return self.usb_dev.write(ENDPOINT_OUT, data)
             except usb.core.USBError as e:

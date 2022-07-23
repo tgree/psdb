@@ -29,7 +29,7 @@ class LCG:
         return LCG(48271, 0, 0x7FFFFFFF, seed)
 
 
-def test_sram(t, rd, rv, lcg, timeout=10):
+def test_sram(t, rd, _rv, lcg, timeout=10):
     print('Testing %s with seed %u' % (rd.name, lcg.x))
     ap         = rd.ap
     ap_num     = ap.ap_num

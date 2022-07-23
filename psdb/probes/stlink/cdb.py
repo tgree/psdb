@@ -55,7 +55,7 @@ class STLinkCommand:
         self.cmd = cmd
         self.cdb = cmd + bytes(b'\x00'*(16 - len(cmd)))
 
-    def decode(self, rsp):
+    def decode(self, _rsp):
         assert self.CMD_FLAGS & HAS_DATA_IN_PHASE
 
 

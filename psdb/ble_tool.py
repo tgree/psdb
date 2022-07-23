@@ -24,7 +24,7 @@ PSDB_UUID      = uuid.UUID('f4182738-aaed-11ea-9ce0-784f435eb986')
 PSDB_CHAR      = uuid.UUID('210c8390-aaf5-11ea-9ce0-784f435eb986')
 
 
-def gen_manuf_data(client, mac_addr):
+def gen_manuf_data(_client, mac_addr):
     data = struct.pack('<BBBBBBBB6B',
                        13, 0xFF, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
                        mac_addr[0], mac_addr[1], mac_addr[2],
@@ -98,7 +98,7 @@ def ble_hci_gap_gatt_init(client):
 
     # Initialize GAP.
     print('Initializing GAP...')
-    (gap_service,
+    (_gap_service,
      dev_name_char,
      appearance_char) = client.ipc.ble_channel.aci_gap_init(0x01, False,
                                                             DEV_NAME)

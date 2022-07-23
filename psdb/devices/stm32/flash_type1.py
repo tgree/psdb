@@ -153,14 +153,15 @@ class FLASH(Device, Flash):
         assert offset + size <= self.otp_len
         return self.ap.read_bulk(self.otp_base + offset, size)
 
-    def is_otp_writeable(self, offset, size, verbose=True):
+    def is_otp_writeable(self, offset, size,
+                         verbose=True):  # pylint: disable=W0613
         '''
         Determines if the selected region of one-time-programmable memory is
         still writeable.
         '''
         return self.read_otp(offset, size) == (b'\xFF'*size)
 
-    def write_otp(self, offset, data, verbose=True):
+    def write_otp(self, offset, data, verbose=True):  # pylint: disable=W0613
         '''
         Writes 8-byte lines of data to the one-time-programmable area in flash.
         The address must be 8-byte aligned and the data to write must be a
@@ -193,7 +194,7 @@ class FLASH(Device, Flash):
                 self._wait_bsy_clear()
                 self._check_errors()
 
-    def _trigger_obl_launch(self, **kwargs):
+    def _trigger_obl_launch(self, **kwargs):  # pylint: disable=W0613
         '''
         Set OBL_LAUNCH to trigger an uncatchable reset of the device using the
         new options.  This reset triggers a disconnect of the debug probe, and

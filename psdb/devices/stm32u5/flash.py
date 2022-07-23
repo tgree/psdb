@@ -333,7 +333,7 @@ class FLASH(Device, Flash):
                 self._wait_bsy_clear()
                 self._check_errors()
 
-    def _trigger_obl_launch(self, **kwargs):
+    def _trigger_obl_launch(self, **kwargs):  # pylint: disable=W0613
         '''
         Set OBL_LAUNCH to trigger an uncatchable reset of the device using the
         new options.  This reset triggers a disconnect of the debug probe, and
