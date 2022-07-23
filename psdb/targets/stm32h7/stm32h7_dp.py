@@ -78,7 +78,10 @@ AP3DEVS = [(stm32h7.ART,        'ART',          0x40024400),
 
 class STM32H7_DP(Target):
     def __init__(self, db):
-        super().__init__(db, 24000000)
+        # Max SWD speed is:
+        #   71.0 MHz for 2.70V < VDD < 3.6V
+        #   52.5 MHz for 1.62V < VDD < 3.6V
+        super().__init__(db, 52500000)
         self.m7_ap      = self.db.aps[0]
         self.m4_ap      = self.db.aps[3]
         self.apbd_ap    = self.db.aps[2]

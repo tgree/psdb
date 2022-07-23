@@ -14,6 +14,7 @@ DEVICES = [
 
 class STM32G0(Target):
     def __init__(self, db):
+        # Max SWD speed is not specified in the data sheet.
         super().__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)

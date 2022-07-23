@@ -29,7 +29,10 @@ AP2DEVS = []
 
 class STM32H7(Target):
     def __init__(self, db):
-        super().__init__(db, 24000000)
+        # Max SWD speed is:
+        #   71.0 MHz for 2.70V < VDD < 3.6V
+        #   52.5 MHz for 1.62V < VDD < 3.6V
+        super().__init__(db, 52500000)
         self.ahb_ap     = self.db.aps[0]
         self.apbd_ap    = self.db.aps[2]
         self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)

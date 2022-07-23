@@ -34,6 +34,9 @@ class STM32U5MCU(psdb.component.Component):
 
 class STM32U5(Target):
     def __init__(self, db):
+        # Max SWD speed is:
+        #   66.5 MHz for 2.70V < VDD < 3.6V
+        #   43.0 MHz for 1.71V < VDD < 3.6V
         super().__init__(db, 43000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x0BFA0700, 12)

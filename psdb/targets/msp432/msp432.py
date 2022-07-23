@@ -11,6 +11,8 @@ DEVICES = [(RAMDevice,     'SRAM',     0x20000000, 0x00010000),
 
 class MSP432P401(Target):
     def __init__(self, db):
+        # The max JTAG TCK frequency is 10 MHz.  It's unclear if this also
+        # applies to SWD mode.
         super().__init__(db, 3300000)
         self.ahb_ap = self.db.aps[0]
 
