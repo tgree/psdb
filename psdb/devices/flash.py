@@ -21,7 +21,7 @@ class FlashWriteException(Exception):
 
 class Flash(object):
     def __init__(self, mem_base, sector_size, nsectors, max_nowait_write_freq):
-        super(Flash, self).__init__()
+        super().__init__()
         self.mem_base              = mem_base
         self.sector_size           = sector_size
         self.sector_mask           = sector_size - 1

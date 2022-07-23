@@ -19,7 +19,7 @@ from .ws_client import WSClient
 
 class FUSClient(object):
     def __init__(self, ipc):
-        super(FUSClient, self).__init__()
+        super().__init__()
         self.ipc     = ipc
         self.fw_name = 'FUS'
         assert self.ipc.mailbox.check_dit_key_fus()

@@ -19,4 +19,4 @@ class BT(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(BT, self).__init__(target, ap, addr, name, BT.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, BT.REGS, **kwargs)

@@ -150,7 +150,7 @@ DEVICES_4 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00004000),
 
 class STM32G4(Target):
     def __init__(self, db):
-        super(STM32G4, self).__init__(db, 24000000)
+        super().__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x1FFF7590, 12)
         self.flash_size = (self.ahb_ap.read_32(0x1FFF75E0) & 0x0000FFFF)*1024

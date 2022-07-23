@@ -78,7 +78,7 @@ AP3DEVS = [(stm32h7.ART,        'ART',          0x40024400),
 
 class STM32H7_DP(Target):
     def __init__(self, db):
-        super(STM32H7_DP, self).__init__(db, 24000000)
+        super().__init__(db, 24000000)
         self.m7_ap      = self.db.aps[0]
         self.m4_ap      = self.db.aps[3]
         self.apbd_ap    = self.db.aps[2]

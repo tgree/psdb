@@ -1483,7 +1483,7 @@ class RCC(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(RCC, self).__init__(target, ap, addr, name, RCC.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, RCC.REGS, **kwargs)
 
         self._f_hse = None
 

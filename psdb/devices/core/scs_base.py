@@ -11,7 +11,7 @@ class SCS(CortexSubDevice):
     devices.
     '''
     def __init__(self, component, subtype, dev_regs, core_regs):
-        super(SCS, self).__init__('SCS', dev_regs, component, subtype)
+        super().__init__('SCS', dev_regs, component, subtype)
         self.core_regs = core_regs
 
         # Enable DHCSR.C_DEBUGEN so that we have debug control of the CPU.

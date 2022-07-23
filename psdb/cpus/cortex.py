@@ -12,8 +12,8 @@ class Cortex(psdb.component.Component):
     for any other Cortex model.
     '''
     def __init__(self, component, subtype, model):
-        super(Cortex, self).__init__(component.parent, component.ap,
-                                     component.addr, subtype)
+        super().__init__(component.parent, component.ap, component.addr,
+                         subtype)
         self.model     = model
         self._scs      = None
         self._bpu      = None

@@ -31,7 +31,7 @@ class FPB(CortexSubDevice):
             ]
 
     def __init__(self, component, subtype):
-        super(FPB, self).__init__('FPB', FPB.REGS, component, subtype)
+        super().__init__('FPB', FPB.REGS, component, subtype)
         fp_ctrl       = self._FP_CTRL.read()
         self.ncode    = (((fp_ctrl >> 4) & 0x0F) |
                          ((fp_ctrl >> 8) & 0xF0))
@@ -43,7 +43,7 @@ class FPB(CortexSubDevice):
         self.active_breakpoints = {}
 
     def __repr__(self):
-        return (super(FPB, self).__repr__() +
+        return (super().__repr__() +
                 (' (rev %u: %u code breakpoints, %u literals)'
                  % (self.revision, self.ncode, self.nlit)))
 

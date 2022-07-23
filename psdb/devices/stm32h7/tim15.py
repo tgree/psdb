@@ -28,5 +28,4 @@ class TIM15(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(TIM15, self).__init__(target, ap, addr, name, TIM15.REGS,
-                                    **kwargs)
+        super().__init__(target, ap, addr, name, TIM15.REGS, **kwargs)

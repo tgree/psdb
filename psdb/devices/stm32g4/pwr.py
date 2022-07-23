@@ -302,7 +302,7 @@ class PWR(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(PWR, self).__init__(target, ap, addr, name, PWR.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, PWR.REGS, **kwargs)
 
     def unlock_backup_domain(self):
         self._CR1.DBP = 1

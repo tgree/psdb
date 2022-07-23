@@ -255,4 +255,4 @@ class ADC(Device):
                      for cls, _name, offset, fields in ADC.PER_ADC_REGS]
         regs += ADC.COM_ADC_REGS
 
-        super(ADC, self).__init__(target, ap, addr, name, regs, **kwargs)
+        super().__init__(target, ap, addr, name, regs, **kwargs)

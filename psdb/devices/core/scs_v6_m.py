@@ -125,7 +125,7 @@ class SCS(scs_base.SCS):
             ]
 
     def __init__(self, component, subtype):
-        super(SCS, self).__init__(component, subtype, SCS.REGS, CORE_REGISTERS)
+        super().__init__(component, subtype, SCS.REGS, CORE_REGISTERS)
 
         # Enable DEMCR.DWTENA so we can probe further.
         self._DEMCR.DWTENA = 1

@@ -252,7 +252,7 @@ class RDCapture(object):
 
 class Device(object):
     def __init__(self, owner, ap, dev_base, name, regs, path=None):
-        super(Device, self).__setattr__(
+        super().__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self, dev_base)
                             for r in regs if not isinstance(r, RegDiv)})
 
@@ -282,7 +282,7 @@ class Device(object):
             else:
                 rd.write(value)
         else:
-            super(Device, self).__setattr__(name, value)
+            super().__setattr__(name, value)
 
     def _read_8(self, offset):
         return self.ap.read_8(self.dev_base + offset)
@@ -330,7 +330,7 @@ class MemDevice(Device):
     Base class for memory-type devices.
     '''
     def __init__(self, target, ap, name, addr, size, **kwargs):
-        super(MemDevice, self).__init__(target, ap, addr, name, [], **kwargs)
+        super().__init__(target, ap, addr, name, [], **kwargs)
         self.size = size
 
     def read_mem_block(self, addr, size):

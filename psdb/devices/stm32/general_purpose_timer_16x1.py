@@ -132,5 +132,4 @@ class GPT16x1(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(GPT16x1, self).__init__(target, ap, addr, name, GPT16x1.REGS,
-                                      **kwargs)
+        super().__init__(target, ap, addr, name, GPT16x1.REGS, **kwargs)

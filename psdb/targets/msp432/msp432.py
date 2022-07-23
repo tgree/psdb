@@ -11,7 +11,7 @@ DEVICES = [(RAMDevice,     'SRAM',     0x20000000, 0x00010000),
 
 class MSP432P401(Target):
     def __init__(self, db):
-        super(MSP432P401, self).__init__(db, 3300000)
+        super().__init__(db, 3300000)
         self.ahb_ap = self.db.aps[0]
 
         for d in DEVICES:

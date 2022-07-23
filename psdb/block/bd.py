@@ -3,8 +3,7 @@
 
 class BlockOutOfRangeException(Exception):
     def __init__(self, bd, block_num):
-        super(BlockOutOfRangeException, self).__init__(
-              'Block %u out of range' % block_num)
+        super().__init__('Block %u out of range' % block_num)
         self.bd        = bd
         self.block_num = block_num
 

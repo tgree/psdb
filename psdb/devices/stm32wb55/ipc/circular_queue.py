@@ -120,5 +120,5 @@ class Queue(QueueRef):
     initialized to an empty queue when the object is constructed.
     '''
     def __init__(self, ap, addr):
-        super(Queue, self).__init__(ap, addr)
+        super().__init__(ap, addr)
         self.clear()

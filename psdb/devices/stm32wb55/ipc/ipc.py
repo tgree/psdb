@@ -24,7 +24,7 @@ MM_CMD_CHANNEL          = 4
 
 class IPC(object):
     def __init__(self, target, ap, base_addr, ram_size, vtor_addr):
-        super(IPC, self).__init__()
+        super().__init__()
         self.target    = target
         self.ap        = ap
         self.base_addr = base_addr

@@ -120,7 +120,7 @@ class PWR(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(PWR, self).__init__(target, ap, addr, name, PWR.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, PWR.REGS, **kwargs)
 
     def _wait_vosrdy(self):
         while self._D3CR.VOSRDY == 0:

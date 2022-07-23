@@ -9,7 +9,7 @@ class RAMBD(bd.BlockDevice):
     block number.
     '''
     def __init__(self, block_size, first_block=0, nblocks=0x10000000000000000):
-        super(RAMBD, self).__init__(block_size, b'\xff')
+        super().__init__(block_size, b'\xff')
         self.blocks      = {}
         self.first_block = first_block
         self.end_block   = first_block + nblocks

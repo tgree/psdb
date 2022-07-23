@@ -14,4 +14,4 @@ class DMAMUX(Device):
         regs += [Reg32('RG%uCR' % i, 0x100 + i*0x04) for i in range(nrgens)]
         regs += [Reg32R('RGSR',  0x140),
                  Reg32W('RGCFR', 0x144)]
-        super(DMAMUX, self).__init__(target, ap, addr, name, regs, **kwargs)
+        super().__init__(target, ap, addr, name, regs, **kwargs)

@@ -68,7 +68,7 @@ class DAC(Device):
 
     def __init__(self, target, ap, name, addr, sub_regs=None, **kwargs):
         regs = DAC.REGS + (sub_regs or [])
-        super(DAC, self).__init__(target, ap, addr, name, regs, **kwargs)
+        super().__init__(target, ap, addr, name, regs, **kwargs)
 
 
 class DAC_Saw(DAC):
@@ -84,5 +84,5 @@ class DAC_Saw(DAC):
               ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(DAC_Saw, self).__init__(target, ap, name, addr,
-                                      sub_regs=DAC_Saw.STREGS, **kwargs)
+        super().__init__(target, ap, name, addr, sub_regs=DAC_Saw.STREGS,
+                         **kwargs)

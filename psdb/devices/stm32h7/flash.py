@@ -89,10 +89,10 @@ class FlashBank(Device):
             ]
 
     def __init__(self, flash, bank_num, **kwargs):
-        super(FlashBank, self).__init__(flash.target, flash.ap,
-                                        flash.dev_base + 0x100*bank_num,
-                                        '%s:BANK%u' % (flash.name, bank_num),
-                                        FlashBank.REGS, **kwargs)
+        super().__init__(flash.target, flash.ap,
+                         flash.dev_base + 0x100*bank_num,
+                         '%s:BANK%u' % (flash.name, bank_num), FlashBank.REGS,
+                         **kwargs)
 
     def _clear_errors(self):
         self._CCR = 0x0FEF0000

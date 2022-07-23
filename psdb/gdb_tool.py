@@ -36,7 +36,7 @@ REG_REV_MAP = {
 
 class ConnectionClosedException(Exception):
     def __init__(self):
-        super(ConnectionClosedException, self).__init__('Connection closed')
+        super().__init__('Connection closed')
 
 
 class GDBConnection(object):

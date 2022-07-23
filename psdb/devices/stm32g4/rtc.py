@@ -182,7 +182,7 @@ class RTC(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(RTC, self).__init__(target, ap, addr, name, RTC.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, RTC.REGS, **kwargs)
 
     def _rtc_unlocked(self):
         return UnlockedContextManager(self)

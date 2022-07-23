@@ -51,7 +51,7 @@ def is_fus_ready_event(event):
 
 class SystemChannel(object):
     def __init__(self, ipc, cmd_rsp_channel, event_channel):
-        super(SystemChannel, self).__init__()
+        super().__init__()
         self.ipc             = ipc
         self.cmd_rsp_channel = cmd_rsp_channel
         self.event_channel   = event_channel

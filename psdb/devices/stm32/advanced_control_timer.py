@@ -37,4 +37,4 @@ class ACT(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super(ACT, self).__init__(target, ap, addr, name, ACT.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, ACT.REGS, **kwargs)
