@@ -4,14 +4,14 @@ import math
 
 
 FRAC_LUT = [
-    u'\u2500',
-    u'\u258F',
-    u'\u258E',
-    u'\u258D',
-    u'\u258C',
-    u'\u258B',
-    u'\u258A',
-    u'\u2589',
+    '\u2500',
+    '\u258F',
+    '\u258E',
+    '\u258D',
+    '\u258C',
+    '\u258B',
+    '\u258A',
+    '\u2589',
     ]
 
 
@@ -33,10 +33,10 @@ class piter:
         n_star       = int(n_star)
         n_space      = self.width - n_star - 1
 
-        s = u'\r\u2503' + u'\u2588'*n_star
+        s = '\r\u2503' + '\u2588'*n_star
         if n_space >= 0:
-            s += FRAC_LUT[frac] + u'\u2500'*n_space
-        s += (u'\u2503 [%u / %u]' % (self.v, self.end))
+            s += FRAC_LUT[frac] + '\u2500'*n_space
+        s += ('\u2503 [%u / %u]' % (self.v, self.end))
 
         return s
 
