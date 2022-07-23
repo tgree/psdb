@@ -4,8 +4,10 @@ from psdb.devices import MemDevice, RAMDevice, stm32g0
 from psdb.targets import Target
 
 
+# Verified with Nucleo-G071RB and V2J39S27 that flash writes work at 4 MHz, the
+# fastest speed available on the STLINK-V2E debugger.
 DEVICES = [
-           (stm32g0.FLASH,  'FLASH',    0x40022000, 0x08000000, 3300000,
+           (stm32g0.FLASH,  'FLASH',    0x40022000, 0x08000000, 4000000,
                                         0x1FFF7000, 1024),  # noqa: E127
            ]
 
