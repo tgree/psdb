@@ -175,8 +175,9 @@ class STM32G4(Target):
         MemDevice(self, self.ahb_ap, 'OTP', self.flash.otp_base,
                   self.flash.otp_len)
 
-        self.orig_fb_mode = self._get_fb_mode()
-        self.fb_mode      = self._synchronize_fb_mode()
+        if self.flash.nbanks > 1:
+            self.orig_fb_mode = self._get_fb_mode()
+            self.fb_mode      = self._synchronize_fb_mode()
 
     def __repr__(self):
         return 'STM32G4 MCU_IDCODE 0x%08X' % self.mcu_idcode
@@ -186,18 +187,22 @@ class STM32G4(Target):
 
     def halt(self):
         super().halt()
-        self._set_fb_mode(self.fb_mode)
+        if self.flash.nbanks > 1:
+            self._set_fb_mode(self.fb_mode)
 
     def reset_halt(self):
         super().reset_halt()
-        self.orig_fb_mode = self._get_fb_mode()
-        self.fb_mode      = self._synchronize_fb_mode()
+        if self.flash.nbanks > 1:
+            self.orig_fb_mode = self._get_fb_mode()
+            self.fb_mode      = self._synchronize_fb_mode()
 
     def resume(self):
-        self._set_fb_mode(self.orig_fb_mode)
+        if self.flash.nbanks > 1:
+            self._set_fb_mode(self.orig_fb_mode)
         super().resume()
 
     def _set_fb_mode(self, v):
+        assert self.flash.nbanks > 1
         rcc                    = self.devs['RCC']
         syscfg                 = self.devs['SYSCFG']
         syscfgen               = rcc._APB2ENR.SYSCFGEN
@@ -206,6 +211,7 @@ class STM32G4(Target):
         rcc._APB2ENR.SYSCFGEN  = syscfgen
 
     def _get_fb_mode(self):
+        assert self.flash.nbanks > 1
         rcc                    = self.devs['RCC']
         syscfg                 = self.devs['SYSCFG']
         syscfgen               = rcc._APB2ENR.SYSCFGEN
@@ -220,6 +226,7 @@ class STM32G4(Target):
         with BFB2=1).  This is critical for just about anything that touches
         flash.
         '''
+        assert self.flash.nbanks > 1
         bfb2 = self.flash.get_options()['bfb2']
         self._set_fb_mode(bfb2)
         return bfb2

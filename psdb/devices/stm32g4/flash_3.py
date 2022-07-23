@@ -115,6 +115,7 @@ class FLASH_3(flash_type1.FLASH):
         super(FLASH_3, self).__init__(target, FLASH_3.REGS, sector_size, ap,
                                       name, dev_base, mem_base, max_write_freq,
                                       otp_base, otp_len, **kwargs)
+        self.nbanks = (2 if sector_size == 2048 else 1)
 
     def erase_sector(self, n, verbose=True):
         '''

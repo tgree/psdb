@@ -80,3 +80,4 @@ class FLASH_4(flash_type1.FLASH):
         super(FLASH_4, self).__init__(target, FLASH_4.REGS, 2048, ap, name,
                                       dev_base, mem_base, max_write_freq,
                                       otp_base, otp_len, **kwargs)
+        self.nbanks = 1
