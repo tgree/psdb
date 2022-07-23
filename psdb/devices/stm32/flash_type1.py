@@ -105,6 +105,22 @@ class FLASH(Device, Flash):
             finally:
                 self._CR = 0
 
+    def erase_all(self, verbose=True):
+        '''
+        Erases the entire flash.
+        '''
+        if verbose:
+            print('Erasing entire flash...')
+        with self._flash_unlocked():
+            self._clear_errors()
+            self._CR = (1 << 15) | (1 << 2)
+            try:
+                self._CR = (1 << 15) | (1 << 2) | (1 << 16)
+                self._wait_bsy_clear()
+                self._check_errors()
+            finally:
+                self._CR = 0
+
     def read(self, addr, length):
         '''
         Reads a region from the flash.
