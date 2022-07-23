@@ -4,7 +4,7 @@ import time
 from ..device import Device, Reg32
 
 
-class TimeoutError(Exception):
+class TimeoutError(Exception):  # pylint: disable=W0622
     pass
 
 
