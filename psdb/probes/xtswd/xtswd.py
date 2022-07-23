@@ -119,7 +119,7 @@ class XTSWD(usb_probe.Probe):
     NAME = 'XTSWD'
 
     def __init__(self, usb_dev, **kwargs):
-        super().__init__(usb_dev, **kwargs)
+        super().__init__(usb_dev, bConfigurationValue=0x30, **kwargs)
         self.tag      = random.randint(0, 65535)
         self.imon_tag = None
         self.git_sha1 = usb.util.get_string(usb_dev, 6)
