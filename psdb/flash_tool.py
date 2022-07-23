@@ -97,11 +97,12 @@ def main(rv):  # noqa: C901
     # Write a new ELF image to flash if requested.
     if rv.flash:
         dv = []
-        for f in rv.flash:
-            print('Burning "%s"...' % f)
-            md5 = hashlib.md5(open(f, 'rb').read())
+        for path in rv.flash:
+            print('Burning "%s"...' % path)
+            with open(path, 'rb') as f:
+                md5 = hashlib.md5(f.read())
             print('MD5: %s' % md5.hexdigest())
-            img = parse_image(f)
+            img = parse_image(path)
             pdv = target.flash.prune_dv(img.flash_dv)
             dv  = psdb.elf.dv.merge_dvs(dv, pdv)
         target.flash.burn_dv(dv, verbose=True, bank_swap=rv.flash_inactive)
