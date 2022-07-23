@@ -27,6 +27,7 @@ class Flash(object):
         self.sector_mask = sector_size - 1
         self.flash_size  = sector_size * nsectors
         self.nsectors    = nsectors
+        self.all_mask    = (1 << nsectors) - 1
 
     def _mask_for_alp(self, addr, length):
         '''
@@ -82,6 +83,10 @@ class Flash(object):
         '''
         Erases the sectors specified in the bit mask.
         '''
+        if mask == self.all_mask:
+            self.erase_all(verbose=verbose)
+            return
+
         sectors = []
         for i in range(int(math.floor(math.log(mask, 2))) + 1):
             if (mask & (1 << i)):
@@ -101,7 +106,8 @@ class Flash(object):
         '''
         Erases the entire flash.
         '''
-        self.erase(self.mem_base, self.flash_size, verbose=verbose)
+        for i in psdb.piter(range(self.nsectors), verbose=verbose):
+            self.erase_sector(i, verbose=False)
 
     def read(self, addr, length):
         '''
