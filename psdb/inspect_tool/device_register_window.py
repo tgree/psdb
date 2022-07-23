@@ -64,10 +64,8 @@ class DeviceRegisterWindow:
         for i, r in enumerate(self.dev.regs):
             if i == self.selection and self.edit_val is not None:
                 continue
-            elif r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
+            if r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
                 cmd_list.append(r.read_cmd(self.dev))
-            else:
-                continue
 
         read_vals = self.dev.ap.db.exec_cmd_list(cmd_list)
 
@@ -155,7 +153,7 @@ class DeviceRegisterWindow:
             if not r.flags & Reg.WRITEABLE:
                 self.inspect_tool.status('Register not writeable')
                 return
-            elif r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
+            if r.flags & Reg.READABLE and not r.flags & Reg.SIDE_EFFECTS:
                 self.edit_val = r.read(self.dev)
             else:
                 self.edit_val = 0

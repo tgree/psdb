@@ -131,10 +131,9 @@ class FLCTL(Device, flash.Flash):
         bank = addr // 0x00020000
         if bank == 0:
             return self._BANK0_RDCTL.read()
-        elif bank == 1:
+        if bank == 1:
             return self._BANK1_RDCTL.read()
-        else:
-            raise Exception('Address 0x%08X not in flash!' % addr)
+        raise Exception('Address 0x%08X not in flash!' % addr)
 
     def _write_rdctl(self, v, addr):
         bank = addr // 0x00020000

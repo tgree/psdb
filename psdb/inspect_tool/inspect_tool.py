@@ -24,7 +24,7 @@ DEV_TYPE_MEMORY   = 1
 def get_dev_type(dev):
     if dev.regs:
         return DEV_TYPE_REGISTER
-    elif hasattr(dev, 'size'):
+    if hasattr(dev, 'size'):
         return DEV_TYPE_MEMORY
     raise Exception('Unknown device type!')
 
@@ -122,7 +122,7 @@ class InspectTool:
             c = self.workspace.canvas.getch()
             if c == ord('q'):
                 break
-            elif c in (ord('\t'), curses.KEY_BTAB):
+            if c in (ord('\t'), curses.KEY_BTAB):
                 self.focus_list[0].focus_lost()
 
                 while True:
