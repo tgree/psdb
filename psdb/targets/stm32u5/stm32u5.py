@@ -5,6 +5,12 @@ from psdb.targets import Target
 from . import dbgmcu
 
 
+# Verified with Nucleo-U575ZIQ and V3J7M3B0S0 that flash writes faster than 3.3
+# MHz error out.  After upgrading to V3J10M3B0S0, unfortunately it still errors
+# out when writing faster than 8 MHz, so we leave the max write speed at 3.3
+# MHz for now and have a hack in the stlink_v3.py file to enable 8 MHz if it
+# sees a U5.  In that configuration the V3E can flash at around 90 K/s; the
+# WB55 XTSWD achieves around 94 K/s at 16 MHz.
 DEVICES = [
            (MemDevice,       'System ROM',  0x0BF90000, 0x00008000),
            (RAMDevice,       'SRAM1',       0x20000000, 0x00030000),

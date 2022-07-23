@@ -5,6 +5,9 @@ from psdb.targets import Target
 from . import dbgmcu
 
 
+# Verified with Nucleo-G431RB and V3J7M2B0S0 that flash writes faster than 3.3
+# MHz error out.  After upgrading to V3J10M3B0S0 flash writes work at 24 MHz
+# (but performance is the same; it just handles the WAIT states properly now).
 DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00004000),
@@ -47,6 +50,9 @@ DEVICES_2 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00002800),
              (stm32g4.DBGMCU,  'DBGMCU',      0xE0042000),
              ]
 
+# Verified with Nucleo-G474RE and V3J9M3B0S0 that flash writes faster than 3.3
+# MHz error out.  After upgrading to V3J10M3B0S0 flash writes work at 24 MHz
+# (but again, performance is unchanged from 3.3 MHz).
 DEVICES_3 = [(RAMDevice,       'CCM SRAM ID', 0x10000000, 0x00008000),
              (MemDevice,       'System ROM',  0x1FFF0000, 0x00007000),
              (RAMDevice,       'SRAM1',       0x20000000, 0x00014000),

@@ -32,6 +32,23 @@ class STLinkV3(stlink.STLink):
     board from MSD+VCP to just VCP mode:
 
         0x3754 - STLINK-V3 in single-VCP mode (Nucleo)
+
+    The STLINK-V3 supports a fixed set of frequencies:
+
+        --------
+        24.0 MHz
+         8.0 MHz
+         3.3 MHz
+         1.0 MHz
+        --------
+         200 KHz
+          50 KHz
+           5 KHz
+        --------
+
+    The STLINK-V3 may support up to 24 MHz for reads, however on the H7 if you
+    try to flash at 24 MHz it errors out.  I think the ST firmware doesn't deal
+    with WAIT acknowledgements properly.
     '''
     NAME = 'STLinkV3'
 
