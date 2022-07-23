@@ -43,8 +43,15 @@ clean:
 	find . -name __pycache__ | xargs rm -r
 
 .PHONY: test
-test:
+test: flake8
+
+.PHONY: flake8
+flake8:
 	$(PYTHON) -m flake8 psdb
+
+.PHONY: lint
+lint:
+	$(PYTHON) -m pylint -j2 psdb
 
 .PHONY: psdb
 psdb: dist/psdb-$(PSDB_VERS)-py3-none-any.whl
