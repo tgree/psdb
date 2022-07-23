@@ -1,6 +1,4 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import struct
-
 from .component import Component
 
 
