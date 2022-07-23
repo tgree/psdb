@@ -36,7 +36,7 @@ class BPU(CortexSubDevice):
         if addr in self.active_breakpoints:
             return
 
-        assert ((addr & 0xE0000001) == 0)
+        assert (addr & 0xE0000001) == 0
         index    = self.free_breakpoints.pop(0)
         bp_match = (1 if not (addr & 2) else 2)
         comp     = (addr & 0x1FFFFFFC)

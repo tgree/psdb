@@ -48,7 +48,7 @@ class SCS(CortexSubDevice):
             time.sleep(0.001)
 
     def is_halted(self):
-        return (self._DHCSR.S_HALT != 0)
+        return self._DHCSR.S_HALT != 0
 
     def halt(self):
         self._DHCSR = (0xA05F0000 | (1 << 1) | (1 << 0))

@@ -112,8 +112,8 @@ class FlashBank(Device):
             self._KEYR = 0x45670123
             self._KEYR = 0xCDEF89AB
             v = self._CR.read()
-            assert not (v & 1)
-        if not (v & 2):
+            assert not v & 1
+        if not v & 2:
             self._CR = (v | 2)
 
         return self

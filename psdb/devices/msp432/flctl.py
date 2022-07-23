@@ -212,7 +212,7 @@ class FLCTL(Device, flash.Flash):
             self._PRGBRST_STARTADDR = addr
             self._PRGBRST_CTLSTAT   = (verify_bits | (4 << 3) | 1)
             ctlstat = self._wait_prgbrst_complete()
-            assert not (ctlstat & (1 << 21))
+            assert not ctlstat & (1 << 21)
 
             if (ctlstat & ((1 << 19) | (1 << 20))) == 0:
                 return
@@ -384,7 +384,7 @@ class FLCTL(Device, flash.Flash):
                 self._set_erase_idle()
                 self._ERASE_CTLSTAT = ((1 << 1) | (1 << 0))
                 ctlstat = self._wait_erase_complete()
-                assert not (ctlstat & (1 << 18))
+                assert not ctlstat & (1 << 18)
 
             for i in range(64):
                 if (mask & (1 << i)) and self._verify_sector_erased(4096*i):

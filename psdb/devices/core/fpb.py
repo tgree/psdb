@@ -51,7 +51,7 @@ class FPB(CortexSubDevice):
         self._write_32(v, 0x08 + 4*index)
 
     def _insert_breakpoint_rev1(self, addr):
-        assert ((addr & 0xE0000001) == 0)
+        assert (addr & 0xE0000001) == 0
         index   = self.free_breakpoints.pop(0)
         replace = (1 if not (addr & 2) else 2)
         comp    = (addr & 0x1FFFFFFC)
@@ -59,7 +59,7 @@ class FPB(CortexSubDevice):
         return index
 
     def _insert_breakpoint_rev2(self, addr):
-        assert ((addr & 0x00000001) == 0)
+        assert (addr & 0x00000001) == 0
         index  = self.free_breakpoints.pop(0)
         self._write_comp(addr | 1, index)
         return index

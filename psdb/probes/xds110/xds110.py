@@ -90,7 +90,7 @@ class XDS110(usb_probe.Probe):
         return s[4:], err
 
     def send_command(self, payload):
-        assert (len(payload) <= 4096 + 60)
+        assert len(payload) <= 4096 + 60
         cmd = pack('<cH', b'*', len(payload)) + payload
         assert self.write(cmd) == len(cmd)
 

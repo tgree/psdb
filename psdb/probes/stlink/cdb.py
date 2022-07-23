@@ -45,7 +45,7 @@ class STLinkCommand:
     def __init__(self, cmd):
         assert hasattr(self, 'CMD_FLAGS')
         if self.CMD_FLAGS & HAS_DATA_IN_PHASE:
-            assert not (self.CMD_FLAGS & HAS_DATA_OUT_PHASE)
+            assert not self.CMD_FLAGS & HAS_DATA_OUT_PHASE
             assert hasattr(self, 'RSP_LEN')
         else:
             assert not hasattr(self, 'RSP_LEN')

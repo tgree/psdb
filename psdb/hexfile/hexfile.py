@@ -40,7 +40,7 @@ class HEXFile:
             offset      = (record_hex[1] << 8) | record_hex[2]
             record_type = record_hex[3]
             data        = bytes(record_hex[4:-1])
-            if (sum(record_hex) & 0xFF):
+            if sum(record_hex) & 0xFF:
                 self._raise_inval_format(i, 'Invalid checksum.')
 
             if record_type == 0x00:

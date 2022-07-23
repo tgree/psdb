@@ -71,7 +71,7 @@ class Flash:
 
         sectors = []
         for i in range(int(math.floor(math.log(mask, 2))) + 1):
-            if (mask & (1 << i)):
+            if mask & (1 << i):
                 sectors.append(i)
         for i in psdb.piter(sectors, verbose=verbose):
             self.erase_sector(i, verbose=False)

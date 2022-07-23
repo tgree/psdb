@@ -62,7 +62,7 @@ class Component:
         #   E   - generic IP component
         #   F   - PrimeCell peripheral
         self.children = []
-        if ((self.cidr & 0xFFFF0FFF) != 0xB105000D):
+        if (self.cidr & 0xFFFF0FFF) != 0xB105000D:
             return
         if ((self.cidr >> 12) & 0xF) != 1:
             return

@@ -188,7 +188,7 @@ class Mailbox:
         '''
         Returns the stack type field when the WS firmware is running.
         '''
-        return (self.read_stack_info() & 0xFF)
+        return self.read_stack_info() & 0xFF
 
     def write_sys_command(self, opcode, payload):
         '''

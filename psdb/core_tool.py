@@ -45,7 +45,7 @@ def main(rv):
                 assert r.size == 4
                 pad          = r.offset - len(region_data)
                 region_data += b'\xCA'*pad
-                if (r.flags & r.READABLE):
+                if r.flags & r.READABLE:
                     region_data += struct.pack('<L', r.read(d))
                 else:
                     region_data += struct.pack('<L', 0xCACACACA)

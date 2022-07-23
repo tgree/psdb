@@ -394,7 +394,7 @@ class BLEChannel:
         assert rsp[0].payload[0] == 0x00
 
     def aci_gap_init(self, role, privacy_enabled, device_name):
-        assert not (role & ~0xF)
+        assert not role & ~0xF
         assert isinstance(privacy_enabled, bool)
         payload = struct.pack('<BBB', role, int(privacy_enabled),
                               len(device_name) + 2)

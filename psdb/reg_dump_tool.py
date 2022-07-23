@@ -38,9 +38,9 @@ def main(rv):
             for r in d.regs:
                 addr = d.dev_base + r.offset
                 f.write('0x%08X: ' % addr)
-                if not (r.flags & r.READABLE):
+                if not r.flags & r.READABLE:
                     f.write('--Wr Onl--')
-                elif (r.flags & r.SIDE_EFFECTS):
+                elif r.flags & r.SIDE_EFFECTS:
                     f.write('--SideFx--')
                 else:
                     v    = r.read(d)

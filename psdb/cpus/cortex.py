@@ -112,7 +112,7 @@ class Cortex(psdb.component.Component):
 
     def resume(self):
         '''Resumes execution of a halted CPU.'''
-        if not (self.flags & FLAG_HALTED):
+        if not self.flags & FLAG_HALTED:
             return
 
         self.scs.resume()

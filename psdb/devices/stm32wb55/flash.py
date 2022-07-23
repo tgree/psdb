@@ -171,18 +171,18 @@ class FLASH(flash_type1.FLASH):
                             'try using --srst')
         sfr = self._SFR.read()
 
-        if (optr & (1 << 8)) and not (sfr & (1 << 8)):
+        if optr & (1 << 8) and not sfr & (1 << 8):
             self.secure_flash_base = mem_base + ((sfr & 0x000000FF) * 4096)
         else:
             self.secure_flash_base = mem_base + self.target.flash_size
         self.user_flash_size = self.secure_flash_base - mem_base
 
         srrvr = self._SRRVR.read()
-        if not (srrvr & (1 << 23)):
+        if not srrvr & (1 << 23):
             self.user_sram2a_size = ((srrvr >> 18) & 0x1F)*1024
         else:
             self.user_sram2a_size = self.target.devs['SRAM2a'].size
-        if not (srrvr & (1 << 30)):
+        if not srrvr & (1 << 30):
             self.user_sram2b_size = ((srrvr >> 25) & 0x1F)*1024
         else:
             self.user_sram2b_size = self.target.devs['SRAM2b'].size

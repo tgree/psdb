@@ -63,7 +63,7 @@ class Reg:
         self.fields = fields
         if size is not None:
             nbits       = sum(f[1] for f in fields)
-            assert(nbits <= size*8)
+            assert nbits <= size*8
             if nbits < size*8:
                 self.fields = self.fields + [('', size*8 - nbits)]
 
@@ -305,7 +305,7 @@ class Device:
     def _set_field(self, v, width, shift, offset):
         assert width + shift <= 32
         mask = (1 << width) - 1
-        assert ((v & ~mask) == 0)
+        assert (v & ~mask) == 0
         curr = self._read_32(offset)
         curr &= ~(mask << shift)
         curr |= (v << shift)
