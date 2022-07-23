@@ -71,6 +71,12 @@ class Probe(object):
     def deassert_srst(self):
         raise NotImplementedError
 
+    def set_write_tck_freq(self, target):
+        raise NotImplementedError
+
+    def set_max_tck_freq(self):
+        raise NotImplementedError
+
     def set_tck_freq(self, freq):
         raise NotImplementedError
 

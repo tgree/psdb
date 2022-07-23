@@ -206,15 +206,15 @@ class FLASH(Device, Flash):
             AReg32('PRIVBB2R3',     0x0FC),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 otp_base, otp_len, **kwargs):
+    def __init__(self, target, ap, name, dev_base, mem_base,
+                 max_nowait_write_freq, otp_base, otp_len, **kwargs):
         Device.__init__(self, target, ap, dev_base, name, FLASH.REGS, **kwargs)
-        Flash.__init__(self, mem_base, 8192, target.flash_size // 8192)
+        Flash.__init__(self, mem_base, 8192, target.flash_size // 8192,
+                       max_nowait_write_freq)
 
-        self.target         = target
-        self.max_write_freq = max_write_freq
-        self.otp_base       = otp_base
-        self.otp_len        = otp_len
+        self.target   = target
+        self.otp_base = otp_base
+        self.otp_len  = otp_len
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
@@ -235,16 +235,6 @@ class FLASH(Device, Flash):
         v = self._NSSR.read()
         while v & 0x00030000:
             v = self._NSSR.read()
-
-    def set_swd_freq_write(self, verbose=True):
-        f = self.target.db.set_tck_freq(self.max_write_freq)
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
-
-    def set_swd_freq_read(self, verbose=True):
-        f = self.target.set_max_tck_freq()
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     def erase_sector(self, n, verbose=True):
         '''

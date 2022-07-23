@@ -166,16 +166,15 @@ class FLASH(Device, Flash):
             Reg32 ('OPTCCR',        0x024),
             ]
 
-    def __init__(self, target, ap, name, dev_base, mem_base, max_write_freq,
-                 opt_regs, **kwargs):
+    def __init__(self, target, ap, name, dev_base, mem_base,
+                 max_nowait_write_freq, opt_regs, **kwargs):
         sector_size = 128*1024
         Device.__init__(self, target, ap, dev_base, name, FLASH.REGS + opt_regs,
                         **kwargs)
         Flash.__init__(self, mem_base, sector_size,
-                       target.flash_size // sector_size)
+                       target.flash_size // sector_size, max_nowait_write_freq)
 
-        self.target          = target
-        self.max_write_freq   = max_write_freq
+        self.target           = target
         nbanks                = 1 if self.target.flash_size == 128*1024 else 2
         self.banks            = [FlashBank(self, i, **kwargs)
                                  for i in range(nbanks)]
@@ -187,16 +186,6 @@ class FLASH(Device, Flash):
 
     def _options_unlocked(self):
         return UnlockedOptionsContextManager(self)
-
-    def set_swd_freq_write(self, verbose=True):
-        f = self.target.db.set_tck_freq(self.max_write_freq)
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
-
-    def set_swd_freq_read(self, verbose=True):
-        f = self.target.set_max_tck_freq()
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     def erase_sector(self, n, verbose=True):
         '''

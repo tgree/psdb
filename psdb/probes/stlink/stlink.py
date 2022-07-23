@@ -46,6 +46,7 @@ FEATURE_AP            = (1 << 5)
 FEATURE_OPEN_AP       = (1 << 6)
 FEATURE_SCATTERGATHER = (1 << 7)
 FEATURE_TRACE         = (1 << 8)
+FEATURE_SWD_WAIT_OK   = (1 << 9)
 
 
 class STLink(usb_probe.Probe):

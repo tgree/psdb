@@ -195,6 +195,12 @@ class XTSWD(usb_probe.Probe):
     def deassert_srst(self):
         self._exec_command(Opcode.SET_SRST, [0])
 
+    def set_write_tck_freq(self, flash):
+        return self.set_max_tck_freq()
+
+    def set_max_tck_freq(self):
+        return self.set_tck_freq(32000000)
+
     def set_tck_freq(self, freq):
         rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq])
         return rsp.params[0]

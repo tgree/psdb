@@ -46,15 +46,14 @@ class FLASH(Device, Flash):
     Common base class for many STM32 flash devices.
     '''
     def __init__(self, target, regs, sector_size, ap, name, dev_base, mem_base,
-                 max_write_freq, otp_base, otp_len, **kwargs):
+                 max_nowait_write_freq, otp_base, otp_len, **kwargs):
         Device.__init__(self, target, ap, dev_base, name, regs, **kwargs)
         Flash.__init__(self, mem_base, sector_size,
-                       target.flash_size // sector_size)
+                       target.flash_size // sector_size, max_nowait_write_freq)
 
-        self.target         = target
-        self.max_write_freq = max_write_freq
-        self.otp_base       = otp_base
-        self.otp_len        = otp_len
+        self.target   = target
+        self.otp_base = otp_base
+        self.otp_len  = otp_len
 
     def _flash_unlocked(self):
         return UnlockedContextManager(self)
@@ -73,16 +72,6 @@ class FLASH(Device, Flash):
     def _wait_bsy_clear(self):
         while self._SR.BSY:
             pass
-
-    def set_swd_freq_write(self, verbose=True):
-        f = self.target.db.set_tck_freq(self.max_write_freq)
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
-
-    def set_swd_freq_read(self, verbose=True):
-        f = self.target.set_max_tck_freq()
-        if verbose:
-            print('Set SWD frequency to %.3f MHz' % (f/1.e6))
 
     def erase_sector(self, n, verbose=True):
         '''
