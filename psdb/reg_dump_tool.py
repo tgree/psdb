@@ -25,7 +25,7 @@ def main(rv):
 
     # Iterate over all devices to get peripheral registers.
     print('Dumping device registers to %s...' % rv.output_path)
-    with open(rv.output_path, 'w') as f:
+    with open(rv.output_path, 'w', encoding='utf8') as f:
         block = 0
         for d in target.devs.values():
             if isinstance(d, psdb.devices.MemDevice):

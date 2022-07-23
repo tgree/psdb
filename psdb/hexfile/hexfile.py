@@ -14,7 +14,7 @@ class HEXFile:
         self.path     = path
         self.flash_dv = []
 
-        with open(self.path, 'r') as f:
+        with open(self.path, 'r', encoding='utf8') as f:
             self._parse(f)
 
     def _raise_inval_format(self, i, err):
