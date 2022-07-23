@@ -211,7 +211,7 @@ WRITE_CONFIG_DATA_OFFSETS = {
     }
 
 
-class BLEChannel(object):
+class BLEChannel:
     def __init__(self, ipc, cmd_channel, event_channel):
         super().__init__()
         self.ipc           = ipc

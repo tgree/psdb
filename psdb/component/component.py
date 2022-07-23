@@ -2,7 +2,7 @@
 from . import matcher
 
 
-class Component(object):
+class Component:
     def __init__(self, parent, ap, addr, subtype=''):
         self.parent   = parent
         self.ap       = ap

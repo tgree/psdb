@@ -26,7 +26,7 @@ def and_bytes(l, r):
     return ''.join(chr(ord(lc) & ord(rc)) for lc, rc in zip(l, r))
 
 
-class UnlockedContextManager(object):
+class UnlockedContextManager:
     def __init__(self, flash, mask):
         assert (mask & 0xFFFFFFFFFFFFFFFF) == mask
         self.flash = flash

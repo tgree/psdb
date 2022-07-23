@@ -371,7 +371,7 @@ class APBAP(MemAP):
         super().__init__(db, ap_num, idr, csw_base, 'APB')
 
 
-class IDRMapper(object):
+class IDRMapper:
     PROBE_SIZES = (1<<0)
 
     def __init__(self, idr, mask, factory, flags, *args):

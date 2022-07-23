@@ -2,7 +2,7 @@
 MATCHERS = []
 
 
-class Matcher(object):
+class Matcher:
     def __init__(self, cls, cidr, pidr, cidr_mask=0xFFFFFFFF,
                  pidr_mask=0xFFFFFFFFFFFFFFFF, subtype=''):
         self.cls       = cls

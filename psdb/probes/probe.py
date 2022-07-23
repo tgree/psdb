@@ -38,7 +38,7 @@ class Stats:
         print("Statistics not supported.")
 
 
-class Probe(object):
+class Probe:
     def __init__(self):
         self.aps    = {}
         self.cpus   = []

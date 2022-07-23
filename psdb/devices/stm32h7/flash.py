@@ -123,7 +123,7 @@ class FlashBank(Device):
         self._CR = ((v & ~2) | 1)
 
 
-class UnlockedContextManager(object):
+class UnlockedContextManager:
     def __init__(self, bank):
         self.bank = bank
 
@@ -135,7 +135,7 @@ class UnlockedContextManager(object):
         self.bank._pg_lock()
 
 
-class UnlockedOptionsContextManager(object):
+class UnlockedOptionsContextManager:
     def __init__(self, flash):
         self.flash = flash
 

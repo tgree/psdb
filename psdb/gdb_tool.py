@@ -39,7 +39,7 @@ class ConnectionClosedException(Exception):
         super().__init__('Connection closed')
 
 
-class GDBConnection(object):
+class GDBConnection:
     WAIT_DOLLAR = 1
     WAIT_SHARP  = 2
     WAIT_CHECK0 = 3
@@ -146,7 +146,7 @@ class GDBConnection(object):
         return True
 
 
-class GDBServer(object):
+class GDBServer:
     STATE_HALTED  = 1
     STATE_RUNNING = 2
 

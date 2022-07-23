@@ -1,7 +1,7 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 
 
-class STBinary(object):
+class STBinary:
     def __init__(self, fname, version, md5sum, addr_1M, addr_640K, addr_512K,
                  addr_256K):
         super().__init__()

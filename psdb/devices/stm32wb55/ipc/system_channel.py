@@ -49,7 +49,7 @@ def is_fus_ready_event(event):
             event.payload == EVT_PAYLOAD_FUS_RUNNING)
 
 
-class SystemChannel(object):
+class SystemChannel:
     def __init__(self, ipc, cmd_rsp_channel, event_channel):
         super().__init__()
         self.ipc             = ipc

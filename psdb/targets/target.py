@@ -5,13 +5,13 @@ import collections
 import time
 
 
-class MemRegion(object):
+class MemRegion:
     def __init__(self, addrs, length):
         self.addrs = addrs
         self.len   = length
 
 
-class Target(object):
+class Target:
     def __init__(self, db, max_tck_freq):
         self.db           = db
         self.max_tck_freq = max_tck_freq

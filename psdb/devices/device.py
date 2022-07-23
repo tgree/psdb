@@ -50,7 +50,7 @@ class ReadCommand:
         self.size = size
 
 
-class Reg(object):
+class Reg:
     READABLE     = (1 << 0)
     WRITEABLE    = (1 << 1)
     SIDE_EFFECTS = (1 << 2)
@@ -212,7 +212,7 @@ class AReg32RS(Reg32RS):
         super().__init__(name, offset, convert_positional_to_adjacency(fields))
 
 
-class RDCapture(object):
+class RDCapture:
     def __init__(self, reg, dev, dev_base):
         object.__setattr__(self, 'reg', reg)
         object.__setattr__(self, 'dev', dev)
@@ -250,7 +250,7 @@ class RDCapture(object):
         self.reg.write(self.dev, v)
 
 
-class Device(object):
+class Device:
     def __init__(self, owner, ap, dev_base, name, regs, path=None):
         super().__setattr__(
                 'reg_map', {'_' + r.name.upper() : RDCapture(r, self, dev_base)

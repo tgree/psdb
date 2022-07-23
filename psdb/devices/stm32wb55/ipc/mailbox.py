@@ -5,7 +5,7 @@ from .circular_queue import Queue
 from . import packet
 
 
-class Mailbox(object):
+class Mailbox:
     '''
     Mailbox class for managing data structures used for interfacing with CPU2
     firmware.  Located somwhere in SRAM2a, according to the IPCCDBA address.

@@ -19,7 +19,7 @@ class FlashWriteException(Exception):
     pass
 
 
-class Flash(object):
+class Flash:
     def __init__(self, mem_base, sector_size, nsectors, max_nowait_write_freq):
         super().__init__()
         self.mem_base              = mem_base

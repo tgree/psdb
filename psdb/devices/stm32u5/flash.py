@@ -12,7 +12,7 @@ def write_in_region(addr, data, region_base, region_len):
     return block_in_region(addr, len(data), region_base, region_len)
 
 
-class UnlockedContextManager(object):
+class UnlockedContextManager:
     def __init__(self, flash):
         self.flash = flash
 
@@ -26,7 +26,7 @@ class UnlockedContextManager(object):
         self.flash._NSCR.LOCK = 1
 
 
-class UnlockedOptionsContextManager(object):
+class UnlockedOptionsContextManager:
     def __init__(self, flash):
         self.flash = flash
 

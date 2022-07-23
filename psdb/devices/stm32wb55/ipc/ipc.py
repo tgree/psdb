@@ -22,7 +22,7 @@ SYSTEM_EVENT_CHANNEL    = 2
 MM_CMD_CHANNEL          = 4
 
 
-class IPC(object):
+class IPC:
     def __init__(self, target, ap, base_addr, ram_size, vtor_addr):
         super().__init__()
         self.target    = target

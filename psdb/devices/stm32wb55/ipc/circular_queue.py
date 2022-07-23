@@ -1,7 +1,7 @@
 # Copyright (c) 2020 by Phase Advanced Sensor Systems, Inc.
 
 
-class LinkRef(object):
+class LinkRef:
     def __init__(self, ap, addr):
         self.ap   = ap
         self.addr = addr
@@ -19,7 +19,7 @@ class LinkRef(object):
         self.ap.write_32(v, self.addr + 4)
 
 
-class QueueRef(object):
+class QueueRef:
     '''
     A QueueRef is a class that can manipulate a standard circular queue (queue
     with bidirectional links and sentinel node).  A QueueRef is typically used

@@ -15,7 +15,7 @@ FRAC_LUT = [
     ]
 
 
-class piter(object):
+class piter:
     '''
     Iterator class that also displays a progress bar.
     '''

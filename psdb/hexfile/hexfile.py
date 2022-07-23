@@ -9,7 +9,7 @@ class InvalidFormatException(HEXFileException):
     pass
 
 
-class HEXFile(object):
+class HEXFile:
     def __init__(self, path):
         self.path     = path
         self.hex_file = open(self.path, 'r')

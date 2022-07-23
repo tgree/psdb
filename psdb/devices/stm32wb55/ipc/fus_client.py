@@ -17,7 +17,7 @@ from . import binaries
 from .ws_client import WSClient
 
 
-class FUSClient(object):
+class FUSClient:
     def __init__(self, ipc):
         super().__init__()
         self.ipc     = ipc

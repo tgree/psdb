@@ -8,7 +8,7 @@ class BlockOutOfRangeException(Exception):
         self.block_num = block_num
 
 
-class Block(object):
+class Block:
     def __init__(self, addr, data):
         self.addr = addr
         self.data = data[:]
@@ -24,7 +24,7 @@ class Block(object):
         self.data = new_data
 
 
-class BlockDevice(object):
+class BlockDevice:
     def __init__(self, block_size, fill=b'\xff'):
         self.fill = fill*block_size
 
