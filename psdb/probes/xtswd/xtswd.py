@@ -187,8 +187,9 @@ class XTSWD(usb_probe.Probe):
                                  timeout=timeout)
         assert len(data) >= Response._STRUCT.size
 
-        rsp     = Response.unpack(data[-Response._STRUCT.size:])
-        rx_data = bytes(data[:-Response._STRUCT.size])
+        rsp = Response.unpack(
+                data[-Response._STRUCT.size:])          # pylint: disable=E1130
+        rx_data = bytes(data[:-Response._STRUCT.size])  # pylint: disable=E1130
         assert rsp.tag == tag
 
         if rsp.status != Status.OK:
