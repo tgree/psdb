@@ -45,7 +45,6 @@ class Probe:
         self.aps    = {}
         self.cpus   = []
         self.target = None
-        self.dpidr  = None
 
     @staticmethod
     def find():
@@ -262,16 +261,16 @@ class Probe:
         else:
             self.deassert_srst()
 
-        self.connect()
+        dpidr = self.connect()
 
-        dpver = ((self.dpidr & 0x0000F000) >> 12)
+        dpver = ((dpidr & 0x0000F000) >> 12)
         if dpver == 1:
             self._probe_dp_v1(verbose=verbose)
         elif dpver == 2:
             self._probe_dp_v2(verbose=verbose)
         else:
             raise psdb.ProbeException('Unsupported DP version %u (0x%08X)' % (
-                                      dpver, self.dpidr))
+                                      dpver, dpidr))
 
         psdb.targets.pre_probe(self, verbose)
 

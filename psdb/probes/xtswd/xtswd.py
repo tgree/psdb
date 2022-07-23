@@ -321,10 +321,11 @@ class XTSWD(usb_probe.Probe):
 
     def connect(self):
         rsp, _ = self._exec_command(Opcode.CONNECT)
-        self.dpidr = rsp.params[0]
-        trace('DPIDR:     0x%08X' % self.dpidr)
+        dpidr  = rsp.params[0]
+        trace('DPIDR:     0x%08X' % dpidr)
         trace('CTRL/STAT: 0x%08X' % rsp.params[1])
         trace('CSW:       0x%08X' % self.read_ap_reg(0, 0x0))
+        return dpidr
 
     @staticmethod
     def find():

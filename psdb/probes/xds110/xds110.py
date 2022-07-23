@@ -404,12 +404,13 @@ class XDS110(usb_probe.Probe):
         # fails if somebody left DPBANKSEL != 0, so nuke it if we get an error
         # and retry.
         self.swd_connect()
-        self.dpidr, err = self.cmapi_connect()
+        dpidr, err = self.cmapi_connect()
         if err == -1141:
             self.write_dp_reg(0x8, 0x00000000)
-            self.dpidr, err = self.cmapi_connect()
+            dpidr, err = self.cmapi_connect()
             assert err == 0
         self.cmapi_acquire()
+        return dpidr
 
     @staticmethod
     def find():

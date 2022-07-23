@@ -307,9 +307,10 @@ class STLink(usb_probe.Probe):
 
     def connect(self):
         self._swd_connect()
-        self.dpidr = self._read_dpidr()
+        dpidr = self._read_dpidr()
         if self.features & FEATURE_SCATTERGATHER:
             self.max_sg_ops = self._get_max_sg_ops()
+        return dpidr
 
     @staticmethod
     def find():
