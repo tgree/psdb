@@ -128,7 +128,7 @@ class Core:
                        len(self.notes)*Core.PHDR_SIZE +
                        len(self.mmaps)*Core.PHDR_SIZE)
         note_offset = hdr_size
-        note_size   = sum([len(n.data) for n in self.notes])
+        note_size   = sum(len(n.data) for n in self.notes)
         data_align  = 1
         data_offset = round_up_pow_2(hdr_size + note_size, data_align)
 
