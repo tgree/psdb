@@ -19,6 +19,10 @@ MAX_PACKET       = 1024
 MAX_DATA_BLOCK   = 4096
 USB_PAYLOAD_SIZE = MAX_DATA_BLOCK + 60
 
+# Features supported by various versions of the XDS110 firmware.
+FEATURE_TCK_V2  = (1 << 0)
+FEATURE_TCK_V3  = (1 << 1)
+
 
 def version_string(v):
     return '%u.%u.%u.%u' % (((v & 0xFF000000) >> 24),
@@ -52,8 +56,13 @@ class XDS110(usb_probe.Probe):
         super().__init__(usb_dev)
         self.fw_version, self.hw_version = self.xds_version()
         self.csw_bases = {}
+        self.features  = 0
         if self.fw_version < MIN_FW_VERSION:
             raise XDS110VersionException(self.fw_version, MIN_FW_VERSION)
+        if self.fw_version >= 0x03000000:
+            self.features |= FEATURE_TCK_V2
+        if self.fw_version >= 0x03000003:
+            self.features |= FEATURE_TCK_V3
 
     def read(self, n):
         return self.usb_dev.read(ENDPOINT_IN, n, timeout=40000)
@@ -113,29 +122,7 @@ class XDS110(usb_probe.Probe):
         return unpack('IH', rsp)
 
     def xds_set_tck_delay(self, clks):
-        '''
-        Set TCK delay (to set TCK frequency) in 66.666666... ns steps.  I
-        measured this with an oscilloscope and saw the following values:
-
-            0   = 2730 kHz ( 366 ns)
-            1   = 2310 kHz ( 433 ns)
-            2   = 2000 kHz ( 500 ns)
-            3   = 1760 kHz ( 567 ns)
-            10  =  967 kHz (1034 ns)
-            100 =  142 kHz (7040 ns)
-
-        For the longer values the measurement is less precise.  This implies
-        that the probe is generating:
-
-            P_ns = (1100 + clks*200)/3
-            F_hz = 30000000/(11 + clks*2)
-
-        Returns the actual clock period in ns.
-        '''
-        clks = max(clks, 0)
-        clks = min(clks, 144)
         self.execute(pack('<BI', 0x04, clks), 0)
-        return (1100 + clks*200)/3.
 
     def xds_set_srst(self, srst):
         '''
@@ -371,8 +358,74 @@ class XDS110(usb_probe.Probe):
         Sets TCK to the nearest frequency that doesn't exceed the requested
         one.  Returns the actual frequency in Hz.
         '''
-        p_ns = self.xds_set_tck_delay(math.ceil(15000000./freq_hz - 5.5))
-        return 1000000000./p_ns
+        if self.features & FEATURE_TCK_V2:
+            return self._set_tck_freq_new(freq_hz)
+        return self._set_tck_freq_old(freq_hz)
+
+    def _set_tck_freq_new(self, freq_hz):
+        '''
+        Some TCK delay values are magic numbers, and a new equation is used to
+        calculate the non-magic ones.  With firmware 3.0.0.24:
+
+            0   =   66.66666667 ns
+            1   =  121.33333333 ns
+            3   =  233.77777778 ns
+            100 = 5922.22222222 ns
+
+        It seems like 0 is a magic number and above that it is pretty linear.
+        We also have magic numbers for negative TCK delay values:
+
+            -2 = 0xFFFFFFFE =  83.33333333 ns
+            -3 = 0xFFFFFFFD = 100.00000000 ns
+
+        I tried 0xFFFFFFFF and 0xFFFFFFFC and these hung when I attempted a
+        connect() so it's not just another linear with different coefficients
+        but actually magic numbers.
+        '''
+        if freq_hz >= 14e6:
+            clks    = 0
+            freq_hz = 14e6
+        elif freq_hz >= 12e6 and (self.features & FEATURE_TCK_V3):
+            clks    = 0xFFFFFFFE
+            freq_hz = 12e6
+        elif freq_hz >= 10e6 and (self.features & FEATURE_TCK_V3):
+            clks    = 0xFFFFFFFD
+            freq_hz = 10e6
+        else:
+            m       = 58.59483726150394e-9
+            b       = 62.73849607182592e-9
+            clks    = max(math.ceil((1 / freq_hz - b) / m), 1)
+            freq_hz = 1 / (m * clks + b)
+
+        self.xds_set_tck_delay(clks)
+        return freq_hz
+
+    def _set_tck_freq_old(self, freq_hz):
+        '''
+        Set TCK delay (to set TCK frequency) in 66.666666... ns steps.  I
+        measured this with an oscilloscope and saw the following values:
+
+            0   = 2730 kHz ( 366 ns)
+            1   = 2310 kHz ( 433 ns)
+            2   = 2000 kHz ( 500 ns)
+            3   = 1760 kHz ( 567 ns)
+            10  =  967 kHz (1034 ns)
+            100 =  142 kHz (7040 ns)
+
+        For the longer values the measurement is less precise.  This implies
+        that the probe is generating:
+
+            P_ns = (1100 + clks*200)/3
+            F_hz = 30000000/(11 + clks*2)
+
+        Returns the actual clock period in ns.
+        '''
+        clks = max(math.ceil(15e6 / freq_hz - 5.5), 0)
+        if clks > 144:
+            raise psdb.ProbeException('Frequency %s too low1' % freq_hz)
+
+        self.xds_set_tck_delay(clks)
+        return 3e7 / (11 + clks * 2)
 
     def open_ap(self, ap_num):
         pass
