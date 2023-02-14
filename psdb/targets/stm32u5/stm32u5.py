@@ -1,6 +1,6 @@
 # Copyright (c) 2021 by Phase Advanced Sensor Systems, Inc.
 import psdb
-from psdb.devices import MemDevice, RAMDevice, stm32u5
+from psdb.devices import MemDevice, RAMDevice, stm32, stm32u5
 from psdb.targets import Target
 from . import dbgmcu
 
@@ -17,11 +17,28 @@ DEVICES = [
            (RAMDevice,       'SRAM2',       0x20030000, 0x00010000),
            (RAMDevice,       'SRAM3',       0x20040000, 0x00080000),
            (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
+           (stm32.GPT32,     'TIM2',        0x40000000),
+           (stm32.GPT32,     'TIM3',        0x40000400),
+           (stm32.GPT32,     'TIM4',        0x40000800),
+           (stm32.GPT32,     'TIM5',        0x40000C00),
+           (stm32.BT,        'TIM6',        0x40001000),
            (stm32u5.FLASH,   'FLASH',       0x40022000, 0x08000000, 3300000,
                                             0x0BFA0000, 512),  # noqa: E127
            (RAMDevice,       'Backup SRAM', 0x40036400, 0x00000800),
+           (stm32.GPIO,      'GPIOA',       0x42020000),
+           (stm32.GPIO,      'GPIOB',       0x42020400),
+           (stm32.GPIO,      'GPIOC',       0x42020800),
+           (stm32.GPIO,      'GPIOD',       0x42020C00),
+           (stm32.GPIO,      'GPIOE',       0x42021000),
+           (stm32.GPIO,      'GPIOF',       0x42021400),
+           (stm32.GPIO,      'GPIOG',       0x42021800),
+           (stm32.GPIO,      'GPIOH',       0x42021C00),
+           (stm32.GPIO,      'GPIOI',       0x42022000),
+           (stm32.ADC14,     'ADC1',        0x42028000, 1, 1),
            (stm32u5.PWR,     'PWR',         0x46020800),
            (stm32u5.RCC,     'RCC',         0x46020C00),
+           (stm32.DAC,       'DAC',         0x46021800),
+           (stm32.GPDMA,     'GPDMA',       0x50020000),
            (stm32u5.DBGMCU,  'DBGMCU',      0xE0044000),
            ]
 
