@@ -8,6 +8,10 @@ class PWR(Device):
     '''
     Driver for the STM Power Control (PWR) device.
     '''
+    VCORE_1V00 = 0
+    VCORE_1V20 = 1
+    VCORE_1V28 = 2
+
     REGS = [AReg32('CR1',       0x000, [('LPMS',        0, 2),
                                         ('DBP',         8),
                                         ('VOS',         9, 10),
@@ -308,3 +312,25 @@ class PWR(Device):
         self._CR1.DBP = 1
         while self._CR1.DBP == 0:
             time.sleep(0.01)
+
+    def wait_vosf_ready(self):
+        while self._SR2.VOSF == 1:
+            time.sleep(0.01)
+
+    def set_vcore_voltage(self, vcv):
+        if vcv == self.VCORE_1V00:
+            self._CR5.R1MODE = 1
+            self.wait_vosf_ready()
+            self._CR1.VOS = 2
+        elif vcv == self.VCORE_1V20:
+            self._CR5.R1MODE = 1
+            self.wait_vosf_ready()
+            self._CR1.VOS = 1
+        elif vcv == self.VCORE_1V28:
+            self._CR1.VOS = 1
+            self.wait_vosf_ready()
+            self._CR5.R1MODE = 0
+        else:
+            raise Exception('Invalid vcore voltage %s' % vcv)
+
+        self.wait_vosf_ready()
