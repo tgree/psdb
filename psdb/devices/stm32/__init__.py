@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
 from .advanced_control_timer import ACT
 from .adc import ADC
+from .adc_14 import ADC14
 from .adc_16 import ADC16
 from .basic_timer import BT
 from .dac import DAC, DAC_Saw
@@ -22,6 +23,7 @@ from . import flash_type1
 
 __all__ = ['ACT',
            'ADC',
+           'ADC14',
            'ADC16',
            'BT',
            'CRS',
