@@ -1,6 +1,7 @@
 # Copyright (c) 2019-2020 Phase Advanced Sensor Systems, Inc.
 from .advanced_control_timer import ACT
 from .adc import ADC
+from .adc_14 import ADC14
 from .adc_16 import ADC16
 from .basic_timer import BT
 from .dac import DAC, DAC_Saw
@@ -17,11 +18,13 @@ from .usb_hs import USB_HS
 from .crs import CRS
 from .lpuart import LPUART
 from .qspi import QUADSPI
+from .gpdma import GPDMA
 from . import flash_type1
 
 
 __all__ = ['ACT',
            'ADC',
+           'ADC14',
            'ADC16',
            'BT',
            'CRS',
@@ -32,6 +35,7 @@ __all__ = ['ACT',
            'DMA_DBM',
            'DMAMUX',
            'flash_type1',
+           'GPDMA',
            'GPIO',
            'GPT16x1',
            'GPT16x2',

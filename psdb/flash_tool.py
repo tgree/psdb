@@ -29,6 +29,7 @@ def main(rv):  # noqa: C901
     # Dump all debuggers if requested.
     if rv.dump_debuggers:
         psdb.probes.dump_probes()
+        return
 
     # Probe the specified serial number (or find the default if no serial number
     # was specified.

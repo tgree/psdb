@@ -13,6 +13,10 @@ from .. import usb_probe
 TRACE_EN   = False
 
 
+# Approximate ADC-to-mA ratio for prototype board.
+MA_RATIO = 11.047
+
+
 def trace(msg):
     if TRACE_EN:
         print(msg)
@@ -127,6 +131,9 @@ class XTSWD(usb_probe.Probe):
         self.imon_tag    = None
         self.git_sha1    = usb.util.get_string(usb_dev, 6)
         self.njunk_bytes = self._synchronize()
+
+        # Stop current monitoring in case it had been started previously.
+        self.stop_current_monitoring()
 
     def _synchronize(self):
         '''
@@ -261,6 +268,19 @@ class XTSWD(usb_probe.Probe):
             idata = IMonData.unpack(data)
             if idata.tag == self.imon_tag:
                 return idata, data[-20000:]
+
+    def read_current_consumption(self):
+        while True:
+            data = self.usb_dev.read(self.IMON_EP, IMonData._STRUCT.size,
+                                     timeout=1000)
+            idata = IMonData.unpack(data)
+            if idata.tag == self.imon_tag:
+                break
+
+        ovr  = (1 << idata.oversample_log2)
+        vals = [v / ovr for v in idata.samples]
+        vals = [v / MA_RATIO for v in vals]
+        return sum(vals) / len(vals)
 
     def get_stats(self):
         rsp, _ = self._exec_command(Opcode.GET_STATS)

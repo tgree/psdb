@@ -8,7 +8,7 @@ class DAC(Device):
     '''
     REGS = [AReg32('CR',      0x000,   [('EN1',              0),
                                         ('TEN1',             1),
-                                        ('TSEL',             2,  5),
+                                        ('TSEL1',            2,  5),
                                         ('WAVE1',            6,  7),
                                         ('MAMP1',            8, 11),
                                         ('DMAEN1',          12),
@@ -16,7 +16,7 @@ class DAC(Device):
                                         ('CEN1',            14),
                                         ('EN2',             16),
                                         ('TEN2',            17),
-                                        ('TSESL2',          18, 21),
+                                        ('TSEL2',           18, 21),
                                         ('WAVE2',           22, 23),
                                         ('MAMP2',           24, 27),
                                         ('DMAEN2',          28),

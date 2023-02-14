@@ -31,9 +31,14 @@ def get_dev_type(dev):
 
 class InspectTool:
     def __init__(self, target, workspace):
-        self.target      = target
-        self.workspace   = workspace
-        self.status_time = None
+        self.target           = target
+        self.workspace        = workspace
+        self.status_time      = None
+        self.consumption_time = time.time()
+
+        # Start current monitoring if it is available.
+        if hasattr(self.target.db, 'start_current_monitoring'):
+            self.target.db.start_current_monitoring()
 
         # Build the device list, including global devices and per-CPU devices
         # and then sort it by address.
@@ -82,6 +87,14 @@ class InspectTool:
             self.status_time = time.time()
         self.workspace.canvas.noutrefresh()
 
+    def show_current_consumption(self):
+        if hasattr(self.target.db, 'read_current_consumption'):
+            y = self.workspace.canvas.height - 1
+            x = self.workspace.canvas.width  - 13
+            s = '%.2f mA' % self.target.db.read_current_consumption()
+            s += ' '*(12 - len(s))
+            self.workspace.canvas.addstr(s, pos=(y, x), attr=curses.A_REVERSE)
+
     def handle_device_selected(self, d):
         dt = get_dev_type(d)
         if dt == DEV_TYPE_REGISTER:
@@ -105,6 +118,11 @@ class InspectTool:
             if self.status_time is not None:
                 if time.time() - self.status_time >= STATUS_TIMEOUT:
                     self.status(None)
+
+            # Update current consumption if available.
+            if time.time() - self.consumption_time > 1:
+                self.show_current_consumption()
+                self.consumption_time = time.time()
 
             # Draw the current device contents.
             if self.mem_win.is_visible():
