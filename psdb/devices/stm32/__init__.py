@@ -18,6 +18,7 @@ from .usb_hs import USB_HS
 from .crs import CRS
 from .lpuart import LPUART
 from .qspi import QUADSPI
+from .gpdma import GPDMA
 from . import flash_type1
 
 
@@ -34,6 +35,7 @@ __all__ = ['ACT',
            'DMA_DBM',
            'DMAMUX',
            'flash_type1',
+           'GPDMA',
            'GPIO',
            'GPT16x1',
            'GPT16x2',
