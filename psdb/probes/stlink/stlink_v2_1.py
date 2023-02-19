@@ -70,7 +70,7 @@ class STLinkV2_1(stlink.STLink):
     def set_max_burn_tck_freq(self, flash):
         return self.set_tck_freq(flash.max_nowait_write_freq)
 
-    def set_tck_freq(self, freq_hz):
+    def _set_tck_freq(self, freq_hz):
         '''
         Sets the TCK to the nearest frequency that doesn't exceed the
         requested one.  Returns the actual frequency in Hz.

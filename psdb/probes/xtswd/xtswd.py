@@ -244,7 +244,7 @@ class XTSWD(usb_probe.Probe):
     def deassert_srst(self):
         self._exec_command(Opcode.SET_SRST, [0])
 
-    def set_tck_freq(self, freq_hz):
+    def _set_tck_freq(self, freq_hz):
         rsp, _ = self._exec_command(Opcode.SET_FREQ, [freq_hz])
         return rsp.params[0]
 

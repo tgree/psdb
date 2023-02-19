@@ -82,6 +82,9 @@ class Probe:
         return self.set_max_target_tck_freq()
 
     def set_tck_freq(self, freq_hz):
+        return self._set_tck_freq(freq_hz)
+
+    def _set_tck_freq(self, freq_hz):
         raise NotImplementedError
 
     def get_stats(self):
