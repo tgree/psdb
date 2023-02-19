@@ -34,14 +34,16 @@ def main(rv):  # noqa: C901
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
     probe = psdb.probes.make_one_ns(rv)
-    f     = probe.set_tck_freq(rv.probe_freq)
-    print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
+    if rv.max_freq:
+        probe.max_tck_freq = rv.max_freq
 
     # SRST the target, if requested.  We have to assert this for at least 1 us.
     if rv.srst:
         probe.srst_target()
 
     # Use the probe to detect a target platform.
+    f = probe.set_tck_freq(rv.probe_freq)
+    print('Probing with SWD frequency at %.3f MHz' % (f/1.e6))
     target = probe.probe(verbose=rv.verbose,
                          connect_under_reset=rv.connect_under_reset)
     f      = probe.set_max_target_tck_freq()
@@ -164,6 +166,7 @@ def _main():
     parser.add_argument('--erase-region', action='append')
     parser.add_argument('--mem-dump', '-m')
     parser.add_argument('--probe-freq', type=int, default=1000000)
+    parser.add_argument('--max-freq', type=int)
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--swap-banks', action='store_true')
     parser.add_argument('--get-options', action='store_true')
