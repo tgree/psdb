@@ -42,9 +42,10 @@ class Probe:
     NAME = None
 
     def __init__(self):
-        self.aps    = {}
-        self.cpus   = []
-        self.target = None
+        self.aps          = {}
+        self.cpus         = []
+        self.target       = None
+        self.max_tck_freq = None
 
     @staticmethod
     def find():
@@ -82,6 +83,11 @@ class Probe:
         return self.set_max_target_tck_freq()
 
     def set_tck_freq(self, freq_hz):
+        if self.max_tck_freq is not None:
+            freq_hz = min(freq_hz, self.max_tck_freq)
+        return self._set_tck_freq(freq_hz)
+
+    def _set_tck_freq(self, freq_hz):
         raise NotImplementedError
 
     def get_stats(self):

@@ -353,7 +353,7 @@ class XDS110(usb_probe.Probe):
         '''Releases the target from reset.'''
         self.xds_set_srst(1)
 
-    def set_tck_freq(self, freq_hz):
+    def _set_tck_freq(self, freq_hz):
         '''
         Sets TCK to the nearest frequency that doesn't exceed the requested
         one.  Returns the actual frequency in Hz.

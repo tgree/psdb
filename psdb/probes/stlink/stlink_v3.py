@@ -135,7 +135,7 @@ class STLinkV3(stlink.STLink):
             return self.set_tck_freq(8000000)
         return self.set_max_target_tck_freq()
 
-    def set_tck_freq(self, freq_hz):
+    def _set_tck_freq(self, freq_hz):
         '''
         Sets the communication frequency to the highest supported frequency
         that doesn't exceed the requested one.  Returns the actual frequency in
