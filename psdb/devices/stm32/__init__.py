@@ -19,6 +19,7 @@ from .crs import CRS
 from .lpuart import LPUART
 from .qspi import QUADSPI
 from .gpdma import GPDMA
+from .cordic import CORDIC
 from . import flash_type1
 
 
@@ -27,6 +28,7 @@ __all__ = ['ACT',
            'ADC14',
            'ADC16',
            'BT',
+           'CORDIC',
            'CRS',
            'DAC',
            'DAC_Saw',

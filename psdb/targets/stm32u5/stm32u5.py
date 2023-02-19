@@ -22,6 +22,7 @@ DEVICES = [
            (stm32.GPT32,     'TIM4',        0x40000800),
            (stm32.GPT32,     'TIM5',        0x40000C00),
            (stm32.BT,        'TIM6',        0x40001000),
+           (stm32.CORDIC,    'CORDIC',      0x40021000),
            (stm32u5.FLASH,   'FLASH',       0x40022000, 0x08000000, 3300000,
                                             0x0BFA0000, 512),  # noqa: E127
            (RAMDevice,       'Backup SRAM', 0x40036400, 0x00000800),
