@@ -34,8 +34,6 @@ def main(rv):  # noqa: C901
     # Probe the specified serial number (or find the default if no serial number
     # was specified.
     probe = psdb.probes.make_one_ns(rv)
-    if rv.max_freq:
-        probe.max_tck_freq = rv.max_freq
 
     # SRST the target, if requested.  We have to assert this for at least 1 us.
     if rv.srst:
@@ -166,7 +164,7 @@ def _main():
     parser.add_argument('--erase-region', action='append')
     parser.add_argument('--mem-dump', '-m')
     parser.add_argument('--probe-freq', type=int, default=1000000)
-    parser.add_argument('--max-freq', type=int)
+    parser.add_argument('--max-tck-freq', type=int)
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--swap-banks', action='store_true')
     parser.add_argument('--get-options', action='store_true')

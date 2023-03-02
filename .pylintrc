@@ -21,4 +21,6 @@ disable=missing-module-docstring,
         consider-using-f-string,
         abstract-method,
         fixme,
-        attribute-defined-outside-init
+        attribute-defined-outside-init,
+        superfluous-parens,
+        broad-exception-raised

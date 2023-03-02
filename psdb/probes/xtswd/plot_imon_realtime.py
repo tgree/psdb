@@ -7,11 +7,12 @@ import time
 import sys
 
 import btype
-import psdb.probes
 
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+
+import psdb.probes
 
 
 matplotlib.rcParams['lines.linewidth'] = 1
@@ -25,7 +26,6 @@ F_MUL    = None
 
 MA_PLOT  = None
 MA_LOCK  = threading.Lock()
-MA_X     = []
 MA_Y     = []
 MA_GEN   = 0
 MA_DISP  = 0
@@ -61,12 +61,7 @@ def make_plot(i_max):
 
 
 def update_plot(_frame):
-    global MA_PLOT
-    global MA_LOCK
-    global MA_GEN
     global MA_DISP
-    global MA_X
-    global MA_Y
 
     with MA_LOCK:
         if MA_GEN == MA_DISP:
@@ -83,9 +78,7 @@ def update_plot(_frame):
 
 
 def read_thread(rv, probe):
-    global RUNNING
     global MA_GEN
-    global MA_X
     global MA_Y
     global F_MUL
 

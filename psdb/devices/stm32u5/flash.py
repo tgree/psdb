@@ -307,6 +307,44 @@ class FLASH(Device, Flash):
             finally:
                 self._NSCR = 0
 
+    def read_otp(self, offset, size):
+        '''
+        Reads a block of one-time-programmable memory.
+        '''
+        assert offset + size <= self.otp_len
+        return self.ap.read_bulk(self.otp_base + offset, size)
+
+    def is_otp_writeable(self, offset, size,
+                         verbose=True):  # pylint: disable=W0613
+        '''
+        Determines if the selected region of one-time-programmable memory is
+        still writeable.  Flash memory ECC is per 128-bit (16-byte) quad-word;
+        if any byte if the quad-word has been written then the ECC has been
+        saved and further writes are not allowed.  It is impossible to tell if
+        a quad-word has been written already with all-0xFF, but we assume it
+        has not if the full quad-word is all-0xFF.
+        '''
+        assert size > 0
+        assert offset + size <= self.otp_len
+        first_word = int(offset // 16)
+        last_word  = int((offset + size - 1) // 16)
+        offset     = first_word * 16
+        size       = (last_word - first_word + 1) * 16
+        return self.read_otp(offset, size) == (b'\xFF'*size)
+
+    def write_otp(self, offset, data, verbose=True):  # pylint: disable=W0613
+        '''
+        Writes 16-byte lines of data to the one-time-programmable area in flash.
+        The address must be 16-byte aligned and the data to write must be a
+        multiple of 16 bytes in length.
+
+        The target region to be written must be in the erased state (every 16-
+        byte quad-word must be exactly all-0xFF - if any of the 128 bits has
+        already been written, the entire quad-word is no longer writeable).
+        '''
+        assert self.is_otp_writeable(offset, len(data))
+        self.write(self.otp_base + offset, data)
+
     def _flash_options(self, new_optr, new_nsbootadd0, new_nsbootadd1,
                        new_secbootadd0, verbose=True):
         '''

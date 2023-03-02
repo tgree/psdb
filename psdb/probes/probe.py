@@ -56,11 +56,14 @@ class Probe:
 
     @classmethod
     def make_one(cls, **kwargs):
+        max_tck_freq = kwargs.pop('max_tck_freq', None)
         enumerations = Enumeration.filter(cls.find(), **kwargs)
         if not enumerations:
             raise psdb.ProbeException('No probe found.')
         if len(enumerations) == 1:
-            return enumerations[0].make_probe()
+            p = enumerations[0].make_probe()
+            p.max_tck_freq = max_tck_freq
+            return p
 
         print('Found probes:')
         for e in enumerations:
