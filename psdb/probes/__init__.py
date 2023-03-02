@@ -14,6 +14,7 @@ PROBE_CLASSES = [
 PROBE_KEYS = [
     'serial_num',
     'usb_path',
+    'max_tck_freq',
 ]
 
 
