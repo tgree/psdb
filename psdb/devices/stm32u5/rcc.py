@@ -595,7 +595,7 @@ class RCC(Device):
                                             ('LSESYSEN',        7),
                                             ('RTCSEL',          8,  9),
                                             ('LSESYSRDY',       11),
-                                            ('LSECFGON',        12),
+                                            ('LSEGFON',         12),
                                             ('RTCEN',           15),
                                             ('BDRST',           16),
                                             ('LSCOEN',          24),
