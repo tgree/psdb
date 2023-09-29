@@ -22,6 +22,7 @@ DEVICES = [
            (stm32.GPT32,     'TIM4',        0x40000800),
            (stm32.GPT32,     'TIM5',        0x40000C00),
            (stm32.BT,        'TIM6',        0x40001000),
+           (stm32.ACT,       'TIM1',        0x40012C00),
            (stm32.CORDIC,    'CORDIC',      0x40021000),
            (stm32u5.FLASH,   'FLASH',       0x40022000, 0x08000000, 3300000,
                                             0x0BFA0000, 512),  # noqa: E127
@@ -37,6 +38,7 @@ DEVICES = [
            (stm32.GPIO,      'GPIOI',       0x42022000),
            (stm32.ADC14,     'ADC1',        0x42028000, 1, 1),
            (stm32.USB_HS,    'USB1',        0x42040000),
+           (stm32u5.RTC,     'RTC',         0x46007800),
            (stm32u5.PWR,     'PWR',         0x46020800),
            (stm32u5.RCC,     'RCC',         0x46020C00),
            (stm32.DAC,       'DAC',         0x46021800),

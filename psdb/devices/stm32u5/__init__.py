@@ -3,10 +3,12 @@ from .dbgmcu import DBGMCU
 from .flash import FLASH
 from .pwr import PWR
 from .rcc import RCC
+from .rtc import RTC
 
 
 __all__ = ['DBGMCU',
            'FLASH',
            'PWR',
            'RCC',
+           'RTC',
            ]
