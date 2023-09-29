@@ -38,6 +38,7 @@ DEVICES = [
            (stm32.GPIO,      'GPIOI',       0x42022000),
            (stm32.ADC14,     'ADC1',        0x42028000, 1, 1),
            (stm32.USB_HS,    'USB1',        0x42040000),
+           (stm32u5.RTC,     'RTC',         0x46007800),
            (stm32u5.PWR,     'PWR',         0x46020800),
            (stm32u5.RCC,     'RCC',         0x46020C00),
            (stm32.DAC,       'DAC',         0x46021800),
