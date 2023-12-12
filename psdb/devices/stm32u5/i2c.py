@@ -1,4 +1,6 @@
 # Copyright (c) 2023 by Phase Advanced Sensor Systems, Inc.
+import time
+
 from ..device import Device, AReg32
 
 
@@ -106,3 +108,34 @@ class I2C(Device):
 
     def __init__(self, target, ap, name, addr, **kwargs):
         super().__init__(target, ap, addr, name, I2C.REGS, **kwargs)
+
+    def i2c_read(self, slave_addr_7, nbytes):
+        self._CR2.ADD10   = 0
+        self._CR2.SADD    = (slave_addr_7 << 1)
+        self._CR2.RD_WRN  = 1
+        self._CR2.NBYTES  = nbytes
+        self._CR2.AUTOEND = 1
+        self._CR2.START   = 1
+
+        retries = 0
+        while self._CR2.START == 1:
+            retries += 1
+            if retries >= 100:
+                raise Exception('Timed out waiting for START to clear!')
+            time.sleep(0.001)
+
+        data = b''
+        while nbytes:
+            retries = 0
+            while self._ISR.RXNE == 0:
+                retries += 1
+                if retries >= 1000:
+                    raise Exception('Timed out waiting for RXNE=1!')
+                time.sleep(0.0001)
+                # print('Retry %u.' % retries)
+            data = data + bytes([self._RXDR.RXDATA])
+            nbytes -= 1
+
+        assert self._ISR.STOPF == 1
+
+        return data
