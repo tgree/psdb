@@ -56,6 +56,7 @@ class Opcode(IntEnum):
     START_IMON  = 0x06
     STOP_IMON   = 0x07
     GET_STATS   = 0x08
+    SET_DDRIVE  = 0x09
     READ_DP     = 0x10
     WRITE_DP    = 0x11
     READ_AP     = 0x20
@@ -281,6 +282,9 @@ class XTSWD(usb_probe.Probe):
         vals = [v / ovr for v in idata.samples]
         vals = [v / MA_RATIO for v in vals]
         return sum(vals) / len(vals)
+
+    def set_dac_drive(self, dac):
+        self._exec_command(Opcode.SET_DDRIVE, [dac])
 
     def get_stats(self):
         rsp, _ = self._exec_command(Opcode.GET_STATS)
