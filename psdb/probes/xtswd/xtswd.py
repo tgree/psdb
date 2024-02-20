@@ -289,7 +289,7 @@ class XTSWD(usb_probe.Probe):
 
         ovr  = (1 << idata.oversample_log2)
         vals = [v / ovr for v in idata.samples]
-        vals = [v / MA_RATIO for v in vals]
+        vals = [(53.8206644205 + 10.6461162703*v) / 1000 for v in vals]
         return sum(vals) / len(vals)
 
     def set_dac_drive(self, dac):
