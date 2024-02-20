@@ -87,6 +87,14 @@ class Response(btype.Struct):
     _EXPECTED_SIZE = 32
 
 
+class IMonSettings:
+    def __init__(self, calfact, f_numerator, f_denominator):
+        self.calfact       = calfact
+        self.f_numerator   = f_numerator
+        self.f_denominator = f_denominator
+        self.f             = f_numerator / f_denominator
+
+
 class IMonData(btype.Struct):
     tag             = btype.uint16_t()
     oversample_log2 = btype.uint8_t()
@@ -255,9 +263,10 @@ class XTSWD(usb_probe.Probe):
     def disable_instrumentation_amp(self):
         self._exec_command(Opcode.DISABLE_INA)
 
-    def start_current_monitoring(self):
-        rsp, _ = self._exec_command(Opcode.START_IMON)
+    def start_current_monitoring(self, calfact=0):
+        rsp, _ = self._exec_command(Opcode.START_IMON, [calfact])
         self.imon_tag = rsp.tag
+        return IMonSettings(rsp.params[0], rsp.params[1], rsp.params[2])
 
     def stop_current_monitoring(self):
         self._exec_command(Opcode.STOP_IMON)
