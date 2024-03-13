@@ -1,7 +1,4 @@
 # Copyright (c) 2020-2023 Phase Advanced Sensor Systems, Inc.
-import time
-import datetime
-
 from ..device import Device, AReg32
 
 

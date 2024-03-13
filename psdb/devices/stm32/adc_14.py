@@ -6,7 +6,7 @@ from ..device import Device, AReg32, AReg32R
 
 class ADC14(Device):
     '''
-    Driver for the STM32H7 16-bit ADC.
+    Driver for the STM32U5 14-bit ADC.
     '''
     PER_ADC_REGS = [(AReg32,  'ISR',      0x00, [('ADRDY',         0),
                                                  ('EOSMP',         1),

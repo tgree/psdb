@@ -6,7 +6,7 @@ from ..device import Device, Reg32, Reg32R
 
 class ADC(Device):
     '''
-    Driver for the STM32G4 ADC.
+    Driver for the STM32G4 12-bit ADC.
     '''
     PER_ADC_REGS = [(Reg32,  'ISR',     0x00, [('ADRDY',        1),
                                                ('EOSMP',        1),

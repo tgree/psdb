@@ -5,6 +5,7 @@ import usb.core
 import usb.util
 
 import btype
+import numpy as np
 
 import psdb
 from .. import usb_probe
@@ -56,6 +57,7 @@ class Opcode(IntEnum):
     START_IMON  = 0x06
     STOP_IMON   = 0x07
     GET_STATS   = 0x08
+    SET_DDRIVE  = 0x09
     READ_DP     = 0x10
     WRITE_DP    = 0x11
     READ_AP     = 0x20
@@ -84,6 +86,14 @@ class Response(btype.Struct):
     status         = btype.uint32_t()
     params         = btype.Array(btype.uint32_t(), 6)
     _EXPECTED_SIZE = 32
+
+
+class IMonSettings:
+    def __init__(self, calfact, f_numerator, f_denominator):
+        self.calfact       = calfact
+        self.f_numerator   = f_numerator
+        self.f_denominator = f_denominator
+        self.f             = f_numerator / f_denominator
 
 
 class IMonData(btype.Struct):
@@ -254,14 +264,15 @@ class XTSWD(usb_probe.Probe):
     def disable_instrumentation_amp(self):
         self._exec_command(Opcode.DISABLE_INA)
 
-    def start_current_monitoring(self):
-        rsp, _ = self._exec_command(Opcode.START_IMON)
+    def start_current_monitoring(self, calfact=0):
+        rsp, _ = self._exec_command(Opcode.START_IMON, [calfact])
         self.imon_tag = rsp.tag
+        return IMonSettings(rsp.params[0], rsp.params[1], rsp.params[2])
 
     def stop_current_monitoring(self):
         self._exec_command(Opcode.STOP_IMON)
 
-    def read_current_monitor_data(self):
+    def read_current_monitor_raw_data(self):
         while True:
             data = self.usb_dev.read(self.IMON_EP, IMonData._STRUCT.size,
                                      timeout=1000)
@@ -269,18 +280,20 @@ class XTSWD(usb_probe.Probe):
             if idata.tag == self.imon_tag:
                 return idata, data[-20000:]
 
-    def read_current_consumption(self):
-        while True:
-            data = self.usb_dev.read(self.IMON_EP, IMonData._STRUCT.size,
-                                     timeout=1000)
-            idata = IMonData.unpack(data)
-            if idata.tag == self.imon_tag:
-                break
+    def read_current_monitor_data(self):
+        idata, _ = self.read_current_monitor_raw_data()
+        ovr      = (1 << idata.oversample_log2)
+        V        = np.array(idata.samples)
+        V        = V / ovr
+        V        = (53.8206644205 + 10.6461162703 * V) / 1000
+        return idata, V
 
-        ovr  = (1 << idata.oversample_log2)
-        vals = [v / ovr for v in idata.samples]
-        vals = [v / MA_RATIO for v in vals]
-        return sum(vals) / len(vals)
+    def read_current_consumption(self):
+        _, V = self.read_current_monitor_data()
+        return sum(V) / len(V)
+
+    def set_dac_drive(self, dac):
+        self._exec_command(Opcode.SET_DDRIVE, [dac])
 
     def get_stats(self):
         rsp, _ = self._exec_command(Opcode.GET_STATS)
