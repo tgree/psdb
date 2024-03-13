@@ -5,6 +5,7 @@ import usb.core
 import usb.util
 
 import btype
+import numpy as np
 
 import psdb
 from .. import usb_probe
@@ -271,7 +272,7 @@ class XTSWD(usb_probe.Probe):
     def stop_current_monitoring(self):
         self._exec_command(Opcode.STOP_IMON)
 
-    def read_current_monitor_data(self):
+    def read_current_monitor_raw_data(self):
         while True:
             data = self.usb_dev.read(self.IMON_EP, IMonData._STRUCT.size,
                                      timeout=1000)
@@ -279,18 +280,17 @@ class XTSWD(usb_probe.Probe):
             if idata.tag == self.imon_tag:
                 return idata, data[-20000:]
 
-    def read_current_consumption(self):
-        while True:
-            data = self.usb_dev.read(self.IMON_EP, IMonData._STRUCT.size,
-                                     timeout=1000)
-            idata = IMonData.unpack(data)
-            if idata.tag == self.imon_tag:
-                break
+    def read_current_monitor_data(self):
+        idata, _ = self.read_current_monitor_raw_data()
+        ovr      = (1 << idata.oversample_log2)
+        V        = np.array(idata.samples)
+        V        = V / ovr
+        V        = (53.8206644205 + 10.6461162703 * V) / 1000
+        return idata, V
 
-        ovr  = (1 << idata.oversample_log2)
-        vals = [v / ovr for v in idata.samples]
-        vals = [(53.8206644205 + 10.6461162703*v) / 1000 for v in vals]
-        return sum(vals) / len(vals)
+    def read_current_consumption(self):
+        _, V = self.read_current_monitor_data()
+        return sum(V) / len(V)
 
     def set_dac_drive(self, dac):
         self._exec_command(Opcode.SET_DDRIVE, [dac])
