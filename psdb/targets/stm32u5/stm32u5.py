@@ -45,6 +45,7 @@ DEVICES = [
            (stm32u5.RTC,     'RTC',         0x46007800),
            (stm32u5.PWR,     'PWR',         0x46020800),
            (stm32u5.RCC,     'RCC',         0x46020C00),
+           (stm32.ADC12,     'ADC4',        0x46021000, 4, 1),
            (stm32.DAC,       'DAC',         0x46021800),
            (stm32.GPDMA,     'GPDMA',       0x50020000),
            (stm32u5.DBGMCU,  'DBGMCU',      0xE0044000),
