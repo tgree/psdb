@@ -66,6 +66,7 @@ def _main():
     parser.add_argument('--serial-num')
     parser.add_argument('--halt', action='store_true')
     parser.add_argument('--probe-freq', type=int, default=1000000)
+    parser.add_argument('--max-tck-freq', type=int)
     parser.add_argument('--verbose', '-v', action='store_true')
     parser.add_argument('--output-path', '-o', required=True)
     rv = parser.parse_args()
