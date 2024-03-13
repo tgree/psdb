@@ -1,5 +1,5 @@
 [flake8]
-ignore = E123, E126, E201, E203, E211, E221, E222, E225, E226, E227, E241, \
+ignore = E123, E126, E201, E203, E211, E221, E222, E225, E226, E227, E241,
          E741, W504
 exclude = .git,__pycache__,build,dist
 max-complexity = 20
