@@ -2,6 +2,7 @@
 # Copyright (c) 2023 Phase Advanced Sensor Systems, Inc.
 import argparse
 import time
+import sys
 
 import psdb.probes
 
