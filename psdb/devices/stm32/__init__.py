@@ -14,6 +14,7 @@ from .general_purpose_timer_16x1 import GPT16x1
 from .general_purpose_timer_16x2 import GPT16x2
 from .general_purpose_timer_16x4 import GPT16x4
 from .general_purpose_timer_32 import GPT32
+from .i2c import I2C
 from .usb import USB
 from .usb_hs import USB_HS
 from .crs import CRS
@@ -34,7 +35,6 @@ __all__ = ['ACT',
            'CRS',
            'DAC',
            'DAC_Saw',
-           'VREF',
            'DMA',
            'DMA_DBM',
            'DMAMUX',
@@ -45,8 +45,10 @@ __all__ = ['ACT',
            'GPT16x2',
            'GPT16x4',
            'GPT32',
+           'I2C',
            'LPUART',
            'QUADSPI',
+           'VREF',
            'USB',
            'USB_HS',
            ]

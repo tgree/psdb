@@ -4,13 +4,14 @@ import time
 from ..device import Device, AReg32
 
 
+class NACKException(Exception):
+    pass
+
+
 class I2C(Device):
     '''
-    Driver for the STM32WB I2C device.
+    Driver for generic STM32 I2C peripheral.
     '''
-    class NACKException(Exception):
-        pass
-
     REGS = [AReg32('CR1',       0x00,  [('PE',              0),
                                         ('TXIE',            1),
                                         ('RXIE',            2),
@@ -121,7 +122,7 @@ class I2C(Device):
 
         if self._ISR.NACKF != 0:
             self._ICR = (1 << 4)
-            raise I2C.NACKException()
+            raise NACKException()
 
     def _wait_rx_not_empty(self):
         retries = 0
@@ -151,6 +152,15 @@ class I2C(Device):
 
         self._wait_start_clear()
 
+    def _bulk_read_chunk(self, nbytes):
+        data = b''
+        while nbytes:
+            self._wait_rx_not_empty()
+            data    = data + bytes([self._RXDR.RXDATA])
+            nbytes -= 1
+
+        return data
+
     def _setup_bulk_write(self, addr7, nbytes):
         assert nbytes < 256
 
@@ -162,21 +172,12 @@ class I2C(Device):
 
         self._wait_start_clear()
 
-    def _bulk_read_chunk(self, nbytes):
-        data = b''
-        while nbytes:
-            self._wait_rx_not_empty()
-            data    = data + bytes([self._RXDR.RXDATA])
-            nbytes -= 1
-
-        return data
-
     def _bulk_write_chunk(self, data):
         for b in data:
             self._wait_tx_empty()
             if self._ISR.NACKF != 0:
                 self._ICR = (1 << 4)
-                raise I2C.NACKException()
+                raise NACKException()
 
             self._TXDR = b
 
