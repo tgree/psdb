@@ -103,91 +103,65 @@ class I2C(Device):
     def __init__(self, target, ap, name, addr, **kwargs):
         super().__init__(target, ap, addr, name, I2C.REGS, **kwargs)
 
-    def _wait_start_clear(self):
-        retries = 0
-        while self._CR2.START == 1:
-            retries += 1
-            if retries >= 100:
-                raise Exception('Timed out waiting for START to clear!')
-            time.sleep(0.01)
-
-    def _wait_stop(self):
-        retries = 0
-        while self._ISR.STOPF == 0:
-            retries += 1
-            if retries >= 100:
-                raise Exception('Timed out waiting for STOPF!')
-            time.sleep(0.01)
-        self._ICR = (1 << 5)
-
-        if self._ISR.NACKF != 0:
-            self._ICR = (1 << 4)
-            raise NACKException()
-
-    def _wait_rx_not_empty(self):
-        retries = 0
-        while self._ISR.RXNE == 0:
-            retries += 1
-            if retries >= 1000:
-                raise Exception('Timed out waiting for RXNE=1!')
-            time.sleep(0.0001)
-
-    def _wait_tx_empty(self):
-        retries = 0
-        while self._ISR.TXE == 0:
-            retries += 1
-            if retries >= 1000:
-                raise Exception('Timed out waiting for TXE=1!')
-            time.sleep(0.0001)
-
-    def _setup_bulk_read(self, addr7, nbytes):
+    def i2c_read(self, addr7, nbytes):
         assert nbytes < 256
 
+        # Start the read operation.
         self._CR2 = ((addr7  <<  1) |
                      (1      << 10) |
                      (nbytes << 16) |
                      (1      << 25) |
                      (1      << 13))
-        self._CR2.read()
 
-        self._wait_start_clear()
-
-    def _bulk_read_chunk(self, nbytes):
+        # We will get either NACKF (if no such slave address exists) or RXNE.
         data = b''
         while nbytes:
-            self._wait_rx_not_empty()
-            data    = data + bytes([self._RXDR.RXDATA])
-            nbytes -= 1
+            retries = 0
+            isr = self._ISR.read()
+            if isr & (1 << 4):
+                self._ICR = (1 << 4)
+                raise NACKException()
+            if isr & (1 << 2):
+                data    = data + bytes([self._RXDR.RXDATA])
+                nbytes -= 1
+                retries = 0
+                continue
+
+            retries += 1
+            if retries >= 1000:
+                raise Exception('Timed out waiting for RX data!')
+            time.sleep(0.0001)
 
         return data
 
-    def _setup_bulk_write(self, addr7, nbytes):
+    def i2c_write(self, addr7, data):
         assert nbytes < 256
 
+        # Start the write operation.
         self._CR2 = ((addr7  <<  1) |
                      (nbytes << 16) |
                      (1      << 25) |
                      (1      << 13))
-        self._CR2.read()
 
-        self._wait_start_clear()
-
-    def _bulk_write_chunk(self, data):
-        for b in data:
-            self._wait_tx_empty()
-            if self._ISR.NACKF != 0:
+        # We will get either NACKF (if no such slave address exists or if the
+        # slave terminated the transfer) or TXIS.
+        nbytes = len(data)
+        while nbytes:
+            retries = 0
+            isr = self._ISR.read()
+            if isr & (1 << 4):
                 self._ICR = (1 << 4)
-                raise NACKException()
+                if nbytes == len(data):
+                    raise NACKException()
+                else:
+                    break
+            if isr & (1 << 1):
+                self._TXDR = data[len(data) - nbytes]
+                nbytes    -= 1
+                retries    = 0
+                continue
 
-            self._TXDR = b
-
-    def i2c_read(self, addr7, nbytes):
-        self._setup_bulk_read(addr7, nbytes)
-        data = self._bulk_read_chunk(nbytes)
-        self._wait_stop()
-        return data
-
-    def i2c_write(self, addr7, data):
-        self._setup_bulk_write(addr7, len(data))
-        self._bulk_write_chunk(data)
-        self._wait_stop()
+            retries += 1
+            if retries >= 1000:
+                raise Exception('Timed out waiting to TX data!')
+            time.sleep(0.0001)
