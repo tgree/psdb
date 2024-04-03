@@ -4,6 +4,7 @@ from . import msp432
 from . import stm32g0
 from . import stm32g4
 from . import stm32h7
+from . import stm32l4
 from . import stm32u5
 from . import stm32wb55
 
@@ -17,6 +18,7 @@ TARGETS = [msp432.MSP432P401,
            stm32g4.STM32G4,
            stm32h7.STM32H7,
            stm32h7.STM32H7_DP,
+           stm32l4.STM32L4,
            stm32u5.STM32U5,
            stm32wb55.STM32WB55,
            ]
