@@ -1,8 +1,9 @@
 # Copyright (c) 2023 by Phase Advanced Sensor Systems, Inc.
-from ..device import Device, AReg32
+from ..device import AReg32
+from ..stm32 import i2c
 
 
-class I2C(Device):
+class I2C(i2c.I2C):
     '''
     Driver for the STM32U5 I2C device.
     '''
@@ -105,4 +106,4 @@ class I2C(Device):
             ]
 
     def __init__(self, target, ap, name, addr, **kwargs):
-        super().__init__(target, ap, addr, name, I2C.REGS, **kwargs)
+        super().__init__(target, ap, addr, name, regs=I2C.REGS, **kwargs)
