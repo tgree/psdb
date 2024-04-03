@@ -14,6 +14,7 @@ from .general_purpose_timer_16x1 import GPT16x1
 from .general_purpose_timer_16x2 import GPT16x2
 from .general_purpose_timer_16x4 import GPT16x4
 from .general_purpose_timer_32 import GPT32
+from .i2c import I2C
 from .usb import USB
 from .usb_hs import USB_HS
 from .crs import CRS
@@ -22,6 +23,7 @@ from .qspi import QUADSPI
 from .gpdma import GPDMA
 from .cordic import CORDIC
 from . import flash_type1
+from . import i2c
 
 
 __all__ = ['ACT',
@@ -44,6 +46,8 @@ __all__ = ['ACT',
            'GPT16x2',
            'GPT16x4',
            'GPT32',
+           'I2C',
+           'i2c',
            'LPUART',
            'QUADSPI',
            'VREF',
