@@ -23,6 +23,8 @@ psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
 psdb.component.StaticMatcher(cortex_m0p.CortexM0P, 0, 0xF0000000, 0xB105100D,
                              0x00000000000A0460, subtype='STM32G0 Cortex-M0+')
 psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
+                             0x00000000000A0464, subtype='STM32L4 Cortex-M4')
+psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
                              0x00000000000A0468, subtype='STM32G4 Cortex-M4')
 psdb.component.StaticMatcher(cortex_m4.CortexM4, 0, 0xE00FF000, 0xB105100D,
                              0x00000000000A0469, subtype='STM32G4 Cortex-M4')
