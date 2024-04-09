@@ -5,6 +5,7 @@ import psdb
 from psdb.devices.stm32wb55.ipc import IPC
 from psdb.devices import MemDevice, RAMDevice, stm32, stm32wb55
 from psdb.targets import Target
+from . import dbgmcu
 
 
 DEVICES = [(RAMDevice,        'SRAM1',    0x20000000, 0x00030000),
@@ -153,21 +154,55 @@ class STM32WB55(Target):
         rcc.set_smpsclock_source(2)
 
     @staticmethod
-    def probe(db):
-        # APSEL 0 and 1 should be populated and be AHB3 APs.
-        for i in range(2):
-            if i not in db.aps:
-                return None
+    def is_mcu(db):
+        # APSEL 0 should be populated.
+        if set(db.aps) != set((0, 1)):
+            return False
 
-            ap = db.aps[i]
-            if not isinstance(ap, psdb.access_port.AHB3AP):
-                return None
+        # APSEL 0 and 1 should be AHB3 APs.
+        ap = db.aps[0]
+        if not isinstance(ap, psdb.access_port.AHB3AP):
+            return False
+        ap = db.aps[1]
+        if not isinstance(ap, psdb.access_port.AHB3AP):
+            return False
 
         # Identify the STM32WB55 through the base component's CIDR/PIDR
         # registers.
         c = db.aps[0].base_component
-        if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0495:
-            return None
+        if not c:
+            c = db.aps[0].probe_components(match=False, recurse=False)
+        if not c:
+            return False
+        if c.cidr != 0xB105100D:
+            return False
+        if c.pidr != 0xA0495:
+            return False
+
+        # Finally, we can match on the DBGMCU IDC value.
+        if dbgmcu.read_idc_dev_id(db) != 0x495:
+            return False
+
+        return True
+
+    @staticmethod
+    def pre_probe(db, verbose):
+        # Ensure this is an STM32WB55 part.
+        if not STM32WB55.is_mcu(db):
+            return
+
+        # Enable all the clocks we want to use.
+        cr = dbgmcu.read_cr(db)
+        if (cr & 0x00000007) != 0x00000007:
+            if verbose:
+                print('Detected STM32WB55, enabling all DBGMCU debug clocks.')
+            dbgmcu.write_cr(db, cr | 0x00000007)
+
+    @staticmethod
+    def probe(db):
+        # Ensure this is an STM32WB55 part.
+        if not STM32WB55.is_mcu(db):
+            return
 
         # While the STM32WB55 has two CPUs, the second one is inaccessible due
         # to ST security.
