@@ -94,10 +94,11 @@ class Target:
             c.disable_reset_vector_catch()
 
     def wait_reset(self):
-        # Wait for the initial disconnect.
+        # Wait for the initial disconnect.  We detect this be either getting an
+        # exception (most targets) or reading a 0 for the CPUID (STM32G0,
+        # STM32C0).
         try:
-            while True:
-                self.cpus[0].scs.read_cpuid()
+            while self.cpus[0].scs.read_cpuid():
                 time.sleep(0.1)
         except psdb.ProbeException:
             time.sleep(0.1)
