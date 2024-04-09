@@ -1,6 +1,7 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .target import (Target, MemRegion)
 from . import msp432
+from . import stm32c0
 from . import stm32g0
 from . import stm32g4
 from . import stm32h7
@@ -14,6 +15,7 @@ __all__ = ['Target',
            ]
 
 TARGETS = [msp432.MSP432P401,
+           stm32c0.STM32C0,
            stm32g0.STM32G0,
            stm32g4.STM32G4,
            stm32h7.STM32H7,

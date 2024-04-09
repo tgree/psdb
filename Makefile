@@ -10,6 +10,7 @@ PSDB_DEPS := \
 	psdb/devices/core/*.py			\
 	psdb/devices/msp432/*.py		\
 	psdb/devices/stm32/*.py			\
+	psdb/devices/stm32c0/*.py		\
 	psdb/devices/stm32g0/*.py		\
 	psdb/devices/stm32g4/*.py		\
 	psdb/devices/stm32h7/*.py		\
@@ -25,6 +26,7 @@ PSDB_DEPS := \
 	psdb/probes/xtswd/*.py			\
 	psdb/targets/*.py			\
 	psdb/targets/msp432/*.py		\
+	psdb/targets/stm32c0/*.py		\
 	psdb/targets/stm32g0/*.py		\
 	psdb/targets/stm32g4/*.py		\
 	psdb/targets/stm32h7/*.py		\
