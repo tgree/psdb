@@ -2,6 +2,7 @@
 import psdb
 from psdb.devices import MemDevice, RAMDevice, stm32g0
 from psdb.targets import Target
+from . import dbgmcu
 
 
 # Verified with Nucleo-G071RB and V2J39S27 that flash writes work at 4 MHz, the
@@ -54,24 +55,50 @@ class STM32G0(Target):
         return 'STM32G0 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
-    def probe(db):
+    def is_mcu(db):
         # APSEL 0 should be populated.
-        if 0 not in db.aps:
-            return None
+        if set(db.aps) != set((0,)):
+            return False
 
         # APSEL 0 should be an AHB3 AP.
         ap = db.aps[0]
         if not isinstance(ap, psdb.access_port.AHB3AP):
-            return None
+            return False
 
         # Identify the STM32G0 through the base component's CIDR/PIDR
         # registers.
         c = db.aps[0].base_component
-        if not c or c.cidr != 0xB105100D or c.pidr != 0x00000000000A0460:
-            return None
+        if not c:
+            c = db.aps[0].probe_components(match=False, recurse=False)
+        if not c:
+            return False
+        if c.cidr != 0xB105100D:
+            return False
+        if c.pidr != 0xA0460:
+            return False
+
+        # Unlike other ST MCUs, the IDCODE register returns 0 if we read it
+        # while NRST is asserted, so we skip the DBGMCU check here.
+        return True
+
+    @staticmethod
+    def probe(db):
+        # Ensure this is an STM32G0 part.
+        if not STM32G0.is_mcu(db):
+            return
 
         # There should be exactly one CPU.
         if len(db.cpus) != 1:
             return None
+
+        # We should be able to see the IDCODE now.
+        if dbgmcu.read_idc_dev_id(db) not in (0x460, 0x466):
+            return None
+
+        # Enable all the clocks we want to use.
+        cr = dbgmcu.read_cr(db)
+        if (cr & 0x00000006) != 0x00000006:
+            print('Detected STM32G0, enabling all DBGMCU debug clocks.')
+            dbgmcu.write_cr(db, cr | 0x00000006)
 
         return STM32G0(db)
