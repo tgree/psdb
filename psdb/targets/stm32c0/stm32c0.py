@@ -1,6 +1,6 @@
 # Copyright (c) 2024 by Phase Advanced Sensor Systems, Inc.
 import psdb
-from psdb.devices import MemDevice, RAMDevice, stm32c0
+from psdb.devices import MemDevice, RAMDevice, stm32, stm32c0
 from psdb.targets import Target
 from . import dbgmcu
 
@@ -10,6 +10,11 @@ DEVICES = [(RAMDevice,      'SRAM',     0x20000000, 0x00003000),
            (stm32c0.FLASH,  'FLASH',    0x40022000, 0x08000000, 4000000,
                                         0x1FFF7000, 1024),  # noqa: E127
            (stm32c0.PWR,    'PWR',      0x40007000),
+           (stm32.GPIO,     'GPIOA',    0x50000000),
+           (stm32.GPIO,     'GPIOB',    0x50000400),
+           (stm32.GPIO,     'GPIOC',    0x50000800),
+           (stm32.GPIO,     'GPIOD',    0x50000C00),
+           (stm32.GPIO,     'GPIOF',    0x50001400),
            ]
 
 
