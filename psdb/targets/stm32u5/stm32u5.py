@@ -1,4 +1,6 @@
 # Copyright (c) 2021 by Phase Advanced Sensor Systems, Inc.
+import itertools
+
 import psdb
 from psdb.devices import MemDevice, RAMDevice, stm32, stm32u5
 from psdb.targets import Target
@@ -11,12 +13,8 @@ from . import dbgmcu
 # MHz for now and have a hack in the stlink_v3.py file to enable 8 MHz if it
 # sees a U5.  In that configuration the V3E can flash at around 90 K/s; the
 # WB55 XTSWD achieves around 94 K/s at 16 MHz.
-DEVICES = [
+COMMON_DEVICES = [
            (MemDevice,       'System ROM',  0x0BF90000, 0x00008000),
-           (RAMDevice,       'SRAM1',       0x20000000, 0x00030000),
-           (RAMDevice,       'SRAM2',       0x20030000, 0x00010000),
-           (RAMDevice,       'SRAM3',       0x20040000, 0x00080000),
-           (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
            (stm32.GPT32,     'TIM2',        0x40000000),
            (stm32.GPT32,     'TIM3',        0x40000400),
            (stm32.GPT32,     'TIM4',        0x40000800),
@@ -35,12 +33,9 @@ DEVICES = [
            (stm32.GPIO,      'GPIOC',       0x42020800),
            (stm32.GPIO,      'GPIOD',       0x42020C00),
            (stm32.GPIO,      'GPIOE',       0x42021000),
-           (stm32.GPIO,      'GPIOF',       0x42021400),
            (stm32.GPIO,      'GPIOG',       0x42021800),
            (stm32.GPIO,      'GPIOH',       0x42021C00),
-           (stm32.GPIO,      'GPIOI',       0x42022000),
            (stm32.ADC14,     'ADC1',        0x42028000, 1, 1),
-           (stm32.USB_HS,    'USB1',        0x42040000),
            (stm32u5.I2C,     'I2C3',        0x46002800),
            (stm32u5.RTC,     'RTC',         0x46007800),
            (stm32u5.PWR,     'PWR',         0x46020800),
@@ -50,6 +45,18 @@ DEVICES = [
            (stm32.GPDMA,     'GPDMA',       0x50020000),
            (stm32u5.DBGMCU,  'DBGMCU',      0xE0044000),
            ]
+
+TARGET_DEVICES = {
+    # STM32U575/585
+    0x482 : [
+        (RAMDevice,       'SRAM1',       0x20000000, 0x00030000),
+        (RAMDevice,       'SRAM2',       0x20030000, 0x00010000),
+        (RAMDevice,       'SRAM3',       0x20040000, 0x00080000),
+        (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
+
+        (stm32.USB_HS,    'USB1',        0x42040000),
+    ],
+}
 
 
 class STM32U5MCU(psdb.component.Component):
@@ -74,7 +81,7 @@ class STM32U5(Target):
         if dev_id != 0x482:
             raise Exception('Unrecognized MCU_IDCODE 0x%08X' % self.mcu_idcode)
 
-        for d in DEVICES:
+        for d in itertools.chain(COMMON_DEVICES, TARGET_DEVICES[dev_id]):
             cls  = d[0]
             name = d[1]
             addr = d[2]
