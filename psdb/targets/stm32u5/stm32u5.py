@@ -24,6 +24,7 @@ COMMON_DEVICES = [
            (stm32u5.I2C,     'I2C2',        0x40005800),
            (stm32u5.I2C,     'I2C4',        0x40008400),
            (stm32.ACT,       'TIM1',        0x40012C00),
+           (stm32.GPDMA,     'GPDMA',       0x40020000),
            (stm32.CORDIC,    'CORDIC',      0x40021000),
            (stm32u5.FLASH,   'FLASH',       0x40022000, 0x08000000, 3300000,
                                             0x0BFA0000, 512),  # noqa: E127
@@ -42,7 +43,6 @@ COMMON_DEVICES = [
            (stm32u5.RCC,     'RCC',         0x46020C00),
            (stm32.ADC12,     'ADC4',        0x46021000, 4, 1),
            (stm32.DAC,       'DAC',         0x46021800),
-           (stm32.GPDMA,     'GPDMA',       0x50020000),
            (stm32u5.DBGMCU,  'DBGMCU',      0xE0044000),
            ]
 
