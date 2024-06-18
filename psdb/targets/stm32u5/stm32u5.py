@@ -47,6 +47,17 @@ COMMON_DEVICES = [
            ]
 
 TARGET_DEVICES = {
+    # STM32U535/545
+    0x455 : [
+        (RAMDevice,       'SRAM1',       0x20000000, 0x00030000),
+        (RAMDevice,       'SRAM2',       0x20030000, 0x00010000),
+        (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
+
+        (stm32.USB,       'USB1',        0x40016000),
+        (stm32.GPIO,      'GPIOF',       0x42021400),
+        (stm32.GPIO,      'GPIOI',       0x42022000),
+    ],
+
     # STM32U575/585
     0x482 : [
         (RAMDevice,       'SRAM1',       0x20000000, 0x00030000),
@@ -78,7 +89,7 @@ class STM32U5(Target):
         self.mcu_idcode = self.ahb_ap.read_32(0xE0044000)
 
         dev_id = (self.mcu_idcode & 0x0FFF)
-        if dev_id != 0x482:
+        if dev_id not in (0x455, 0x482):
             raise Exception('Unrecognized MCU_IDCODE 0x%08X' % self.mcu_idcode)
 
         for d in itertools.chain(COMMON_DEVICES, TARGET_DEVICES[dev_id]):
@@ -114,11 +125,13 @@ class STM32U5(Target):
             c = db.aps[0].probe_components(match=False, recurse=False)
         if not c:
             return False
-        if (c.addr, c.cidr, c.pidr) != (0xE00FE000, 0xB105100D, 0xA0482):
+        if (c.addr, c.cidr) != (0xE00FE000, 0xB105100D):
+            return False
+        if c.pidr not in (0xA0455, 0xA0482):
             return False
 
         # Finally, we can match on the DBGMCU IDC value.
-        if dbgmcu.read_idc_dev_id(db) != 0x482:
+        if dbgmcu.read_idc_dev_id(db) not in (0x455, 0x482):
             return False
 
         return True
