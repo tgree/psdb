@@ -83,7 +83,7 @@ class STM32C0(Target):
             return None
 
         # We should be able to see the IDCODE now.
-        if dbgmcu.read_idc_dev_id(db) != 0x453:
+        if dbgmcu.read_idc_dev_id(db) not in (0x443, 0x453):
             return None
 
         # Enable all the clocks we want to use.
