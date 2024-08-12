@@ -54,6 +54,7 @@ TARGET_DEVICES = {
         (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
 
         (stm32.USB,       'USB1',        0x40016000),
+        (stm32.OCTOSPI,   'OCTOSPI1',    0x420D1400),
     ],
 
     # STM32U575/585
