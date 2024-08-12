@@ -54,8 +54,7 @@ TARGET_DEVICES = {
         (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
 
         (stm32.USB,       'USB1',        0x40016000),
-        (stm32.GPIO,      'GPIOF',       0x42021400),
-        (stm32.GPIO,      'GPIOI',       0x42022000),
+        (stm32.OCTOSPI,   'OCTOSPI1',    0x420D1400),
     ],
 
     # STM32U575/585
@@ -65,6 +64,8 @@ TARGET_DEVICES = {
         (RAMDevice,       'SRAM3',       0x20040000, 0x00080000),
         (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
 
+        (stm32.GPIO,      'GPIOF',       0x42021400),
+        (stm32.GPIO,      'GPIOI',       0x42022000),
         (stm32.USB_HS,    'USB1',        0x42040000),
     ],
 }

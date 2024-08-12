@@ -278,6 +278,10 @@ class GDBServer:
         addr = int(args[0], 16)
         n    = int(args[1], 16)
 
+        if (addr & 0xEFFFFF00) == 0xEFFFFF00:
+            print('Failing evil read to 0x%08X' % addr)
+            return b''
+
         print('Reading %u bytes from 0x%08X' % (n, addr))
         try:
             mem = self.cpu.read_bulk(addr, n)
