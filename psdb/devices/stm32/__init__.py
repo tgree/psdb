@@ -19,6 +19,7 @@ from .usb_hs import USB_HS
 from .crs import CRS
 from .lpuart import LPUART
 from .qspi import QUADSPI
+from .octospi import OCTOSPI
 from .gpdma import GPDMA
 from .cordic import CORDIC
 from . import flash_type1
@@ -46,6 +47,7 @@ __all__ = ['ACT',
            'GPT16x4',
            'GPT32',
            'LPUART',
+           'OCTOSPI',
            'QUADSPI',
            'USB',
            'USB_HS',
