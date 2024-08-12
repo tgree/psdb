@@ -92,6 +92,10 @@ ENABLE_BITS = {
     'TIM17'         : (0xA4, 18),
     'SAI1'          : (0xA4, 21),
     'SAI2'          : (0xA4, 22),
+    'USB'           : (0xA4, 24),
+    'GFXTIMEN'      : (0xA4, 25),
+    'LTDCEN'        : (0xA4, 26),
+    'DSIEN'         : (0xA4, 27),
 
     # APB3.
     'SYSCFG'        : (0xA8,  1),
