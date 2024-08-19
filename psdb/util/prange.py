@@ -28,7 +28,10 @@ class piter:
         self.v       = 0
 
     def __repr__(self):
-        frac, n_star = math.modf(self.v * self.width / self.end)
+        if self.end:
+            frac, n_star = math.modf(self.v * self.width / self.end)
+        else:
+            frac, n_star = 0, self.width
         frac         = int(frac * 8)
         n_star       = int(n_star)
         n_space      = self.width - n_star - 1
