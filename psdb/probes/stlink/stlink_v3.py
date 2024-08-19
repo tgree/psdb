@@ -1,12 +1,11 @@
 # Copyright (c) 2020-2021 by Phase Advanced Sensor Systems, Inc.
-import usb
-
 import psdb
 from psdb.targets.stm32u5 import STM32U5
 from . import stlink
 from . import cdb
 from . import errors
 from .. import usb_probe
+from ...util import pusb
 
 
 V3_PIDS = [0x374E,
@@ -147,8 +146,8 @@ class STLinkV3(stlink.STLink):
     def find():
         def is_stlink_v3(usb_dev):
             return usb_dev.idProduct in V3_PIDS
-        devs = usb.core.find(find_all=True, idVendor=0x0483,
-                             custom_match=is_stlink_v3)
+        devs = pusb.find(find_all=True, idVendor=0x0483,
+                         custom_match=is_stlink_v3)
         return [usb_probe.Enumeration(STLinkV3, d) for d in devs]
 
     def show_detailed_info(self):

@@ -1,7 +1,6 @@
 # Copyright (c) 2022 Phase Advanced Sensor Systems, Inc.
 from enum import IntEnum
 import random
-import usb.core
 import usb.util
 
 import btype
@@ -9,6 +8,7 @@ import numpy as np
 
 import psdb
 from .. import usb_probe
+from ...util import pusb
 
 
 TRACE_EN   = False
@@ -356,8 +356,8 @@ class XTSWD(usb_probe.Probe):
 
     @staticmethod
     def find():
-        devs = usb.core.find(find_all=True, idVendor=0x0483, idProduct=0xA34E,
-                             bDeviceClass=0xFF, bDeviceSubClass=0x03)
+        devs = pusb.find(find_all=True, idVendor=0x0483, idProduct=0xA34E,
+                         bDeviceClass=0xFF, bDeviceSubClass=0x03)
         return [usb_probe.Enumeration(XTSWD, d) for d in devs]
 
     @staticmethod

@@ -8,6 +8,7 @@ import usb.core
 
 import psdb
 from .. import usb_probe
+from ...util import pusb
 
 
 MIN_FW_VERSION = 0x02030014
@@ -461,7 +462,7 @@ class XDS110(usb_probe.Probe):
 
     @staticmethod
     def find():
-        devs = usb.core.find(find_all=True, idVendor=0x0451, idProduct=0xBEF3)
+        devs = pusb.find(find_all=True, idVendor=0x0451, idProduct=0xBEF3)
         return [usb_probe.Enumeration(XDS110, d) for d in devs]
 
     def show_detailed_info(self):

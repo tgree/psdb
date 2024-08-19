@@ -1,9 +1,9 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
-import usb
 import psdb
 from . import stlink
 from . import cdb
 from .. import usb_probe
+from ...util import pusb
 
 
 V2_1_PIDS = [0x374B,
@@ -99,8 +99,8 @@ class STLinkV2_1(stlink.STLink):
     def find():
         def is_stlink_v2_1(usb_dev):
             return usb_dev.idProduct in V2_1_PIDS
-        devs = usb.core.find(find_all=True, idVendor=0x0483,
-                             custom_match=is_stlink_v2_1)
+        devs = pusb.find(find_all=True, idVendor=0x0483,
+                         custom_match=is_stlink_v2_1)
         return [usb_probe.Enumeration(STLinkV2_1, d) for d in devs]
 
     def show_detailed_info(self):
