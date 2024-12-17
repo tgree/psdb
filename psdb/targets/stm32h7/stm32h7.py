@@ -16,8 +16,7 @@ AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
                                                 8000000),  # noqa: E127
            ]
 
-# AP1 devices are ones accessible in the D3 domain; we can access these via AP1
-# even if both CPU cores are down.
+# AP1 devices are ones accessible in the D3 domain.
 AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
            (RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
            ]
