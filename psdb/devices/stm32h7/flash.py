@@ -230,16 +230,27 @@ class FLASH(Device, Flash):
         '''
         if verbose:
             print('Erasing entire flash...')
-        with self._flash_bank_unlocked(self.banks[0]):
-            with self._flash_bank_unlocked(self.banks[1]):
-                with self._options_unlocked():
-                    self.banks[0]._clear_errors()
-                    self.banks[1]._clear_errors()
-                    self._OPTCR.MER = 1
-                    self.banks[0]._wait_prg_idle()
-                    self.banks[1]._wait_prg_idle()
-                    self.banks[0]._check_errors()
-                    self.banks[1]._check_errors()
+        if len(self.banks) == 1:
+            with self._flash_bank_unlocked(self.banks[0]):
+                self.banks[0]._clear_errors()
+                v  = self.banks[0]._CR.read() & ~0x00000700
+                v |= (1 << 7) | (1 << 3)
+                self.banks[0]._CR = v
+                self.banks[0]._wait_prg_idle()
+                self.banks[0]._check_errors()
+        else:
+            with self._flash_bank_unlocked(self.banks[0]):
+                with self._flash_bank_unlocked(self.banks[1]):
+                    with self._options_unlocked():
+                        self.banks[0]._clear_errors()
+                        self.banks[1]._clear_errors()
+                        self._OPTCR.MER = 1
+                        self.banks[0]._wait_prg_idle()
+                        self.banks[1]._wait_prg_idle()
+                        self.banks[0]._check_errors()
+                        self.banks[1]._check_errors()
+        if verbose:
+            print('Entire flash erased.')
 
     def read(self, addr, length):
         '''
