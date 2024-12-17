@@ -82,7 +82,9 @@ class STM32U5(Target):
         # Max SWD speed is:
         #   66.5 MHz for 2.70V < VDD < 3.6V
         #   43.0 MHz for 1.71V < VDD < 3.6V
-        super().__init__(db, 43000000)
+        # These frequencies are hard to hit without perfect board layout, so
+        # we set a lower default frequency of 24 MHz.
+        super().__init__(db, 24000000)
         self.ahb_ap     = self.db.aps[0]
         self.uuid       = self.ahb_ap.read_bulk(0x0BFA0700, 12)
         self.flash_size = (self.ahb_ap.read_32(0x0BFA07A0) & 0x0000FFFF)*1024
