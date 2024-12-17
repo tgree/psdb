@@ -85,13 +85,14 @@ class STM32H7_DP(Target):
         #   71.0 MHz for 2.70V < VDD < 3.6V
         #   52.5 MHz for 1.62V < VDD < 3.6V
         super().__init__(db, 52500000)
-        self.m7_ap      = self.db.aps[0]
-        self.m4_ap      = self.db.aps[3]
-        self.apbd_ap    = self.db.aps[2]
-        self.ahb_ap     = self.m7_ap
-        self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
-        self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
-        self.mcu_idcode = dbgmcu.read_idc(db)
+        self.m7_ap        = self.db.aps[0]
+        self.m4_ap        = self.db.aps[3]
+        self.apbd_ap      = self.db.aps[2]
+        self.ahb_ap       = self.m7_ap
+        self.uuid         = self.ahb_ap.read_bulk(0x1FF1E800, 12)
+        self.flash_size   = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
+        self.flash_nbanks = 2
+        self.mcu_idcode   = dbgmcu.read_idc(db)
 
         for i, dl in enumerate((AP0DEVS, AP1DEVS, AP2DEVS, AP3DEVS)):
             ap = self.db.aps[i]
