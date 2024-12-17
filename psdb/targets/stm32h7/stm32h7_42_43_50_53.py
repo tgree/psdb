@@ -26,7 +26,7 @@ AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
 AP2DEVS = []
 
 
-class STM32H7(Target):
+class STM32H7_42_43_50_53(Target):
     def __init__(self, db):
         # Max SWD speed is:
         #   71.0 MHz for 2.70V < VDD < 3.6V
@@ -54,7 +54,7 @@ class STM32H7(Target):
                   self.flash.flash_size)
 
     def __repr__(self):
-        return 'STM32H7xx MCU_IDCODE 0x%08X' % self.mcu_idcode
+        return 'STM32H742/43/50/53 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
     def is_mcu(db):
@@ -96,25 +96,26 @@ class STM32H7(Target):
 
     @staticmethod
     def pre_probe(db, verbose):
-        # Ensure this is an STM32H7 part.
-        if not STM32H7.is_mcu(db):
+        # Ensure this is an STM32H742/43/50/53 part.
+        if not STM32H7_42_43_50_53.is_mcu(db):
             return
 
         # Enable all the clocks that we want to use.
         cr = dbgmcu.read_cr(db)
         if (cr & 0x00700187) != 0x00700187:
             if verbose:
-                print('Detected STM32H7, enabling all DBGMCU debug clocks.')
+                print('Detected STM32H742/43/50/53, enabling all DBGMCU debug '
+                      'clocks.')
             dbgmcu.write_cr(db, cr | 0x00700187)
 
     @staticmethod
     def probe(db):
-        # Ensure this is an STM32H7 part.
-        if not STM32H7.is_mcu(db):
+        # Ensure this is an STM32H742/43/50/53 part.
+        if not STM32H7_42_43_50_53.is_mcu(db):
             return None
 
         # There should be exactly one CPU.
         if len(db.cpus) != 1:
             return None
 
-        return STM32H7(db)
+        return STM32H7_42_43_50_53(db)
