@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Phase Advanced Sensor Systems, Inc.
+# Copyright (c) 2024-2025 Phase Advanced Sensor Systems, Inc.
 import psdb
 from psdb.devices import MemDevice, RAMDevice, stm32h7
 from psdb.targets import Target
@@ -6,20 +6,22 @@ from . import dbgmcu
 
 
 # AP0 devices are ones that we access via the M7 core.
-AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
-           (RAMDevice,          'M7 DTCM',      0x20000000, 0x00020000),
-           (RAMDevice,          'AXI SRAM',     0x24000000, 0x00080000),
-           (RAMDevice,          'SRAM1',        0x30000000, 0x00020000),
-           (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
-           (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
-           (stm32h7.FLASH_UP,   'FLASH',        0x52002000, 0x08000000,
-                                                8000000),  # noqa: E127
+# We assume the configurable SRAM is mapped as AXI and not ITCM.
+AP0DEVS = [(RAMDevice,              'ITCM',          0x00000000, 0x00010000),
+           (RAMDevice,              'DTCM',          0x20000000, 0x00020000),
+           (RAMDevice,              'AXI SRAM',      0x24000000, 0x00050000),
+           (RAMDevice,              'SRAM1',         0x30000000, 0x00004000),
+           (RAMDevice,              'SRAM2',         0x30004000, 0x00004000),
+           (stm32h7.FLASH_2x_3x,    'FLASH',         0x52002000, 0x08000000,
+                                                     8000000),  # noqa: E127
+           (stm32h7.SPI,            'SPI6',          0x58001400),
+           (stm32h7.RCC_2x_3x,      'RCC',           0x58024400),
            ]
 
-# AP1 devices are ones accessible in the D3 domain; we can access these via AP1
-# even if both CPU cores are down.
-AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
+# AP1 devices are ones accessible in the D3 domain.
+AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00004000),
            (RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
+           (stm32h7.PWR_2x_3x,  'PWR',          0x58024800),
            ]
 
 # AP2 devices are accessible over the System Debug Bus.  This is mainly for the
@@ -27,17 +29,18 @@ AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00010000),
 AP2DEVS = []
 
 
-class STM32H7(Target):
+class STM32H7_2x_3x(Target):
     def __init__(self, db):
         # Max SWD speed is:
         #   71.0 MHz for 2.70V < VDD < 3.6V
         #   52.5 MHz for 1.62V < VDD < 3.6V
         super().__init__(db, 52500000)
-        self.ahb_ap     = self.db.aps[0]
-        self.apbd_ap    = self.db.aps[2]
-        self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
-        self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
-        self.mcu_idcode = dbgmcu.read_idc(db)
+        self.ahb_ap       = self.db.aps[0]
+        self.apbd_ap      = self.db.aps[2]
+        self.uuid         = self.ahb_ap.read_bulk(0x1FF1E800, 12)
+        self.flash_size   = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
+        self.flash_nbanks = 1
+        self.mcu_idcode   = dbgmcu.read_idc(db)
 
         for i, dl in enumerate((AP0DEVS, AP1DEVS, AP2DEVS)):
             ap = self.db.aps[i]
@@ -54,7 +57,7 @@ class STM32H7(Target):
                   self.flash.flash_size)
 
     def __repr__(self):
-        return 'STM32H7xx MCU_IDCODE 0x%08X' % self.mcu_idcode
+        return 'STM32H72x/3x MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
     def is_mcu(db):
@@ -85,36 +88,37 @@ class STM32H7(Target):
             c = db.aps[2].probe_components(match=False, recurse=False)
         if not c:
             return False
-        if (c.addr, c.cidr, c.pidr) != (0xE00E0000, 0xB105100D, 0xA0450):
+        if (c.addr, c.cidr, c.pidr) != (0xE00E0000, 0xB105100D, 0xA0483):
             return False
 
         # Finally, we can match on the DBGMCU IDC value.
-        if dbgmcu.read_idc_dev_id(db) != 0x450:
+        if dbgmcu.read_idc_dev_id(db) != 0x483:
             return False
 
         return True
 
     @staticmethod
     def pre_probe(db, verbose):
-        # Ensure this is an STM32H7 part.
-        if not STM32H7.is_mcu(db):
+        # Ensure this is an STM32H72x/3x part.
+        if not STM32H7_2x_3x.is_mcu(db):
             return
 
         # Enable all the clocks that we want to use.
         cr = dbgmcu.read_cr(db)
-        if (cr & 0x00700187) != 0x00700187:
+        if (cr & 0x00700007) != 0x00700007:
             if verbose:
-                print('Detected STM32H7, enabling all DBGMCU debug clocks.')
-            dbgmcu.write_cr(db, cr | 0x00700187)
+                print('Detected STM32H72x/3x, enabling all DBGMCU debug '
+                      'clocks.')
+            dbgmcu.write_cr(db, cr | 0x00700000)
 
     @staticmethod
     def probe(db):
-        # Ensure this is an STM32H7 part.
-        if not STM32H7.is_mcu(db):
+        # Ensure this is an STM32H72x/3x part.
+        if not STM32H7_2x_3x.is_mcu(db):
             return None
 
         # There should be exactly one CPU.
         if len(db.cpus) != 1:
             return None
 
-        return STM32H7(db)
+        return STM32H7_2x_3x(db)

@@ -281,6 +281,9 @@ class GDBServer:
         if (addr & 0xEFFFFF00) == 0xEFFFFF00:
             print('Failing evil read to 0x%08X' % addr)
             return b''
+        if addr <= 0x500:
+            print('Failing evil read to 0x%08X' % addr)
+            return b''
 
         print('Reading %u bytes from 0x%08X' % (n, addr))
         try:

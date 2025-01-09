@@ -153,7 +153,8 @@ class FLASH(Device, Flash):
     '''
     Driver for the FLASH device on the STM32H7xx series of MCUs.
     '''
-    REGS = [Reg32 ('ACR',           0x000),
+    REGS_DUAL_BANK = [
+            Reg32 ('ACR',           0x000),
             Reg32W('OPTKEYR',       0x008),
             Reg32 ('OPTCR',         0x018, [('OPTLOCK',         1),
                                             ('OPTSTART',        1),
@@ -165,20 +166,34 @@ class FLASH(Device, Flash):
                                             ]),
             Reg32 ('OPTCCR',        0x024),
             ]
+    REGS_SINGLE_BANK = [
+            Reg32 ('ACR',           0x000),
+            Reg32W('OPTKEYR',       0x008),
+            Reg32 ('OPTCR',         0x018, [('OPTLOCK',         1),
+                                            ('OPTSTART',        1),
+                                            ('',                2),
+                                            ('',                1),
+                                            ('',                25),
+                                            ('OPTCHANGEERRIE',  1),
+                                            ('',                1),
+                                            ]),
+            Reg32 ('OPTCCR',        0x024),
+            ]
 
     def __init__(self, target, ap, name, dev_base, mem_base,
                  max_nowait_write_freq, opt_regs, **kwargs):
         sector_size = 128*1024
-        Device.__init__(self, target, ap, dev_base, name, FLASH.REGS + opt_regs,
+        base_regs = (FLASH.REGS_DUAL_BANK if target.flash_nbanks > 1 else
+                     FLASH.REGS_SINGLE_BANK)
+        Device.__init__(self, target, ap, dev_base, name, base_regs + opt_regs,
                         **kwargs)
         Flash.__init__(self, mem_base, sector_size,
                        target.flash_size // sector_size, max_nowait_write_freq)
 
         self.target           = target
-        nbanks                = 1 if self.target.flash_size == 128*1024 else 2
         self.banks            = [FlashBank(self, i, **kwargs)
-                                 for i in range(nbanks)]
-        self.sectors_per_bank = self.nsectors // nbanks
+                                 for i in range(target.flash_nbanks)]
+        self.sectors_per_bank = self.nsectors // target.flash_nbanks
         self.bank_size        = self.sector_size * self.sectors_per_bank
 
     @staticmethod
@@ -215,16 +230,27 @@ class FLASH(Device, Flash):
         '''
         if verbose:
             print('Erasing entire flash...')
-        with self._flash_bank_unlocked(self.banks[0]):
-            with self._flash_bank_unlocked(self.banks[1]):
-                with self._options_unlocked():
-                    self.banks[0]._clear_errors()
-                    self.banks[1]._clear_errors()
-                    self._OPTCR.MER = 1
-                    self.banks[0]._wait_prg_idle()
-                    self.banks[1]._wait_prg_idle()
-                    self.banks[0]._check_errors()
-                    self.banks[1]._check_errors()
+        if len(self.banks) == 1:
+            with self._flash_bank_unlocked(self.banks[0]):
+                self.banks[0]._clear_errors()
+                v  = self.banks[0]._CR.read() & ~0x00000700
+                v |= (1 << 7) | (1 << 3)
+                self.banks[0]._CR = v
+                self.banks[0]._wait_prg_idle()
+                self.banks[0]._check_errors()
+        else:
+            with self._flash_bank_unlocked(self.banks[0]):
+                with self._flash_bank_unlocked(self.banks[1]):
+                    with self._options_unlocked():
+                        self.banks[0]._clear_errors()
+                        self.banks[1]._clear_errors()
+                        self._OPTCR.MER = 1
+                        self.banks[0]._wait_prg_idle()
+                        self.banks[1]._wait_prg_idle()
+                        self.banks[0]._check_errors()
+                        self.banks[1]._check_errors()
+        if verbose:
+            print('Entire flash erased.')
 
     def read(self, addr, length):
         '''

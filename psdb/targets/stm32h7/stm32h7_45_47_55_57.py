@@ -79,19 +79,20 @@ AP3DEVS = [(stm32h7.ART,        'ART',          0x40024400),
            ]
 
 
-class STM32H7_DP(Target):
+class STM32H7_45_47_55_57(Target):
     def __init__(self, db):
         # Max SWD speed is:
         #   71.0 MHz for 2.70V < VDD < 3.6V
         #   52.5 MHz for 1.62V < VDD < 3.6V
         super().__init__(db, 52500000)
-        self.m7_ap      = self.db.aps[0]
-        self.m4_ap      = self.db.aps[3]
-        self.apbd_ap    = self.db.aps[2]
-        self.ahb_ap     = self.m7_ap
-        self.uuid       = self.ahb_ap.read_bulk(0x1FF1E800, 12)
-        self.flash_size = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
-        self.mcu_idcode = dbgmcu.read_idc(db)
+        self.m7_ap        = self.db.aps[0]
+        self.m4_ap        = self.db.aps[3]
+        self.apbd_ap      = self.db.aps[2]
+        self.ahb_ap       = self.m7_ap
+        self.uuid         = self.ahb_ap.read_bulk(0x1FF1E800, 12)
+        self.flash_size   = (self.ahb_ap.read_32(0x1FF1E880) & 0x0000FFFF)*1024
+        self.flash_nbanks = 2
+        self.mcu_idcode   = dbgmcu.read_idc(db)
 
         for i, dl in enumerate((AP0DEVS, AP1DEVS, AP2DEVS, AP3DEVS)):
             ap = self.db.aps[i]
@@ -108,7 +109,7 @@ class STM32H7_DP(Target):
                   self.flash.flash_size)
 
     def __repr__(self):
-        return 'STM32H7xx DP MCU_IDCODE 0x%08X' % self.mcu_idcode
+        return 'STM32H745/47/55/57 DP MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     def get_fault_addr(self):
         return 0xA0000000
@@ -269,25 +270,26 @@ class STM32H7_DP(Target):
 
     @staticmethod
     def pre_probe(db, verbose):
-        # Ensure this is an STM32H7 DP part.
-        if not STM32H7_DP.is_mcu(db):
+        # Ensure this is an STM32H745/47/55/57 part.
+        if not STM32H7_45_47_55_57.is_mcu(db):
             return
 
         # Enable all the clocks that we want to use.
         cr = dbgmcu.read_cr(db)
         if (cr & 0x0070003F) != 0x0070003F:
             if verbose:
-                print('Detected STM32H7 DP, enabling all DBGMCU debug clocks.')
+                print('Detected STM32H745/47/55/57, enabling all DBGMCU debug '
+                      'clocks.')
             dbgmcu.write_cr(db, cr | 0x0070003F)
 
     @staticmethod
     def probe(db):
-        # Ensure this is an STM32H7 DP part.
-        if not STM32H7_DP.is_mcu(db):
+        # Ensure this is an STM32H745/47/55/57 part.
+        if not STM32H7_45_47_55_57.is_mcu(db):
             return None
 
         # There should be two or fewer CPUs.
         if len(db.cpus) > 2:
             return None
 
-        return STM32H7_DP(db)
+        return STM32H7_45_47_55_57(db)
