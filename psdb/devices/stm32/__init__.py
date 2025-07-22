@@ -20,6 +20,7 @@ from .crs import CRS
 from .lpuart import LPUART
 from .qspi import QUADSPI
 from .octospi import OCTOSPI
+from .spi_13x import SPI_13x
 from .gpdma import GPDMA
 from .cordic import CORDIC
 from . import flash_type1
@@ -49,6 +50,7 @@ __all__ = ['ACT',
            'LPUART',
            'OCTOSPI',
            'QUADSPI',
+           'SPI_13x',
            'USB',
            'USB_HS',
            ]
