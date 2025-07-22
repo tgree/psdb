@@ -7,6 +7,7 @@ from . import dbgmcu
 
 DEVICES = [(RAMDevice,      'SRAM',     0x20000000, 0x00003000),
            (stm32c0.TIM3,   'TIM3',     0x40000400),
+           (stm32.SPI_13x,  'SPI2S1',   0x40013000),
            (stm32c0.RCC,    'RCC',      0x40021000),
            (stm32c0.FLASH,  'FLASH',    0x40022000, 0x08000000, 4000000,
                                         0x1FFF7000, 1024),  # noqa: E127
