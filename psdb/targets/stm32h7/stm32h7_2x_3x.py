@@ -1,6 +1,6 @@
 # Copyright (c) 2024-2025 Phase Advanced Sensor Systems, Inc.
 import psdb
-from psdb.devices import MemDevice, RAMDevice, stm32h7
+from psdb.devices import MemDevice, RAMDevice, stm32, stm32h7
 from psdb.targets import Target
 from . import dbgmcu
 
@@ -29,6 +29,7 @@ AP0DEVS = [(RAMDevice,              'ITCM',          0x00000000, 0x00010000),
 AP1DEVS = [(RAMDevice,          'SRAM4',        0x38000000, 0x00004000),
            (RAMDevice,          'Backup SRAM',  0x38800000, 0x00001000),
            (stm32h7.PWR_2x_3x,  'PWR',          0x58024800),
+           (stm32.VREF,         'VREF',         0x58003C00),
            ]
 
 # AP2 devices are accessible over the System Debug Bus.  This is mainly for the
