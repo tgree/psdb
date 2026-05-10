@@ -1,5 +1,6 @@
 # Copyright (c) 2020 Phase Advanced Sensor Systems, Inc.
 from .flash_2x_3x import FLASH_2x_3x
+from .flash_42_43_50_53 import FLASH_42_43_50_53
 from .flash_dp import FLASH_DP
 from .flash_up import FLASH_UP
 from .pwr import PWR
@@ -20,6 +21,7 @@ TIM7 = TIM6
 
 __all__ = ['ART',
            'FLASH_2x_3x',
+           'FLASH_42_43_50_53',
            'FLASH_DP',
            'FLASH_UP',
            'PWR',
