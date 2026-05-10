@@ -375,6 +375,7 @@ class RCC(Device):
                                             ('ADC1EN',          10),
                                             ('DCMI_PSSIEN',     12),
                                             ('OTGEN',           14),
+                                            ('OTGHSPHYEN',      15),
                                             ('AESEN',           16),
                                             ('HASHEN',          17),
                                             ('RNGEN',           18),
