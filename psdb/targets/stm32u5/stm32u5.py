@@ -37,6 +37,7 @@ COMMON_DEVICES = [
            (stm32.GPIO,      'GPIOG',       0x42021800),
            (stm32.GPIO,      'GPIOH',       0x42021C00),
            (stm32.ADC14,     'ADC1',        0x42028000, 1, 1),
+           (stm32u5.SYSCFG,  'SYSCFG',      0x46000400),
            (stm32u5.I2C,     'I2C3',        0x46002800),
            (stm32u5.RTC,     'RTC',         0x46007800),
            (stm32u5.PWR,     'PWR',         0x46020800),
@@ -68,6 +69,19 @@ TARGET_DEVICES = {
         (stm32.GPIO,      'GPIOI',       0x42022000),
         (stm32.USB_HS,    'USB1',        0x42040000),
     ],
+
+    # STM32U595/5A5
+    0x481 : [
+        (RAMDevice,       'SRAM1',       0x20000000, 0x000C0000),
+        (RAMDevice,       'SRAM2',       0x200C0000, 0x00010000),
+        (RAMDevice,       'SRAM3',       0x200D0000, 0x000D0000),
+        (RAMDevice,       'SRAM4',       0x28000000, 0x00004000),
+        (RAMDevice,       'SRAM5',       0x201A0000, 0x000D0000),
+
+        (stm32.GPIO,      'GPIOF',       0x42021400),
+        (stm32.GPIO,      'GPIOI',       0x42022000),
+        (stm32.USB_HS,    'USB1',        0x42040000),
+    ],
 }
 
 
@@ -92,7 +106,7 @@ class STM32U5(Target):
         self.mcu_idcode = self.ahb_ap.read_32(0xE0044000)
 
         dev_id = (self.mcu_idcode & 0x0FFF)
-        if dev_id not in (0x455, 0x482):
+        if dev_id not in (0x455, 0x481, 0x482):
             raise Exception('Unrecognized MCU_IDCODE 0x%08X' % self.mcu_idcode)
 
         for d in itertools.chain(COMMON_DEVICES, TARGET_DEVICES[dev_id]):
@@ -130,11 +144,11 @@ class STM32U5(Target):
             return False
         if (c.addr, c.cidr) != (0xE00FE000, 0xB105100D):
             return False
-        if c.pidr not in (0xA0455, 0xA0482):
+        if c.pidr not in (0xA0455, 0xA0481, 0xA0482):
             return False
 
         # Finally, we can match on the DBGMCU IDC value.
-        if dbgmcu.read_idc_dev_id(db) not in (0x455, 0x482):
+        if dbgmcu.read_idc_dev_id(db) not in (0x455, 0x481, 0x482):
             return False
 
         return True

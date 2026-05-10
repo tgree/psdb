@@ -15,7 +15,7 @@ DEVICES = [(RAMDevice,      'SRAM',     0x20000000, 0x00003000),
            (stm32.GPIO,     'GPIOA',    0x50000000),
            (stm32.GPIO,     'GPIOB',    0x50000400),
            (stm32.GPIO,     'GPIOC',    0x50000800),
-           (stm32.GPIO,     'GPIOD',    0x50000C00),
+           # (stm32.GPIO,     'GPIOD',    0x50000C00),
            (stm32.GPIO,     'GPIOF',    0x50001400),
            ]
 

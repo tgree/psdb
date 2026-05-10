@@ -1,14 +1,38 @@
 # Copyright (c) 2018-2019 Phase Advanced Sensor Systems, Inc.
 from .flash import FLASH
-from ..device import Reg32, Reg32R
+from ..device import Reg32, Reg32R, AReg32
 
 
-class FLASH_UP(FLASH):
+class FLASH_42_43_50_53(FLASH):
     '''
     Driver for the FLASH device on the STM32H7xx series of single-core MCUs.
     '''
-    OPT_REGS = [Reg32 ('OPTSR_CUR',     0x01C),
-                Reg32 ('OPTSR_PRG',     0x020),
+    OPT_REGS = [AReg32('OPTSR_CUR',     0x01C, [('OPT_BUSY',        0),
+                                                ('BOR_LEV',         2,  3),
+                                                ('IWDG1_SW',        4),
+                                                ('NRST_STOP_D1',    6),
+                                                ('NRST_STDY_D1',    7),
+                                                ('RDP',             8,  15),
+                                                ('IWDG_FZ_STOP',    17),
+                                                ('IWDG_FZ_SDBY',    18),
+                                                ('ST_RAM_SIZE',     19, 20),
+                                                ('SECURITY',        21),
+                                                ('IO_HSLV',         29),
+                                                ('OPTCHANGEERR',    30),
+                                                ('SWAP_BANK_OPT',   31),
+                                                ]),
+                AReg32('OPTSR_PRG',     0x020, [('BOR_LEV',         2,  3),
+                                                ('IWDG1_SW',        4),
+                                                ('NRST_STOP_D1',    6),
+                                                ('NRST_STDY_D1',    7),
+                                                ('RDP',             8,  15),
+                                                ('IWDG_FZ_STOP',    17),
+                                                ('IWDG_FZ_SDBY',    18),
+                                                ('ST_RAM_SIZE',     19, 20),
+                                                ('SECURITY',        21),
+                                                ('IO_HSLV',         29),
+                                                ('SWAP_BANK_OPT',   31),
+                                                ]),
                 Reg32R('PRAR_CUR1',     0x028),
                 Reg32 ('PRAR_PRG1',     0x02C),
                 Reg32R('SCAR_CUR1',     0x030),
@@ -28,7 +52,8 @@ class FLASH_UP(FLASH):
     def __init__(self, target, ap, name, dev_base, mem_base,
                  max_nowait_write_freq, **kwargs):
         super().__init__(target, ap, name, dev_base, mem_base,
-                         max_nowait_write_freq, FLASH_UP.OPT_REGS, **kwargs)
+                         max_nowait_write_freq, FLASH_42_43_50_53.OPT_REGS,
+                         **kwargs)
 
     def get_options_reg(self):
         '''Returns the contents of the options register.'''
@@ -43,11 +68,10 @@ class FLASH_UP(FLASH):
             name.lower() : ((optsr_cur >> shift) & ((1 << width) - 1))
             for name, (width, shift) in self._OPTSR_PRG.reg.fields_map.items()
         }
-        options['boot7'] = self._BOOT7_CURR.read()
-        options['boot4'] = self._BOOT4_CURR.read()
+        options['boot'] = self._BOOT_CURR.read()
         return options
 
-    def _flash_options(self, new_optsr_prg, new_boot7, new_boot4, verbose=True):
+    def _flash_options(self, new_optsr_prg, new_boot, verbose=True):
         '''Records the new options values in flash.'''
         assert self.target.is_halted()
         old_optsr_cur = self._OPTSR_CUR.read()
@@ -56,10 +80,8 @@ class FLASH_UP(FLASH):
                   'OPTSR_PRG=0x%08X)' % (old_optsr_cur, new_optsr_prg))
         with self._options_unlocked():
             self._OPTSR_PRG = new_optsr_prg
-            if new_boot7 is not None:
-                self._BOOT7_PRGR = new_boot7
-            if new_boot4 is not None:
-                self._BOOT4_PRGR = new_boot4
+            if new_boot is not None:
+                self._BOOT_PRGR = new_boot
             self._OPTCR.OPTSTART = 1
             while self._OPTSR_CUR.OPT_BUSY:
                 pass
@@ -78,12 +100,9 @@ class FLASH_UP(FLASH):
 
             target = target.flash.set_options({...})
         '''
-        boot7_prg = options.get('boot7', None)
-        if boot7_prg is not None:
-            del options['boot7']
-        boot4_prg = options.get('boot4', None)
-        if boot4_prg is not None:
-            del options['boot4']
+        boot_prg = options.get('boot', None)
+        if boot_prg is not None:
+            del options['boot']
 
         optsr_prg = self._OPTSR_PRG.read()
         for name, (width, shift) in self._OPTSR_PRG.reg.fields_map.items():
@@ -99,5 +118,5 @@ class FLASH_UP(FLASH):
         if options:
             raise Exception('Invalid options: %s' % options)
 
-        self._flash_options(optsr_prg, boot7_prg, boot4_prg)
+        self._flash_options(optsr_prg, boot_prg)
         return self.target

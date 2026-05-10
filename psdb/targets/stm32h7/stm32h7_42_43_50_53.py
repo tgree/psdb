@@ -6,14 +6,14 @@ from . import dbgmcu
 
 
 # AP0 devices are ones that we access via the M7 core.
-AP0DEVS = [(RAMDevice,          'M7 ITCM',      0x00000000, 0x00010000),
-           (RAMDevice,          'M7 DTCM',      0x20000000, 0x00020000),
-           (RAMDevice,          'AXI SRAM',     0x24000000, 0x00080000),
-           (RAMDevice,          'SRAM1',        0x30000000, 0x00020000),
-           (RAMDevice,          'SRAM2',        0x30020000, 0x00020000),
-           (RAMDevice,          'SRAM3',        0x30040000, 0x00008000),
-           (stm32h7.FLASH_UP,   'FLASH',        0x52002000, 0x08000000,
-                                                8000000),  # noqa: E127
+AP0DEVS = [(RAMDevice,                  'M7 ITCM',  0x00000000, 0x00010000),
+           (RAMDevice,                  'M7 DTCM',  0x20000000, 0x00020000),
+           (RAMDevice,                  'AXI SRAM', 0x24000000, 0x00080000),
+           (RAMDevice,                  'SRAM1',    0x30000000, 0x00020000),
+           (RAMDevice,                  'SRAM2',    0x30020000, 0x00020000),
+           (RAMDevice,                  'SRAM3',    0x30040000, 0x00008000),
+           (stm32h7.FLASH_42_43_50_53,  'FLASH',    0x52002000, 0x08000000,
+                                                    8000000),  # noqa: E127
            ]
 
 # AP1 devices are ones accessible in the D3 domain.

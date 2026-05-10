@@ -5,6 +5,7 @@ from .i2c import I2C
 from .pwr import PWR
 from .rcc import RCC
 from .rtc import RTC
+from .syscfg import SYSCFG
 
 
 __all__ = ['DBGMCU',
@@ -13,4 +14,5 @@ __all__ = ['DBGMCU',
            'PWR',
            'RCC',
            'RTC',
+           'SYSCFG',
            ]
