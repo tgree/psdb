@@ -37,6 +37,7 @@ COMMON_DEVICES = [
            (stm32.GPIO,      'GPIOG',       0x42021800),
            (stm32.GPIO,      'GPIOH',       0x42021C00),
            (stm32.ADC14,     'ADC1',        0x42028000, 1, 1),
+           (stm32u5.SYSCFG,  'SYSCFG',      0x46000400),
            (stm32u5.I2C,     'I2C3',        0x46002800),
            (stm32u5.RTC,     'RTC',         0x46007800),
            (stm32u5.PWR,     'PWR',         0x46020800),
