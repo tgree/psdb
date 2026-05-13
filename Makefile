@@ -60,12 +60,12 @@ psdb: dist/psdb-$(PSDB_VERS)-py3-none-any.whl
 
 .PHONY: install
 install: psdb
-	sudo $(PYTHON) -m pip uninstall -y psdb --break-system-packages
-	sudo $(PYTHON) -m pip install dist/psdb-$(PSDB_VERS)-py3-none-any.whl --break-system-packages
+	$(PYTHON) -m pip uninstall -y psdb
+	$(PYTHON) -m pip install dist/psdb-$(PSDB_VERS)-py3-none-any.whl
 
 .PHONY: uninstall
 uninstall:
-	sudo $(PYTHON) -m pip uninstall psdb --break-system-packages
+	$(PYTHON) -m pip uninstall psdb
 
 .PHONY: publish
 publish: psdb
