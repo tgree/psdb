@@ -1,4 +1,4 @@
-PSDB_VERS := 1.1.8
+PSDB_VERS := 1.1.9
 PSDB_DEPS := \
 	setup.cfg				\
 	setup.py				\
@@ -13,6 +13,7 @@ PSDB_DEPS := \
 	psdb/devices/stm32c0/*.py		\
 	psdb/devices/stm32g0/*.py		\
 	psdb/devices/stm32g4/*.py		\
+	psdb/devices/stm32h5/*.py		\
 	psdb/devices/stm32h7/*.py		\
 	psdb/devices/stm32u5/*.py		\
 	psdb/devices/stm32wb55/*.py		\
@@ -29,6 +30,7 @@ PSDB_DEPS := \
 	psdb/targets/stm32c0/*.py		\
 	psdb/targets/stm32g0/*.py		\
 	psdb/targets/stm32g4/*.py		\
+	psdb/targets/stm32h5/*.py		\
 	psdb/targets/stm32h7/*.py		\
 	psdb/targets/stm32u5/*.py		\
 	psdb/targets/stm32wb55/*.py		\
@@ -60,12 +62,12 @@ psdb: dist/psdb-$(PSDB_VERS)-py3-none-any.whl
 
 .PHONY: install
 install: psdb
-	sudo $(PYTHON) -m pip uninstall -y psdb --break-system-packages
-	sudo $(PYTHON) -m pip install dist/psdb-$(PSDB_VERS)-py3-none-any.whl --break-system-packages
+	$(PYTHON) -m pip uninstall -y psdb
+	$(PYTHON) -m pip install dist/psdb-$(PSDB_VERS)-py3-none-any.whl
 
 .PHONY: uninstall
 uninstall:
-	sudo $(PYTHON) -m pip uninstall psdb --break-system-packages
+	$(PYTHON) -m pip uninstall psdb
 
 .PHONY: publish
 publish: psdb
