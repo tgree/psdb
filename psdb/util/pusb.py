@@ -13,6 +13,8 @@ def get_backend():
     if not LIBUSB_BACKEND:
         LIBUSB_BACKEND = usb.backend.libusb1.get_backend(
                 find_library=libusb_package_tng.find_library)
+        if LIBUSB_BACKEND is None:
+            LIBUSB_BACKEND = usb.backend.libusb1.get_backend()
     return LIBUSB_BACKEND
 
 
