@@ -13,6 +13,7 @@ DEVICES = [
                                             0x08FFF000, 2048),  # noqa: E127
         (stm32h5.PWR_03,    'PWR',          0x44020800),
         (stm32h5.RCC_03,    'RCC',          0x44020C00),
+        (stm32h5.DBGMCU_03, 'DBGMCU',       0x44024000),
         ]
 
 
