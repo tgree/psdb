@@ -50,7 +50,7 @@ class STM32H5_03(Target):
                   self.flash.otp_len)
 
     def __repr__(self):
-        return 'STM32H503'
+        return 'STM32H503 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
     def is_mcu(db):
