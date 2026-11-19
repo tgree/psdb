@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Phase Advanced Sensor Systems, Inc.
 import psdb
-from psdb.devices import MemDevice, RAMDevice, stm32h5
+from psdb.devices import MemDevice, RAMDevice, stm32, stm32h5
 from psdb.targets import Target
 from . import dbgmcu
 
@@ -9,10 +9,16 @@ DEVICES = [
         (MemDevice,         'System ROM',   0x0BF80000, 0x00010000),
         (RAMDevice,         'SRAM1',        0x20000000, 0x00004000),
         (RAMDevice,         'SRAM2',        0x20004000, 0x00004000),
+
+        (stm32.GPT32,       'TIM2',         0x40000000),
+        (stm32.GPT16x4,     'TIM3',         0x40000400),
         (stm32h5.FLASH_03,  'FLASH',        0x40022000, 0x08000000, 3300000,
                                             0x08FFF000, 2048),  # noqa: E127
         (stm32h5.PWR_03,    'PWR',          0x44020800),
         (stm32h5.RCC_03,    'RCC',          0x44020C00),
+        (stm32h5.DBGMCU_03, 'DBGMCU',       0x44024000),
+
+        (stm32.ACT,         'TIM1',         0x40012C00),
         ]
 
 
@@ -50,7 +56,7 @@ class STM32H5_03(Target):
                   self.flash.otp_len)
 
     def __repr__(self):
-        return 'STM32H503'
+        return 'STM32H503 MCU_IDCODE 0x%08X' % self.mcu_idcode
 
     @staticmethod
     def is_mcu(db):
